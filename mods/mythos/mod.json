@@ -1,0 +1,9 @@
+{
+  "id": "mythos",
+  "name": "Mythos",
+  "description": "Adds legendary story arcs. Weather Trio includes Groudon, Kyogre, and Rayquaza sagas with high-IV enemies.",
+  "image": "icon.png",
+  "version": "1.8",
+  "author": "UltraPokechill",
+  "category": "Quest"
+}

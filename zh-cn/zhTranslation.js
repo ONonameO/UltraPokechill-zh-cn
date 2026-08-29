@@ -1655,6 +1655,7 @@
         "Installed": "已安装",
         "Workshop": "创意工坊",
         "Update all": "更新全部",
+        "All workshop mods are up to date.": "所有创意工坊Mod已更新至最新版本。",
         "Drop .mod files here": "把.mod文件拖到这里",
         ".mod is a renamed zip with mod.json, mod.js and optional icon.png.": ".mod是一个重命名的压缩包，包含mod.json、mod.js和可选的icon.png文件。",
         "Mods Folder": "Mods文件夹",
@@ -4508,42 +4509,73 @@
 
     function translateText(text) {
         if (!text || text.length < 2) return text;
+        // 已翻译文本（纯中文/数字）不含拉丁字母，直接跳过，避免无谓的 623 次扫描
+        if (!/[A-Za-z]/.test(text)) return text;
         let result = applyRegexRules(text);
-        result = translateByTrie(result);
+        if (result === text) result = translateByTrie(result);
         return result;
     }
 
+    // B: 异步、分片、低优先级翻译，避免主线程被同步翻译阻塞导致页面无响应
     const translatedNodes = new WeakSet();
+    const _queued = new WeakSet();
+    const _work = [];
+    let _running = false;
 
-    function walk(node) {
-        if (node.nodeType === Node.TEXT_NODE) {
-            if (translatedNodes.has(node)) return;
+    function _schedule() {
+        if (_running) return;
+        _running = true;
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(_runSlice, { timeout: 200 });
+        } else {
+            setTimeout(_runSlice, 16);
+        }
+    }
 
-            const original = node.nodeValue;
-            const translated = translateText(original);
+    function _enqueue(node) {
+        if (!node) return;
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (_queued.has(node)) return;
+            _queued.add(node);
+            _work.push(node);
+            _schedule();
+        } else if (node.parentNode) {
+            _enqueue(node.parentNode);
+        }
+    }
 
-            if (original !== translated) {
-                node.nodeValue = translated;
+    function _runSlice() {
+        const MAX_TEXT = 100; // 每个空闲片最多翻译的文本节点数，超过则让出主线程
+        let count = 0;
+        while (_work.length && count < MAX_TEXT) {
+            const node = _work.pop();
+            if (!node.isConnected) { _queued.delete(node); continue; }
+            if (node.nodeType === Node.TEXT_NODE) {
+                if (!translatedNodes.has(node)) {
+                    const original = node.nodeValue;
+                    const translated = translateText(original);
+                    if (original !== translated) node.nodeValue = translated;
+                    translatedNodes.add(node);
+                }
+                count++;
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.shadowRoot) _work.push(node.shadowRoot);
+                const kids = node.childNodes;
+                for (let i = kids.length - 1; i >= 0; i--) _work.push(kids[i]);
             }
-            translatedNodes.add(node);
-            return;
         }
-
-        if (node.nodeType !== Node.ELEMENT_NODE) return;
-
-        if (node.shadowRoot) {
-            walk(node.shadowRoot);
-        }
-
-        for (const child of node.childNodes) {
-            walk(child);
+        if (_work.length) {
+            _running = false;
+            _schedule();
+        } else {
+            _running = false;
         }
     }
 
     const observer = new MutationObserver(mutations => {
         for (const m of mutations) {
             for (const node of m.addedNodes) {
-                walk(node);
+                _enqueue(node);
             }
         }
     });
@@ -4553,10 +4585,6 @@
         subtree: true
     });
 
-    walk(document.body);
-
-    //暴露翻译规则给core.js使用
-    window.EN_CN_REGEX_RULES = RAW_REGEX_RULES;
-    window.EN_CN_DICT = DICT;
+    _enqueue(document.body);
 
 })();
