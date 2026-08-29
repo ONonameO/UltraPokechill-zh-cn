@@ -4507,75 +4507,46 @@
         return out;
     }
 
+    // 翻译结果缓存：相同字符串只翻译一次。游戏中大量文本（如每帧刷新的
+    // HP / Score / 关卡名）是重复的，命中缓存后近乎免费，避免每帧重复 623 次正则扫描
+    const _trCache = new Map();
+
     function translateText(text) {
         if (!text || text.length < 2) return text;
         // 已翻译文本（纯中文/数字）不含拉丁字母，直接跳过，避免无谓的 623 次扫描
         if (!/[A-Za-z]/.test(text)) return text;
+        const cached = _trCache.get(text);
+        if (cached !== undefined) return cached;
         let result = applyRegexRules(text);
         if (result === text) result = translateByTrie(result);
+        if (_trCache.size > 200000) _trCache.clear();
+        _trCache.set(text, result);
         return result;
     }
 
-    // B: 异步、分片、低优先级翻译，避免主线程被同步翻译阻塞导致页面无响应
+    // 同步翻译：在浏览器绘制（paint）之前完成，彻底消除"英文先显示、延迟跳中文"的闪烁。
+    // MutationObserver 回调在当帧绘制前触发，因此回调内同步改写文本节点即不会出现英文中间态。
+    // 配合上方 translateText 的缓存 + 非拉丁预筛 + 下方 WeakSet 去重，每帧重复文本近乎免费，主线程不再被阻塞。
     const translatedNodes = new WeakSet();
-    const _queued = new WeakSet();
-    const _work = [];
-    let _running = false;
 
-    function _schedule() {
-        if (_running) return;
-        _running = true;
-        if (typeof window.requestIdleCallback === 'function') {
-            window.requestIdleCallback(_runSlice, { timeout: 200 });
-        } else {
-            setTimeout(_runSlice, 16);
+    function walkSync(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            if (translatedNodes.has(node)) return;
+            const original = node.nodeValue;
+            const translated = translateText(original);
+            if (original !== translated) node.nodeValue = translated;
+            translatedNodes.add(node);
+            return;
         }
-    }
-
-    function _enqueue(node) {
-        if (!node) return;
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            if (_queued.has(node)) return;
-            _queued.add(node);
-            _work.push(node);
-            _schedule();
-        } else if (node.parentNode) {
-            _enqueue(node.parentNode);
-        }
-    }
-
-    function _runSlice() {
-        const MAX_TEXT = 100; // 每个空闲片最多翻译的文本节点数，超过则让出主线程
-        let count = 0;
-        while (_work.length && count < MAX_TEXT) {
-            const node = _work.pop();
-            if (!node.isConnected) { _queued.delete(node); continue; }
-            if (node.nodeType === Node.TEXT_NODE) {
-                if (!translatedNodes.has(node)) {
-                    const original = node.nodeValue;
-                    const translated = translateText(original);
-                    if (original !== translated) node.nodeValue = translated;
-                    translatedNodes.add(node);
-                }
-                count++;
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.shadowRoot) _work.push(node.shadowRoot);
-                const kids = node.childNodes;
-                for (let i = kids.length - 1; i >= 0; i--) _work.push(kids[i]);
-            }
-        }
-        if (_work.length) {
-            _running = false;
-            _schedule();
-        } else {
-            _running = false;
-        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        if (node.shadowRoot) walkSync(node.shadowRoot);
+        for (const child of node.childNodes) walkSync(child);
     }
 
     const observer = new MutationObserver(mutations => {
         for (const m of mutations) {
             for (const node of m.addedNodes) {
-                _enqueue(node);
+                walkSync(node);
             }
         }
     });
@@ -4585,6 +4556,6 @@
         subtree: true
     });
 
-    _enqueue(document.body);
+    walkSync(document.body);
 
 })();
