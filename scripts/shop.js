@@ -1,0 +1,2191 @@
+
+
+
+
+const shop = {}
+
+//1 unit == 10-50 gold caps a day
+
+shop.exchange1 = {
+    icon: item.bottleCap.id,
+    name: `Bottle Cap x2`,
+    price: 1,
+    currency: item.goldenBottleCap.id,
+    category: `all`,
+    effect: function() {item.bottleCap.got+=2},
+    bulkBuy : true,
+
+}
+
+
+shop.shoprareCandy = {
+    icon: item.rareCandy.id,
+    price: 1,
+    category: `goods`,
+}
+
+shop.shopabilityPatch = {
+    icon: item.abilityPatch.id,
+    price: 5,
+    category: `goods`,
+}
+
+shop.shopabilityCapsule = {
+    icon: item.abilityCapsule.id,
+    price: 50,
+    category: `goods`,
+}
+
+shop.shopheartScale = {
+    icon: item.heartScale.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `goods`,
+}
+
+shop.shopneutralMint = {
+    icon: item.neutralMint.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `goods`,
+}
+
+shop.shoptimeCandyXL = {
+    icon: item.timeCandyXL.id,
+    price: 3,
+    currency: item.timeCandy.id,
+    category: `goods`,
+}
+
+shop.shoptimeCandy = {
+    icon: item.timeCandy.id,
+    name: `Time Candy x3`,
+    price: 1,
+    currency: item.timeCandyXL.id,
+    category: `goods`,
+    effect: function() {item.timeCandy.got+=3}
+}
+
+shop.shopepochFeather = {
+    icon: item.epochFeather.id,
+    name: `Epoch Feather x25`,
+    price: 10,
+    currency: item.pokeflute.id,
+    category: `goods`,
+    condition: function() {if (rotationEventCurrent==1) return true},
+    effect: function() {item.epochFeather.got+=25}
+}
+
+shop.shopancientOrchid = {
+    icon: item.ancientOrchid.id,
+    name: `Ancient Orchid x25`,
+    price: 10,
+    currency: item.primalEarth.id,
+    category: `goods`,
+    condition: function() {if (rotationEventCurrent==2) return true},
+    effect: function() {item.ancientOrchid.got+=25}
+}
+
+shop.shopancientKeystone = {
+    icon: item.ancientKeystone.id,
+    name: `Ancient Keystone x25`,
+    price: 10,
+    currency: item.steelKeystone.id,
+    category: `goods`,
+    condition: function() {if (rotationEventCurrent==3) return true},
+    effect: function() {item.ancientKeystone.got+=25}
+}
+
+shop.shopaetherKeycard = {
+    icon: item.aetherKeycard.id,
+    name: `Aether Keycard x25`,
+    price: 10,
+    currency: item.wormholeResidue.id,
+    category: `goods`,
+    condition: function() {if (rotationEventCurrent==4) return true},
+    effect: function() {item.aetherKeycard.got+=25}
+}
+
+shop.shopfutureDisk = {
+    icon: item.futureDisk.id,
+    name: `Future Disk x25`,
+    price: 10,
+    currency: item.futureContraption.id,
+    category: `goods`,
+    condition: function() {if (rotationEventCurrent==5) return true},
+    effect: function() {item.futureDisk.got+=25}
+}
+
+shop.shopwisdomPetal = {
+    icon: item.wisdomPetal.id,
+    name: `Wisdom Petal x25`,
+    price: 10,
+    currency: item.redChain.id,
+    category: `goods`,
+    condition: function() {if (rotationEventCurrent==6) return true},
+    effect: function() {item.wisdomPetal.got+=25}
+}
+
+
+
+
+shop.shopblackBelt = {
+    icon: item.blackBelt.id,
+    price: 5,
+    category: `held`,
+}
+
+shop.shopblackGlasses = {
+    icon: item.blackGlasses.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopcharcoal = {
+    icon: item.charcoal.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopdragonFang = {
+    icon: item.dragonFang.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopfairyFeather = {
+    icon: item.fairyFeather.id,
+    price: 5,
+    category: `held`,
+}
+shop.shophardStone = {
+    icon: item.hardStone.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopmagnet = {
+    icon: item.magnet.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopmetalCoat = {
+    icon: item.metalCoat.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopmiracleSeed = {
+    icon: item.miracleSeed.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopmysticWater = {
+    icon: item.mysticWater.id,
+    price: 5,
+    category: `held`,
+}
+
+shop.shoptwistedSpoon = {
+    icon: item.twistedSpoon.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopneverMeltIce = {
+    icon: item.neverMeltIce.id,
+    price: 5,
+    category: `held`,
+}
+shop.shoppoisonBarb = {
+    icon: item.poisonBarb.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopsharpBeak = {
+    icon: item.sharpBeak.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopsilkScarf = {
+    icon: item.silkScarf.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopsilverPowder = {
+    icon: item.silverPowder.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopsoftSand = {
+    icon: item.softSand.id,
+    price: 5,
+    category: `held`,
+}
+shop.shopspellTag = {
+    icon: item.spellTag.id,
+    price: 5,
+    category: `held`,
+}
+
+shop.shopluckyEgg = {
+    icon: item.luckyEgg.id,
+    price: 20,
+    category: `held`,
+}
+shop.shopflameOrb = {
+    icon: item.flameOrb.id,
+    price: 20,
+    category: `held`,
+}
+shop.shoptoxicOrb = {
+    icon: item.toxicOrb.id,
+    price: 20,
+    category: `held`,
+}
+shop.shopluckIncense = {
+    icon: item.luckIncense.id,
+    price: 30,
+    category: `held`,
+}
+shop.shoppureIncense = {
+    icon: item.pureIncense.id,
+    price: 30,
+    category: `held`,
+}
+shop.shopchoiceBand = {
+    icon: item.choiceBand.id,
+    price: 50,
+    category: `held`,
+}
+shop.shopchoiceSpecs = {
+    icon: item.choiceSpecs.id,
+    price: 50,
+    category: `held`,
+}
+shop.shoplifeOrb = {
+    icon: item.lifeOrb.id,
+    price: 50,
+    category: `held`,
+}
+
+shop.shopshinyCharm = {
+    icon: item.shinyCharm.id,
+    price: 200,
+    category: `held`,
+}
+
+shop.shopterrainExtender = {
+    icon: item.terrainExtender.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopelectricSeed = {
+    icon: item.electricSeed.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopgrassySeed = {
+    icon: item.grassySeed.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopmistySeed = {
+    icon: item.mistySeed.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopfoggySeed = {
+    icon: item.foggySeed.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopclearAmulet = {
+    icon: item.clearAmulet.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopejectPack = {
+    icon: item.ejectPack.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopejectButton = {
+    icon: item.ejectButton.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shoploadedDice = {
+    icon: item.loadedDice.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopmetronome = {
+    icon: item.metronome.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shoplaggingTail = {
+    icon: item.laggingTail.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopquickClaw = {
+    icon: item.quickClaw.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopweaknessPolicy = {
+    icon: item.weaknessPolicy.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopluckyPunch = {
+    icon: item.luckyPunch.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shoppowerHerb = {
+    icon: item.powerHerb.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopassaultVest = {
+    icon: item.assaultVest.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopheavyDutyBoots = {
+    icon: item.heavyDutyBoots.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+shop.shopleftovers = {
+    icon: item.leftovers.id,
+    price: 20,
+    currency: item.goldenBottleCap.id,
+    category: `held`,
+}
+
+
+shop.shopwaterStone = {
+    icon: item.waterStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopthunderStone = {
+    icon: item.thunderStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopsunStone = {
+    icon: item.sunStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopovalStone = {
+    icon: item.ovalStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopmoonStone = {
+    icon: item.moonStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopleafStone = {
+    icon: item.leafStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopiceStone = {
+    icon: item.iceStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopfireStone = {
+    icon: item.fireStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopduskStone = {
+    icon: item.duskStone.id,
+    price: 10,
+    category: `evolution`,
+}
+shop.shopdawnStone = {
+    icon: item.dawnStone.id,
+    price: 10,
+    category: `evolution`,
+}
+
+shop.shopshinyStone = {
+    icon: item.shinyStone.id,
+    price: 10,
+    category: `evolution`,
+}
+
+shop.shopoddRock = {
+    icon: item.oddRock.id,
+    price: 20,
+    category: `evolution`,
+}
+
+shop.shoplinkStone = {
+    icon: item.linkStone.id,
+    price: 20,
+    category: `evolution`,
+}
+
+
+shop.shopbarbaracite = {
+    icon: item.barbaracite.id,
+    name: `Barbaracite x21`,
+    price: 150,
+    currency: item.goldenBottleCap.id,
+    category: `evolution`,
+    effect: function() {item.barbaracite.got+=21}
+
+}
+
+shop.shophawluchanite = {
+    icon: item.hawluchanite.id,
+    name: `Hawluchanite x21`,
+    price: 150,
+    currency: item.goldenBottleCap.id,
+    category: `evolution`,
+    effect: function() {item.hawluchanite.got+=21}
+}
+
+shop.shoppyroarite = {
+    icon: item.pyroarite.id,
+    name: `Pyroarite x21`,
+    price: 150,
+    currency: item.goldenBottleCap.id,
+    category: `evolution`,
+    effect: function() {item.pyroarite.got+=21}
+}
+
+shop.shopfalinksite = {
+    icon: item.falinksite.id,
+    name: `Falinksite x21`,
+    price: 150,
+    currency: item.goldenBottleCap.id,
+    category: `evolution`,
+    effect: function() {item.falinksite.got+=21}
+}
+
+
+
+shop.shoppowerAnklet = {
+    icon: item.powerAnklet.id,
+    price: 10,
+    category: `genetics`,
+}
+
+shop.shoppowerBand = {
+    icon: item.powerBand.id,
+    price: 10,
+    category: `genetics`,
+}
+
+shop.shoppowerBelt = {
+    icon: item.powerBelt.id,
+    price: 10,
+    category: `genetics`,
+}
+
+shop.shoppowerBracer = {
+    icon: item.powerBracer.id,
+    price: 10,
+    category: `genetics`,
+}
+
+shop.shoppowerLens = {
+    icon: item.powerLens.id,
+    price: 10,
+    category: `genetics`,
+}
+
+shop.shoppowerWeight = {
+    icon: item.powerWeight.id,
+    price: 10,
+    category: `genetics`,
+}
+
+shop.shopmachoBrace = {
+    icon: item.machoBrace.id,
+    price: 10,
+    category: `genetics`,
+}
+
+shop.shopeverstone = {
+    icon: item.everstone.id,
+    price: 20,
+    category: `genetics`,
+}
+
+shop.shopenergyRoot = {
+    icon: item.energyRoot.id,
+    price: 20,
+    category: `genetics`,
+}
+
+shop.shoplockCapsule = {
+    icon: item.lockCapsule.id,
+    price: 30,
+    category: `genetics`,
+}
+
+shop.shopdestinyKnot = {
+    icon: item.destinyKnot.id,
+    price: 50,
+    category: `genetics`,
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+shop.shoptrickRoomTm = {
+    icon: item.trickRoomTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+shop.shopweirdRoomTm = {
+    icon: item.weirdRoomTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+shop.shopcrossRoomTm = {
+    icon: item.crossRoomTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+shop.shoplightScreenTm = {
+    icon: item.lightScreenTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+shop.shopsafeguardTm = {
+    icon: item.safeguardTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+shop.shoptackleTm = {
+    icon: item.tackleTm.id,
+    price: 1,
+    category: `tm`,
+}
+
+shop.shopleerTm = {
+    icon: item.leerTm.id,
+    price: 1,
+    category: `tm`,
+}
+
+shop.shopquickAttackTm = {
+    icon: item.quickAttackTm.id,
+    price: 1,
+    category: `tm`,
+}
+
+shop.shopbulkUpTm = {
+    icon: item.bulkUpTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+shop.shopthunderWaveTm = {
+    icon: item.thunderWaveTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+shop.shoptoxicTm = {
+    icon: item.toxicTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+shop.shopwillOWispTm = {
+    icon: item.willOWispTm.id,
+    price: 5,
+    category: `tm`,
+}
+
+shop.shopcalmMindTm = {
+    icon: item.calmMindTm.id,
+    price: 10,
+    category: `tm`,
+}
+
+shop.shopsunnyDayTm = {
+    icon: item.sunnyDayTm.id,
+    price: 10,
+    //currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shoprainDanceTm = {
+    icon: item.rainDanceTm.id,
+    price: 10,
+    //currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopcrunchTm = {
+    icon: item.crunchTm.id,
+    price: 20,
+    category: `tm`,
+}
+
+shop.shopxScissorTm = {
+    icon: item.xScissorTm.id,
+    price: 20,
+    category: `tm`,
+}
+
+shop.shopmoonblastTm = {
+    icon: item.moonblastTm.id,
+    price: 20,
+    category: `tm`,
+}
+
+
+
+
+shop.shopfireBlastTm = {
+    icon: item.fireBlastTm.id,
+    price: 50,
+    category: `tm`,
+}
+
+shop.shophydroPumpTm = {
+    icon: item.hydroPumpTm.id,
+    price: 50,
+    category: `tm`,
+}
+
+shop.shopthunderTm = {
+    icon: item.thunderTm.id,
+    price: 50,
+    category: `tm`,
+}
+
+shop.shophyperBeamTm = {
+    icon: item.hyperBeamTm.id,
+    price: 50,
+    category: `tm`,
+}
+
+shop.shopswaggerTm = {
+    icon: item.swaggerTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopironDefenseTm = {
+    icon: item.ironDefenseTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopfeintAttackTm = {
+    icon: item.feintAttackTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopchillingWaterTm = {
+    icon: item.chillingWaterTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopsilverWindTm = {
+    icon: item.silverWindTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopavalancheTm = {
+    icon: item.avalancheTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopknockOffTm = {
+    icon: item.knockOffTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopominousWindTm = {
+    icon: item.ominousWindTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopflameChargeTm = {
+    icon: item.flameChargeTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopacidSprayTm = {
+    icon: item.acidSprayTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopnastyPlotTm = {
+    icon: item.nastyPlotTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopswordsDanceTm = {
+    icon: item.swordsDanceTm.id,
+    price: 5,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shophailTm = {
+    icon: item.hailTm.id,
+    price: 10,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopfogTm = {
+    icon: item.fogTm.id,
+    price: 10,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopsandstormTm = {
+    icon: item.sandstormTm.id,
+    price: 10,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopelectricTerrainTm = {
+    icon: item.electricTerrainTm.id,
+    price: 10,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopmistyTerrainTm = {
+    icon: item.mistyTerrainTm.id,
+    price: 10,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+shop.shopgrassyTerrainTm = {
+    icon: item.grassyTerrainTm.id,
+    price: 10,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+
+shop.shopvoltSwitchTm = {
+    icon: item.voltSwitchTm.id,
+    price: 10,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopuTurnTm = {
+    icon: item.uTurnTm.id,
+    price: 10,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopchargeBeamTm = {
+    icon: item.chargeBeamTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopdischargeTm = {
+    icon: item.dischargeTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopdragonRushTm = {
+    icon: item.dragonRushTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopscorchingSandsTm = {
+    icon: item.scorchingSandsTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopairShlashTm = {
+    icon: item.airShlashTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shoppoisonJabTm = {
+    icon: item.poisonJabTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopliquidationTm = {
+    icon: item.liquidationTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopenergyBallTm = {
+    icon: item.energyBallTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopskyUppercutTm = {
+    icon: item.skyUppercutTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopdracoMeteorTm = {
+    icon: item.dracoMeteorTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+shop.shopspiritBreakTm = {
+    icon: item.spiritBreakTm.id,
+    price: 15,
+    currency: item.goldenBottleCap.id,
+    category: `tm`,
+}
+
+
+
+shop.shopalolanDiglett = {
+    pkmn: pkmn.alolanDiglett.id,
+    price: 30,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.alolanDiglett,1)}
+}
+
+shop.shopgalarianZigzagoon = {
+    pkmn: pkmn.galarianZigzagoon.id,
+    price: 30,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.galarianZigzagoon,1)}
+}
+
+shop.shopgalarianPonyta = {
+    pkmn: pkmn.galarianPonyta.id,
+    price: 30,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.galarianPonyta,1)}
+}
+
+shop.shopalolanSandshrew = {
+    pkmn: pkmn.alolanSandshrew.id,
+    price: 50,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.alolanSandshrew,1)}
+}
+
+shop.shophisuianVoltorb = {
+    pkmn: pkmn.hisuianVoltorb.id,
+    price: 50,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.hisuianVoltorb,1)}
+}
+
+shop.shoppaldeanWooper = {
+    pkmn: pkmn.paldeanWooper.id,
+    price: 50,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.paldeanWooper,1)}
+}
+
+shop.shophisuianQwilfish = {
+    pkmn: pkmn.hisuianQwilfish.id,
+    price: 50,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.hisuianQwilfish,1)}
+}
+
+shop.shopalolanRaichu = {
+    pkmn: pkmn.alolanRaichu.id,
+    price: 100,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.alolanRaichu,1)}
+}
+
+shop.shophisuianBraviary = {
+    pkmn: pkmn.hisuianBraviary.id,
+    price: 100,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.hisuianBraviary,1)}
+}
+
+shop.shophisuianSamurott = {
+    pkmn: pkmn.hisuianSamurott.id,
+    price: 100,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.hisuianSamurott,1)}
+}
+
+shop.shophisuianLilligant = {
+    pkmn: pkmn.hisuianLilligant.id,
+    price: 100,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.hisuianLilligant,1)}
+}
+
+shop.shopvivillonElegant = {
+    pkmn: pkmn.vivillonElegant.id,
+    price: 200,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.vivillonElegant,1)}
+}
+
+shop.shopgimmighoul = {
+    pkmn: pkmn.gimmighoul.id,
+    price: 999,
+    currency: item.goldenBottleCap.id,
+    category: `pokemon`,
+    effect: function() {givePkmn(pkmn.gimmighoul,1)}
+}
+
+
+shop.shophydratationMemory = {
+    icon: item.hydratationMemory.id,
+    price: 20,
+    category: `memory`
+}
+
+shop.shopsandVeilMemory = {
+    icon: item.sandVeilMemory.id,
+    price: 20,
+    category: `memory`
+}
+shop.shopsnowCloakMemory = {
+    icon: item.snowCloakMemory.id,
+    price: 20,
+    category: `memory`
+}
+shop.shopmarvelScaleMemory = {
+    icon: item.marvelScaleMemory.id,
+    price: 20,
+    category: `memory`
+}
+shop.shoplivingShieldMemory = {
+    icon: item.livingShieldMemory.id,
+    price: 20,
+    category: `memory`
+}
+shop.shopbigPecksMemory = {
+    icon: item.bigPecksMemory.id,
+    price: 20,
+    category: `memory`
+}
+shop.shophyperCutterMemory = {
+    icon: item.hyperCutterMemory.id,
+    price: 20,
+    category: `memory`
+}
+shop.shopsynchronizeMemory = {
+    icon: item.synchronizeMemory.id,
+    price: 20,
+    category: `memory`
+}
+shop.shopiceBodyMemory = {
+    icon: item.iceBodyMemory.id,
+    price: 20,
+    category: `memory`
+}
+
+shop.shoprainDishMemory = {
+    icon: item.rainDishMemory.id,
+    price: 30,
+    category: `memory`
+}
+shop.shopsolarPowerMemory = {
+    icon: item.solarPowerMemory.id,
+    price: 30,
+    category: `memory`
+}
+shop.shopsandForceMemory = {
+    icon: item.sandForceMemory.id,
+    price: 30,
+    category: `memory`
+}
+shop.shopscrappyMemory = {
+    icon: item.scrappyMemory.id,
+    price: 30,
+    category: `memory`
+}
+
+shop.shopstrongJawMemory = {
+    icon: item.strongJawMemory.id,
+    price: 50,
+    category: `memory`
+}
+shop.shoptoughClawsMemory = {
+    icon: item.toughClawsMemory.id,
+    price: 50,
+    category: `memory`
+}
+shop.shopironFistMemory = {
+    icon: item.ironFistMemory.id,
+    price: 50,
+    category: `memory`
+}
+shop.shopmagicGuardMemory = {
+    icon: item.magicGuardMemory.id,
+    price: 50,
+    category: `memory`
+}
+
+shop.shoppickPocketMemory = {
+    icon: item.pickPocketMemory.id,
+    price: 35,
+    currency: item.goldenBottleCap.id,
+    category: `memory`
+}
+
+
+
+
+
+
+//event
+
+//assume 25 currency per battle
+
+saved.halloweenThemeUnlocked = false
+shop.eventhalloweenTheme = {
+    icon: item.oldGateau.id,
+    name: `Permanent Seasonal Theme`,
+    price: 50,
+    stock: 1,
+    currency: item.oldGateau.id,
+    category: `limited`,
+    effect: function() {saved.halloweenThemeUnlocked = true},
+    condition: function() {if (saved.currentSeason == season.halloween.id) return true},
+}
+
+shop.eventhalloweenDecor = {
+    icon: item.witchyHat.id,
+    price: 30,
+    currency: item.oldGateau.id,
+    category: `limited`,
+    condition: function() {if (saved.currentSeason == season.halloween.id) return true},
+}
+
+shop.event5 = {
+    icon: item.timeCandyXL.id,
+    price: 10,
+    stock: 10,
+    currency: item.oldGateau.id,
+    category: `limited`
+}
+
+shop.event4 = {
+    icon: item.timeCandy.id,
+    price: 5,
+    stock: 20,
+    currency: item.oldGateau.id,
+    category: `limited`
+}
+
+shop.event1 = {
+    icon: item.autoRefightTicket.id,
+    price: 5,
+    stock: 20,
+    currency: item.oldGateau.id,
+    category: `limited`
+}
+
+shop.event2 = {
+    icon: item.energyRoot.id,
+    price: 5,
+    stock: 20,
+    currency: item.oldGateau.id,
+    category: `limited`
+}
+
+shop.event6 = {
+    icon: item.abilityPatch.id,
+    price: 2,
+    stock: 50,
+    currency: item.oldGateau.id,
+    category: `limited`
+}
+
+shop.event3 = {
+    icon: item.goldenBottleCap.id,
+    price: 1,
+    stock: 100,
+    currency: item.oldGateau.id,
+    category: `limited`
+}
+
+shop.eventhalloweenCaps = {
+    icon: item.bottleCap.id,
+    name: `Bottle Cap x5`,
+    effect: function() {item.bottleCap.got+=5},
+    price: 50,
+    currency: item.oldGateau.id,
+    category: `limited`,
+    condition: function() {if (saved.currentSeason == season.halloween.id) return true},
+}
+
+
+
+//decor
+
+shop.shopDecor1 = {
+    icon: item.googlySpecs.id,
+    price: 10,
+    category: `decor`
+}
+
+shop.shopDecor2 = {
+    icon: item.googlySpecs.id,
+    price: 10,
+    category: `decor`
+}
+
+shop.shopDecor3 = {
+    icon: item.googlySpecs.id,
+    price: 10,
+    category: `decor`
+}
+
+shop.shopDecor4 = {
+    icon: item.googlySpecs.id,
+    price: 10,
+    category: `decor`
+}
+
+shop.shopDecor5 = {
+    icon: item.googlySpecs.id,
+    price: 10,
+    category: `decor`
+}
+
+shop.shopDecor6 = {
+    icon: item.googlySpecs.id,
+    price: 50,
+    currency: item.goldenBottleCap.id,
+    category: `decor`
+}
+
+shop.shopwealthyCoins = {
+    icon: item.wealthyCoins.id,
+    price: 999,
+    currency: item.goldenBottleCap.id,
+    category: `decor`
+}
+
+
+
+//apricorn shop
+
+const shopApricornCostDefault = 3
+
+
+shop.shopApricornItem1 = {
+    icon: item.autoRefightTicket.id,
+    price: 2,
+    stock: 3,
+    currency: item.yellowApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornItem2 = {
+    icon: item.heartScale.id,
+    price: 1,
+    stock: 5,
+    currency: item.pinkApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornItem3 = {
+    icon: item.energyRoot.id,
+    price: 1,
+    stock: 10,
+    currency: item.greenApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornItem4 = {
+    icon: item.fashionCase.id,
+    price: 1,
+    stock: 5,
+    currency: item.yellowApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory1 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.yellowApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory2 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.yellowApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory3 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.yellowApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory4 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.pinkApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory5 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.pinkApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory6 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.pinkApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory7 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.greenApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory8 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.greenApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemory9 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.greenApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemoryWhite1 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.whiteApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemoryWhite2 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.whiteApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopApricornMemoryWhite3 = {
+    icon: item.googlySpecs.id,
+    price: shopApricornCostDefault,
+    stock: 3,
+    currency: item.whiteApricorn.id,
+    category: `apricorn`
+}
+
+
+shop.shopMagazineSubscription = {
+    icon: item.magazineSubscription.id,
+    price: 10,
+    stock: 1,
+    currency: item.whiteApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopBattlePass = {
+    icon: item.battlePass.id,
+    price: 20,
+    stock: 1,
+    currency: item.whiteApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopReplicatorUpgradeS = {
+    icon: item.replicatorUpgradeS.id,
+    price: 30,
+    stock: 1,
+    currency: item.whiteApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopreplicatorUpgradeE = {
+    icon: item.replicatorUpgradeE.id,
+    price: 40,
+    stock: 1,
+    currency: item.whiteApricorn.id,
+    category: `apricorn`
+}
+
+shop.shopfestivalTicket = {
+    icon: item.festivalTicket.id,
+    price: 150,
+    currency: item.whiteApricorn.id,
+    category: `apricorn`
+}
+
+
+
+
+
+
+
+//restaurant
+
+const ingredient = {}
+
+ingredient.boiledEgg = {
+    ability: ability.wonderSkin.id,
+    price: 10,
+}
+
+ingredient.bread = {
+    ability: ability.bigPecks.id,
+    price: 10,
+}
+
+ingredient.coconutMilk = {
+    ability: ability.hyperCutter.id,
+    price: 10
+}
+
+ingredient.freshCream = {
+    ability: ability.synchronize.id,
+    price: 10
+}
+
+ingredient.brittleBones = {
+    ability: ability.naturalCure.id,
+    price: 10
+}
+
+
+
+ingredient.moomooCheese = {
+    ability: ability.unaware.id,
+    price: 20
+}
+
+ingredient.fruitBunch = {
+    ability: ability.magicGuard.id,
+    price: 20
+}
+
+ingredient.friedFood = {
+    ability: ability.rivalry.id,
+    price: 20
+}
+
+ingredient.mixedMushrooms = {
+    ability: ability.filter.id,
+    price: 20
+}
+
+ingredient.pasta = {
+    ability: ability.flameBody.id,
+    price: 20
+}
+
+ingredient.sausages = {
+    ability: ability.poisonPoint.id,
+    price: 20
+}
+
+ingredient.potatoes = {
+    ability: ability.imposter.id,
+    price: 20
+}
+
+
+ingredient.packagedCurry = {
+    ability: ability.ambidextrous.id,
+    price: 30
+}
+
+ingredient.precookedBurger = {
+    ability: ability.adaptability.id,
+    price: 30
+}
+
+
+saved.lastShopApricornReset = undefined
+saved.shopApricornMemoryRotation = undefined
+saved.shopApricornMemoryRotationWhite = undefined
+function assignShopApricorn(){
+
+    if (saved.lastShopApricornReset != rotationWildCurrent){
+    saved.lastShopApricornReset = rotationWildCurrent
+
+
+    const memoryPool = []
+    const memoryPoolWhite = []
+
+    for (const i in item){
+        if (item[i].type !== "memory") continue
+        if (item[i].rarity == "rare" && rng(0.1)) memoryPool.push(i)
+        if (item[i].rarity == "common") memoryPool.push(i)
+
+        if (item[i].rarity == "rare") memoryPoolWhite.push(i)
+        if (item[i].rarity == "white") memoryPoolWhite.push(i)
+
+    }
+
+
+    saved.shopApricornMemoryRotation = arrayPick(memoryPool,9)
+    saved.shopApricornMemoryRotationWhite = arrayPick(memoryPoolWhite,3)
+
+
+
+    shop.shopApricornMemory1.stock = 3
+    shop.shopApricornMemory2.stock = 3
+    shop.shopApricornMemory3.stock = 3
+    shop.shopApricornMemory4.stock = 3
+    shop.shopApricornMemory5.stock = 3
+    shop.shopApricornMemory6.stock = 3
+    shop.shopApricornMemory7.stock = 3
+    shop.shopApricornMemory8.stock = 3
+    shop.shopApricornMemory9.stock = 3
+
+    shop.shopApricornMemoryWhite1.stock = 3
+    shop.shopApricornMemoryWhite2.stock = 3
+    shop.shopApricornMemoryWhite3.stock = 3
+
+    shop.shopApricornItem1.stock = 3
+    shop.shopApricornItem2.stock = 5
+    shop.shopApricornItem3.stock = 10
+    shop.shopApricornItem4.stock = 5
+
+    }
+
+    
+    shop.shopApricornMemory1.icon = saved.shopApricornMemoryRotation[0]
+    shop.shopApricornMemory2.icon = saved.shopApricornMemoryRotation[1]
+    shop.shopApricornMemory3.icon = saved.shopApricornMemoryRotation[2]
+    shop.shopApricornMemory4.icon = saved.shopApricornMemoryRotation[3]
+    shop.shopApricornMemory5.icon = saved.shopApricornMemoryRotation[4]
+    shop.shopApricornMemory6.icon = saved.shopApricornMemoryRotation[5]
+    shop.shopApricornMemory7.icon = saved.shopApricornMemoryRotation[6]
+    shop.shopApricornMemory8.icon = saved.shopApricornMemoryRotation[7]
+    shop.shopApricornMemory9.icon = saved.shopApricornMemoryRotation[8]
+
+    shop.shopApricornMemoryWhite1.icon = saved.shopApricornMemoryRotationWhite[0]
+    shop.shopApricornMemoryWhite2.icon = saved.shopApricornMemoryRotationWhite[1]
+    shop.shopApricornMemoryWhite3.icon = saved.shopApricornMemoryRotationWhite[2]
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+saved.lastShopDecorReset = undefined
+saved.shopDecorRotation = undefined
+function assignShopDecor(){
+
+    if (saved.lastShopDecorReset!=rotationEventCurrent){
+    saved.lastShopDecorReset =rotationEventCurrent
+
+
+    const commonDecor = []
+    const rareDecor = []
+
+    for (const i in item){
+        if (item[i].type !== "decor") continue
+        if (item[i].rarity == undefined) continue
+        if (item[i].rarity == "rare") rareDecor.push(i)
+        if (item[i].rarity == "common") commonDecor.push(i)
+    }
+
+
+
+    saved.shopDecorRotation = [...arrayPick(commonDecor,5), arrayPick(rareDecor,1)]
+
+    }
+
+
+    shop.shopDecor1.icon = saved.shopDecorRotation[0]
+    shop.shopDecor2.icon = saved.shopDecorRotation[1]
+    shop.shopDecor3.icon = saved.shopDecorRotation[2]
+    shop.shopDecor4.icon = saved.shopDecorRotation[3]
+    shop.shopDecor5.icon = saved.shopDecorRotation[4]
+    shop.shopDecor6.icon = saved.shopDecorRotation[5]
+
+
+}
+
+
+
+let shopCategory = undefined
+
+function updateItemShop(){
+
+
+    document.getElementById("shop-listing").innerHTML = ""
+    document.getElementById(`shop-curry`).style.display = "none"
+
+
+
+
+
+
+
+    if (areas.vsLegendTrainerBrendan.defeated== false){
+        document.getElementById("shop-apricorn-exchange").style.filter = "brightness(0.3)"
+        if (shopCategory == "apricorn") {
+        document.getElementById("tooltipTop").style.display = `none`
+        document.getElementById("tooltipTitle").style.display = `none`
+        document.getElementById("tooltipBottom").style.display = `none`
+        document.getElementById("tooltipMid").innerHTML = `Defeat Legend Trainer Brendan in VS mode to unlock`
+        openTooltip()
+        return
+        }
+    } else document.getElementById("shop-apricorn-exchange").style.filter = "brightness(1)"
+
+
+    if (areas.vsLegendTrainerBrendan.defeated== false){
+        document.getElementById("shop-restaurant").style.filter = "brightness(0.3)"
+        if (shopCategory == "restaurant") {
+        document.getElementById("tooltipTop").style.display = `none`
+        document.getElementById("tooltipTitle").style.display = `none`
+        document.getElementById("tooltipBottom").style.display = `none`
+        document.getElementById("tooltipMid").innerHTML = `Defeat Legend Trainer Brendan in VS mode to unlock`
+        openTooltip()
+        return
+        }
+    } else document.getElementById("shop-restaurant").style.filter = "brightness(1)"
+
+
+    assignShopApricorn()
+    assignShopDecor()
+
+    document.getElementById("shop-currency").innerHTML = `<img src="img/items/bottleCap.png"> x${item.bottleCap.got}`
+    document.getElementById("shop-currency-gold").innerHTML = `<img src="img/items/goldenBottleCap.png"> x${item.goldenBottleCap.got}`
+
+
+    if (shopCategory == undefined){
+
+    document.getElementById("shop-categories").style.display = "flex"
+    document.getElementById("shop-listing").style.display = "none"
+
+        
+
+
+        return
+    }
+
+
+    const goBack = document.createElement("div")
+    goBack.id = "shop-back"
+    goBack.innerHTML =`
+    <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><g fill="currentColor"><path d="M224 56v144a8 8 0 0 1-8 8H40a8 8 0 0 1-8-8V56a8 8 0 0 1 8-8h176a8 8 0 0 1 8 8" opacity="0.2"/><path d="M184 104v32a8 8 0 0 1-8 8H99.31l10.35 10.34a8 8 0 0 1-11.32 11.32l-24-24a8 8 0 0 1 0-11.32l24-24a8 8 0 0 1 11.32 11.32L99.31 128H168v-24a8 8 0 0 1 16 0m48-48v144a16 16 0 0 1-16 16H40a16 16 0 0 1-16-16V56a16 16 0 0 1 16-16h176a16 16 0 0 1 16 16m-16 144V56H40v144z"/></g></svg>
+    Go Back`
+    document.getElementById("shop-listing").appendChild(goBack);
+    goBack.addEventListener("click", () => {
+    shopCategory = undefined
+    updateItemShop()
+    })
+
+
+
+
+    if (shopCategory == `restaurant`) updateIngredientShop()
+
+
+
+    if (shopCategory == "decor") {
+    const decorTimer = document.createElement("div")
+    decorTimer.id = "shop-back"
+    decorTimer.style.outline = "none"
+    decorTimer.style.border = "none"
+    decorTimer.innerHTML =`
+    <svg style="scale:0.7" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z"/><rect width="2" height="7" x="11" y="6" fill="currentColor" rx="1"><animateTransform attributeName="transform" dur="450s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></rect><rect width="2" height="9" x="11" y="11" fill="currentColor" rx="1"><animateTransform attributeName="transform" dur="37.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></rect></svg>
+    Available decor will rotate in <font style="margin-left:0.3rem" class="time-counter-event">...</font>`
+    document.getElementById("shop-listing").appendChild(decorTimer);
+    }
+
+
+    if (shopCategory == "apricorn") {
+    const decorTimer = document.createElement("div")
+    decorTimer.id = "shop-back"
+    decorTimer.style.outline = "none"
+    decorTimer.style.border = "none"
+    decorTimer.innerHTML =`
+    <svg style="scale:0.7" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z"/><rect width="2" height="7" x="11" y="6" fill="currentColor" rx="1"><animateTransform attributeName="transform" dur="450s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></rect><rect width="2" height="9" x="11" y="11" fill="currentColor" rx="1"><animateTransform attributeName="transform" dur="37.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></rect></svg>
+    Available items will rotate in <font style="margin-left:0.3rem" class="time-counter-daily">...</font>`
+    document.getElementById("shop-listing").appendChild(decorTimer);
+    }
+
+
+    if (shopCategory == "apricorn"){
+    const apricornCounter = document.createElement("div")
+    apricornCounter.className = "shop-apricorn-counter"
+    apricornCounter.innerHTML =`
+    <div><img src="img/items/yellowApricorn.png">${item.yellowApricorn.got}</div>
+    <div><img src="img/items/pinkApricorn.png">${item.pinkApricorn.got}</div>
+    <div><img src="img/items/greenApricorn.png">${item.greenApricorn.got}</div>
+    <div><img src="img/items/whiteApricorn.png">${item.whiteApricorn.got}</div>
+    `
+    document.getElementById("shop-listing").appendChild(apricornCounter);
+
+    }
+
+
+
+    document.getElementById("shop-categories").style.display = "none"
+    document.getElementById("shop-listing").style.display = "flex"
+
+
+    if (shopCategory == "restaurant") return
+
+
+    for (let i in shop){
+
+    if (shop[i].category !== shopCategory && shop[i].category !== "all") continue
+
+    if (shop[i].condition && shop[i].condition() != true) continue
+    if (shop[i].stock<=0) continue
+
+
+    //if (item[shop[i].icon].type == "held" && item[shop[i].icon].got>= 20) continue
+
+    let name = ``
+
+
+    const div = document.createElement("div");
+
+
+    let currency = item.bottleCap.id
+    if (shop[i].currency) currency = shop[i].currency
+
+
+
+
+    if (shop[i].icon){ //for shop items
+
+    if ((item[shop[i].icon].type=="held" && item[shop[i].icon].got>= 20 && item[shop[i].icon].heldBonusPkmn==undefined)
+        || (item[shop[i].icon].heldBonusPkmn && pkmn[item[shop[i].icon].heldBonusPkmn()].caught==0 && item[shop[i].icon].got>= 21)
+        || (item[shop[i].icon].heldBonusPkmn && pkmn[item[shop[i].icon].heldBonusPkmn()].caught>0 && item[shop[i].icon].got>= 20)
+    ) continue
+
+
+
+
+    name = format(shop[i].icon)
+    if (shop[i].name) name = shop[i].name
+
+    let stockTag = ""
+    if (shop[i].stock) stockTag = ` (Stock: ${shop[i].stock})`
+
+
+    div.dataset.item = shop[i].icon
+
+    const shopItem = shop[i].icon
+
+    if (item[shopItem] && item[shopItem].type=="tm"){ div.innerHTML = `
+    <img src="img/items/tm${formatAsset(move[item[shopItem].move].type)}.png">
+        <span>${name}${stockTag}</span>
+    <strong id="shop-currency-${i}">
+        <img src="img/items/${currency}.png">
+        x${shop[i].price}
+    </strong>
+    `;} else if (item[shopItem] && item[shopItem].type=="memory"){ div.innerHTML = `
+    <img src="img/items/${item[shopItem].image}Memory.png">
+        <span>${name}${stockTag}</span>
+    <strong id="shop-currency-${i}">
+        <img src="img/items/${currency}.png">
+        x${shop[i].price}
+    </strong>
+    `;} else if (item[shopItem] && item[shopItem].type=="decor"){ div.innerHTML = `
+    <img src="img/decor/${shop[i].icon}.png" style="scale:1; margin: 0 -2rem;">
+        <span style="padding-left:0.5rem">${name}${stockTag}</span>
+    <strong id="shop-currency-${i}">
+        <img src="img/items/${currency}.png">
+        x${shop[i].price}
+    </strong>
+    `;} else {div.innerHTML = `
+    <img src="img/items/${shop[i].icon}.png">
+        <span>${name}${stockTag}</span>
+    <strong id="shop-currency-${i}">
+        <img src="img/items/${currency}.png">
+        x${shop[i].price}
+    </strong>
+    `}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+    if (shop[i].pkmn) {
+
+
+    name = format(shop[i].pkmn)
+    div.dataset.pkmn = shop[i].pkmn
+
+
+    div.innerHTML = `
+        <img src="img/items/pokeball.png">
+        <span>${name}</span>
+    <strong  id="shop-currency-${i}">
+        <img src="img/items/${currency}.png">
+        x${shop[i].price}
+    </strong>
+    `
+
+
+
+
+
+
+
+    }
+
+    
+
+
+
+
+div.addEventListener("click", () => {
+
+    document.getElementById("tooltipTop").style.display = "none"
+    document.getElementById("tooltipTitle").innerHTML = "How many will you buy?"
+    document.getElementById("tooltipMid").style.display = "none"
+
+    document.getElementById("tooltipBottom").innerHTML = `
+        <span style="display:flex; justify-content:center; width:100%; flex-wrap:wrap">
+            <div data-amount="1"  style="cursor:pointer; font-size:2rem; width:30%" id="prevent-tooltip-exit">x1</div>
+            <div data-amount="5"  style="cursor:pointer; font-size:2rem; width:30%">x5</div>
+            <div data-amount="10" style="cursor:pointer; font-size:2rem; width:30%">x10</div>
+            <span style="flex-basis: 100%; height:2rem"></span>
+            <div data-amount="25" style="cursor:pointer; font-size:2rem; width:30%">x25</div>
+            <div data-amount="50" style="cursor:pointer; font-size:2rem; width:30%">x50</div>
+            <div data-amount="100" style="cursor:pointer; font-size:2rem; width:30%">x100</div>
+        </span>
+    `
+
+    if (item[shop[i].icon]?.type == "held" && item[shop[i].icon]?.got < 20) document.getElementById("tooltipBottom").innerHTML = `
+        <span style="display:flex; justify-content:center; width:100%">
+            <div data-amount="1"  style="cursor:pointer; font-size:2rem; width:40%" id="prevent-tooltip-exit">x1</div>
+            <div data-amount="5"  style="cursor:pointer; font-size:2rem; width:40%">x5</div>
+            <div data-amount="${20-item[shop[i].icon].got}" style="cursor:pointer; font-size:2rem; width:40%">x${20-item[shop[i].icon].got}</div>        </span>
+    `
+
+    if (shop[i].stock) document.getElementById("tooltipBottom").innerHTML = `
+        <span style="display:flex; justify-content:center; width:100%">
+            <div data-amount="1"  style="cursor:pointer; font-size:2rem; width:40%" id="prevent-tooltip-exit">x1</div>
+            <div data-amount="5"  style="cursor:pointer; font-size:2rem; width:40%">x5</div>
+            <div data-amount="${shop[i].stock}" style="cursor:pointer; font-size:2rem; width:40%">x${shop[i].stock}</div>
+        </span>
+    `
+
+
+    if (shop[i].stock<=5) document.getElementById("tooltipBottom").innerHTML = `
+        <span style="display:flex; justify-content:center; width:100%">
+            <div data-amount="1"  style="cursor:pointer; font-size:2rem; width:40%" id="prevent-tooltip-exit">x1</div>
+            <div data-amount="${shop[i].stock}" style="cursor:pointer; font-size:2rem; width:40%">x${shop[i].stock}</div>
+        </span>
+    `
+
+    if (shop[i].stock==1) document.getElementById("tooltipBottom").innerHTML = `
+        <span style="display:flex; justify-content:center; width:100%">
+            <div data-amount="1"  style="cursor:pointer; font-size:2rem; width:40%" id="prevent-tooltip-exit">x1</div>
+        </span>
+    `
+
+
+
+    document
+        .querySelectorAll("#tooltipBottom div")
+        .forEach(el => {
+            el.addEventListener("click", () => {
+                buyItem(+el.dataset.amount)
+            })
+        })
+
+    openTooltip()
+})
+
+    function buyItem(amount) {
+        
+        if ( ( item[currency].got>=(shop[i].price*amount) && shop[i].stock == undefined ) || ( item[currency].got>=(shop[i].price*amount) && shop[i].stock >= amount ) ){
+
+            item[currency].got-=shop[i].price*amount
+            if (shop[i].stock) shop[i].stock-=amount
+
+            if (shop[i].effect) {
+            for (let l = 0; l < amount; l++) {
+            shop[i].effect()
+            }
+            }
+            else {item[shop[i].icon].got+=amount}
+
+            updateItemShop()
+            closeTooltip()
+        } else{
+            document.getElementById("tooltipTitle").innerHTML = "Cant afford";
+            document.getElementById("tooltipTop").style.display = "none"    
+            document.getElementById("tooltipTop").style.display = "none"    
+            document.getElementById("tooltipMid").style.display = "none"
+            document.getElementById("tooltipBottom").innerHTML = `You cant afford to purchase this<span id="prevent-tooltip-exit"></span>`
+        }
+    }
+
+
+
+
+    document.getElementById("shop-listing").appendChild(div);
+
+    
+    document.getElementById(`shop-currency-${i}`).dataset.item = currency
+
+
+    }
+
+
+
+
+
+
+
+}
+
+
+let curryIngredientList = []
+
+
+function updateIngredientShop(){
+
+
+    document.getElementById(`shop-curry`).style.display = "flex"
+    updateCurry()
+
+
+    for (let i in ingredient){
+
+
+    const div = document.createElement("div");
+
+
+    div.dataset.ability = ingredient[i].ability
+
+    div.innerHTML = `
+        <img src="img/items/${i}.png">
+            <span>${format(i)} (${format(ingredient[i].ability)})</span>
+        <strong id="shop-currency-${i}">
+            <img src="img/items/goldenBottleCap.png">
+            x${ingredient[i].price}
+        </strong>
+    `
+
+
+    document.getElementById("shop-listing").appendChild(div);
+
+
+    div.addEventListener("click", () => {
+
+
+        if (curryIngredientList.length>2) return
+        if (curryIngredientList.includes(i)) return
+
+        curryIngredientList.push(i)
+        updateCurry()
+
+
+    })
+
+    }
+
+
+}
+
+
+function updateCurry(){
+
+
+
+   if (saved.lastCurryRotation == rotationWildCurrent){
+        document.getElementById("curry-buttons").style.display = `none`
+        document.getElementById("curry-ingredients").style.display = `none`
+        document.getElementById("curry-effects").style.display = `none`
+        document.getElementById(`curry-title`).innerHTML = `Come back in <span class="time-counter-daily"></span>`
+        updateDailyCounters()
+        return
+    } else {
+        document.getElementById("curry-buttons").style.display = `flex`
+        document.getElementById("curry-effects").style.display = `flex`
+        document.getElementById("curry-ingredients").style.display = `flex`
+    }
+
+
+
+    document.getElementById(`curry-ingredients`).innerHTML = ``
+    document.getElementById(`curry-title`).innerHTML = `Select ingredients to add to the curry! [${curryIngredientList.length}/3]`
+    
+    
+    
+    
+    let totalPrice = 0
+    for (const i of curryIngredientList){
+        totalPrice += ingredient[i].price
+    }
+    
+    document.getElementById(`curry-pay`).innerHTML = `Pay and cook (${totalPrice} <img src="img/items/goldenBottleCap.png">)`
+
+    document.getElementById(`curry-effects`).innerHTML = `
+    <svg data-help="curry" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M10 8.484C10.5 7.494 11 7 12 7c1.246 0 2 .989 2 1.978s-.5 1.483-2 2.473V13m0 3.5v.5"/></g></svg>
+    <span>~ Current Effects ~</span>
+    `
+
+
+    for (const i of curryIngredientList){
+
+
+        const ingr = document.createElement(`img`)
+        ingr.src = `img/items/${i}.png`
+        document.getElementById(`curry-ingredients`).appendChild(ingr)
+
+        const effect = document.createElement(`div`)
+        effect.innerHTML = format(ingredient[i].ability)
+        document.getElementById(`curry-effects`).appendChild(effect)
+
+    }
+
+}
+
+
+saved.lastCurryRotation = 100
+
+
+function makeCurry(){
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+    if (curryIngredientList.length==0){
+        document.getElementById("tooltipTop").style.display = `none`
+        document.getElementById("tooltipTitle").style.display = `none`
+        document.getElementById("tooltipBottom").style.display = `none`
+        document.getElementById("tooltipMid").innerHTML = `Select at least one ingredient first`
+        openTooltip()
+        return
+    }
+
+
+    let totalPrice = 0
+    let curryAbilities = []
+    for (const i of curryIngredientList){
+        totalPrice += ingredient[i].price
+        curryAbilities.push(ingredient[i].ability)
+    }
+
+
+
+
+    if (item.goldenBottleCap.got < totalPrice){
+        document.getElementById("tooltipTop").style.display = `none`
+        document.getElementById("tooltipTitle").style.display = `none`
+        document.getElementById("tooltipBottom").style.display = `none`
+        document.getElementById("tooltipMid").innerHTML = `You can't afford this`
+        openTooltip()
+        return
+    }
+
+    saved.curry = {
+        time : 60*60,
+        effect : curryAbilities,
+    }
+
+
+    document.getElementById(`curry-ingredients`).style.animation = `curry-drop 0.8s ease-in-out`
+
+    setTimeout(() => {
+    document.getElementById(`curry-pot`).style.animation = `itemShake 0.4s ease-in-out`
+    document.getElementById(`curry-ingredients`).innerHTML = ``
+    }, 700);
+
+    setTimeout(() => {
+        document.getElementById(`curry-ingredients`).style.animation = ``
+        document.getElementById(`curry-pot`).style.animation = ``
+        document.getElementById("tooltipTop").style.display = `none`
+        document.getElementById("tooltipTitle").style.display = `none`
+        document.getElementById("tooltipMid").innerHTML = `During raids: Temporarily gained the next abilities for everyone in your team:`
+        document.getElementById("tooltipBottom").innerHTML = joinWithAnd(curryAbilities)
+        openTooltip()
+        item.goldenBottleCap.got -= totalPrice
+            document.getElementById("shop-currency-gold").innerHTML = `<img src="img/items/goldenBottleCap.png"> x${item.goldenBottleCap.got}`
+        saved.lastCurryRotation = rotationWildCurrent
+        curryIngredientList = []
+        updateCurry()
+
+
+
+    }, 1200);
+
+}

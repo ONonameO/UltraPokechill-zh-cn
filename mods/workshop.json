@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "description": "Community workshop index for GitHub Pages. Add entries here through pull requests.",
+  "mods": [
+    {
+      "id": "workshopWelcome",
+      "name": "Workshop Welcome",
+      "description": "Example download-only mod used to test the GitHub Pages Workshop flow.",
+      "version": "1.0.0",
+      "author": "UltraPokechill",
+      "category": "Example",
+      "file": "workshop/workshopWelcome.mod",
+      "image": "img/items/endorsement.png",
+      "tags": ["example", "workshop", "test"]
+    },
+    {
+      "id": "betterDex",
+      "name": "Better Dex",
+      "description": "Adds monotype matching for duplicate type filters and move filters for equipped or learned moves.",
+      "version": "1.1",
+      "author": "UltraPokechill",
+      "category": "Pokemon UI",
+      "file": "workshop/betterDex.mod",
+      "image": "img/items/dex.png",
+      "tags": ["dex", "filters", "moves", "quality-of-life"]
+    },
+    {
+      "id": "betterMoveSorting",
+      "name": "Better Move Sorting",
+      "description": "Adds sorting controls and move keywords to a Pokemon's learned move list.",
+      "version": "1.5",
+      "author": "UltraPokechill",
+      "category": "Pokemon UI",
+      "file": "workshop/betterMoveSorting.mod",
+      "image": "img/items/tmNormal.png",
+      "tags": ["moves", "sorting", "pokemon-ui", "quality-of-life"]
+    },
+    {
+      "id": "shinyEvolve",
+      "name": "Shiny Evolve",
+      "description": "Makes evolutions from shiny Pokemon unlock shiny evolved units.",
+      "version": "1.6",
+      "author": "UltraPokechill",
+      "category": "Evolution",
+      "file": "workshop/shinyEvolve.mod",
+      "image": "img/items/shinyStone.png",
+      "tags": ["evolution", "shiny", "quality-of-life"]
+    },
+
+    {
+      "id": "cosmoemEvolves",
+      "name": "Cosmoem Evolves",
+      "description": "Adds Cosmog Candy to the shop to evolve Cosmoem into Solgaleo during the day or Lunala during the night.",
+      "version": "1.4",
+      "author": "UltraPokechill",
+      "category": "Evolution",
+      "file": "workshop/CosmoemEvolves.mod",
+      "image": "img/items/cosmogCandy.png",
+      "tags": ["evolution", "cosmoem", "cosmog", "shop"]
+    },
+    {
+    "id": "Pokerus Filter",
+    "name": "Pokerus filter",
+    "description": "Adding a filter in the pokedex to find the pokemons that carry the virus faster.",
+    "file": "workshop/PokerusFilter.mod",
+    "image": "img/items/colburBerry.png",
+    "version": "1.0",
+    "author": "LPF",
+    "category": "Pokedex"
+},
+    {
+      "id": "editTeamFightAgain",
+      "name": "Edit Team and Fight Again",
+      "description": "Adds an end-of-battle button that opens team editing before rematching the same battle.",
+      "version": "1.4",
+      "author": "UltraPokechill",
+      "category": "Battle",
+      "file": "workshop/editTeamFightAgain.mod",
+      "image": "img/items/abilityCapsule.png",
+      "tags": ["battle", "team", "rematch", "quality-of-life"]
+    },
+    {
+      "id": "noMoreMagikarp",
+      "name": "No More Magikarp",
+      "description": "Fixes Mega-Dimension rewards so White Kyurem and M-Rayquaza reward their actual Pokemon instead of Magikarp.",
+      "version": "1.0",
+      "author": "UltraPokechill",
+      "category": "Battle",
+      "file": "workshop/noMoreMagikarp.mod",
+      "image": "mods/workshop/noMoreMagikarpIcon.png",
+      "tags": ["battle", "mega-dimension", "rewards", "quality-of-life"]
+    },
+    {
+      "id": "bulkCandyUse",
+      "name": "Bulk Candy Use",
+      "description": "Adds bulk-use choices for Rare Candy when selecting a Pokemon.",
+      "version": "1.1",
+      "author": "UltraPokechill",
+      "category": "Items",
+      "file": "workshop/bulkCandyUse.mod",
+      "image": "img/items/rareCandy.png",
+      "tags": ["items", "rare-candy", "quality-of-life"]
+    },
+    {
+    "id": "incomplete_famillies",
+    "name": "Incomplete Families",
+    "description": "Option for the shiny filter that shows the pokemons famillies that are not fully shiny",
+    "file": "workshop/IncompleteFamilies.mod",
+    "image": "mods/workshop/incompletefModIcon.png",
+    "version": "1.1",
+    "author": "LPF",
+    "category": "Pokedex"
+  },
+    {
+      "id": "betterGenetics",
+      "name": "Better Genetics",
+      "description": "Adds Energy Root quick-use controls and an optional 5-second Quick Genetics mode.",
+      "version": "1.1",
+      "author": "UltraPokechill",
+      "category": "Genetics",
+      "file": "workshop/betterGenetics.mod",
+      "image": "mods/workshop/betterGeneticsIcon.png",
+      "tags": ["genetics", "energy-root", "quick-genetics", "quality-of-life"]
+    },
+    {
+      "id": "backupMod",
+      "name": "Backup Mod",
+      "description": "Automatically sends clean Discord save backups every 10 minutes. Check the Backup Mod guide entry before using.",
+      "version": "1.2",
+      "author": "UltraPokechill",
+      "category": "Safety",
+      "file": "workshop/backupMod.mod",
+      "image": "mods/workshop/backupModIcon.png",
+      "tags": ["backup", "discord", "webhook", "save", "safety"]
+    },
+    {
+      "id": "shinyFamily",
+      "name": "Shiny Family",
+      "description": "Makes every unlocked Pokemon in an evolution family shiny once any unlocked member of that family is shiny.",
+      "image": "img/items/shinyStone.png",
+      "version": "1.3",
+      "file": "workshop/shinyFamily.mod",
+      "author": "UltraPokechill",
+      "category": "Evolution",
+      "defaultEnabled": false
+    },
+
+    {
+      "id": "fatigueRemover",
+      "name": "Fatigue Remover",
+      "description": "Removes Battle Fatigue HP loss completely while enabled.",
+      "version": "1.0",
+      "author": "UltraPokechill",
+      "category": "Battle",
+      "file": "workshop/fatigueRemover.mod",
+      "image": "img/items/leftovers.png",
+      "tags": ["battle", "fatigue", "afk", "quality-of-life"]
+    },
+    {
+      "id": "multiHeartScale",
+      "name": "Multi Heart Scale",
+      "description": "Lets Heart Scale remember multiple moves at once, spending one Heart Scale per selected move.",
+      "version": "1.0",
+      "author": "UltraPokechill",
+      "category": "Items",
+      "file": "workshop/multiHeartScale.mod",
+      "image": "img/items/heartScale.png",
+      "tags": ["items", "heart-scale", "moves", "quality-of-life"]
+    }
+  ]
+}

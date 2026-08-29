@@ -1,0 +1,10 @@
+{
+  "mods": [
+    "battleNumbers.mod",
+    "saveVault.mod",
+    "mythos.mod",
+    "allStarters.mod",
+    "speedBattles.mod",
+    "movePresets.mod"
+  ]
+}

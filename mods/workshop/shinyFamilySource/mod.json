@@ -1,0 +1,10 @@
+{
+  "id": "shinyFamily",
+  "name": "Shiny Family",
+  "description": "Makes every unlocked Pokemon in an evolution family shiny once any unlocked member of that family is shiny.",
+  "image": "img/items/shinyStone.png",
+  "version": "1.3",
+  "author": "UltraPokechill",
+  "category": "Evolution",
+  "defaultEnabled": false
+}
