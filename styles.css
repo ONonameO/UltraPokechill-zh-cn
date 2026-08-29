@@ -3292,33 +3292,6 @@ background:
     padding: 0 0.5rem;
 }
 
-.settings-list .settings-language-row{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0.2rem;
-    padding: 0.35rem 0.2rem;
-    line-height: 1.1;
-}
-
-.settings-list .settings-language-row > span{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.2rem;
-}
-
-.settings-language-notice{
-    display: block;
-    width: 100%;
-    max-width: 32rem;
-    color: var(--light2);
-    opacity: 0.72;
-    font-size: 0.82rem;
-    line-height: 1.15;
-    text-align: center;
-}
 
 .settings-list div:hover{
     background: white;

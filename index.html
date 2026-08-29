@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -469,17 +469,10 @@
             <div onclick="textData()"><span data-i18n="settings.text">Data to Text</span></div>
             <div onclick="window.UltraMods?.openMenu?.()"><span data-i18n="settings.mods">Mods</span></div>
 
-            <div class="settings-language-row">
-                <span><span data-i18n="language.label">Language</span>: <select id="settings-language">
-                    <option value="en" data-i18n="language.english">English</option>
-                    <option value="pt" data-i18n="language.portuguese">Portuguese</option>
-                </select></span>
-                <small class="settings-language-notice" data-i18n="language.notice">Portuguese translation is not 100% complete yet.</small>
-            </div>
 
             <div><span data-i18n="settings.theme">Theme</span>: <select id="settings-theme">
                 <option value="default" data-i18n="common.default">default</option>
-                <option value="dark" data-i18n="common.dark">dark</option>
+                <option value="dark" data-i18n="common.dark">commonDark</option>
                 <option value="verdant" data-i18n="common.verdant">verdant</option>
                 <option value="lilac" data-i18n="common.lilac">lilac</option>
                 <option value="cherry" data-i18n="common.cherry">cherry</option>
@@ -1737,17 +1730,23 @@
 
 
 
-    <script src="scripts/localization.js?v=language-notice-20260509"></script>
-    <script src="scripts/script.js?v=language-fix-20260509"></script>
+    
+    <script src="scripts/script.js"></script>
     <script src="scripts/teams.js"></script>
-    <script src="scripts/explore.js?v=language-fix-20260509"></script>
-    <script src="scripts/mods.js?v=mod-update-notice-20260510"></script>
-    <script src="scripts/shop.js?v=language-fix-20260509"></script>
+    <script src="scripts/explore.js"></script>
+    <script src="scripts/mods.js"></script>
+    <script src="scripts/shop.js"></script>
     <script src="scripts/dictionarySearch.js"></script>
-    <script src="scripts/tooltip.js?v=language-deep-audit-4-20260509"></script>
+    <script src="scripts/tooltip.js"></script>
     <script src="scripts/decor.js"></script>
+    
+    <script src="scripts/save.js"></script>
 
-    <script src="scripts/save.js?v=mod-save-reset-20260510"></script>
+    <!-- Simplified Chinese localization plugin (loaded at startup) -->
+    <script src="zh-cn/chs.js"></script>
+    <script src="zh-cn/zhTranslation.js"></script>
+    <script src="zh-cn/zhSearch.js"></script>
+    <script src="zh-cn/core.js"></script>
 </body>
 </html>
 

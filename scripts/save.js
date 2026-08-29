@@ -47,7 +47,7 @@ function saveGame() {
 
   }
 
-  // Pokémon
+  // Pokemon
   for (const i in pkmn) {
     if (!data[i]) data[i] = {};
     data[i].caught = pkmn[i].caught;

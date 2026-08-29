@@ -216,7 +216,7 @@
 
     const pokemonId = nameMaps.pokemon[normalize(name)];
     if (!pokemonId) {
-      errors.push(`Unknown ${sideLabel} Pokémon: ${name}`);
+      errors.push(`Unknown ${sideLabel} Pokemon: ${name}`);
     } else {
       result.id = pokemonId;
     }
@@ -317,7 +317,7 @@
 
     // Validation
     if (result.enemyTeam.length < CONFIG.MIN_TEAM || result.enemyTeam.length > CONFIG.MAX_TEAM) {
-      result.errors.push(`Enemy team must have ${CONFIG.MIN_TEAM}-${CONFIG.MAX_TEAM} Pokémon.`);
+      result.errors.push(`Enemy team must have ${CONFIG.MIN_TEAM}-${CONFIG.MAX_TEAM} Pokemon.`);
     }
     [...result.playerTeam, ...result.enemyTeam].forEach(mon => {
       if (mon.moves.length === 0) {
@@ -660,7 +660,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 6 SpA / 6 SpD / 6 Spe
     document.getElementById("tooltipTitle").innerHTML = "Choose Your Team";
     document.getElementById("tooltipMid").innerHTML = `
       <div id="custom-challenge-selection-count">Selected 0/${CONFIG.MAX_TEAM}</div>
-      <div style="opacity:0.8; margin-top:0.3rem;">Pick ${CONFIG.MIN_TEAM}-${CONFIG.MAX_TEAM} Pokémon from the player pool.</div>
+      <div style="opacity:0.8; margin-top:0.3rem;">Pick ${CONFIG.MIN_TEAM}-${CONFIG.MAX_TEAM} Pokemon from the player pool.</div>
       <div id="custom-challenge-selection-error" style="color:#ff9e9e; margin-top:0.4rem;"></div>
     `;
 
@@ -709,7 +709,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 6 SpA / 6 SpD / 6 Spe
           entry.classList.remove("selected");
         } else {
           if (selection.size >= CONFIG.MAX_TEAM) {
-            if (errorEl) errorEl.textContent = `You can only select ${CONFIG.MAX_TEAM} Pokémon.`;
+            if (errorEl) errorEl.textContent = `You can only select ${CONFIG.MAX_TEAM} Pokemon.`;
             return;
           }
           selection.add(idx);
@@ -731,7 +731,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 6 SpA / 6 SpD / 6 Spe
       e.stopPropagation();
       const errorEl = document.getElementById("custom-challenge-selection-error");
       if (selection.size < CONFIG.MIN_TEAM) {
-        if (errorEl) errorEl.textContent = `Select at least ${CONFIG.MIN_TEAM} Pokémon.`;
+        if (errorEl) errorEl.textContent = `Select at least ${CONFIG.MIN_TEAM} Pokemon.`;
         return;
       }
       if (errorEl) errorEl.textContent = "";

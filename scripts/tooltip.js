@@ -51,7 +51,6 @@ function closeTooltip() {
 
 
 function openTooltip(){
-    window.UltraLocale?.applyDynamicTranslations?.(document.getElementById("tooltipBackground"))
     voidAnimation("tooltipBackground","tooltipBoxAppear 0.2s 1")
     document.getElementById("tooltipBackground").style.display = "flex"
 }

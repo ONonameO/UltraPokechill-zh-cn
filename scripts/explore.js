@@ -8361,7 +8361,7 @@ function updateFamilyStarsign() {
     
     for (const i in pkmn) {
         
-        // Skip if this Pokémon has no star signs
+        // Skip if this Pokemon has no star signs
         if (!pkmn[i].starsignList || pkmn[i].starsignList.length === 0) continue;
         
         // Get the evolution family
@@ -10613,8 +10613,6 @@ window.addEventListener('load', function() {
 
 
     loadGame();
-    if (saved.language === undefined) saved.language = window.UltraLocale?.getLanguage?.() || "en";
-    window.UltraLocale?.applyStaticTranslations?.();
     if (typeof setGuide === "function") setGuide();
     getSeed();
     seasonCheck();

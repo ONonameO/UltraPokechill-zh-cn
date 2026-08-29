@@ -233,16 +233,12 @@ function updateGameVersion() {
 
 //--Theme settings
 saved.theme = "default"
-saved.language = undefined
 
 document.getElementById("settings-theme").addEventListener("change", e => {
   saved.theme = document.getElementById(`settings-theme`).value
   changeTheme()
 });
 
-document.getElementById("settings-language")?.addEventListener("change", e => {
-  window.UltraLocale?.setLanguage?.(document.getElementById(`settings-language`).value)
-});
 
 saved.hideGotPkmn = "false"
 document.getElementById("settings-hide-got").addEventListener("change", e => {
@@ -977,9 +973,6 @@ function updateSettings(alt){
 
 
   document.getElementById("settings-theme").value = saved.theme
-  if (saved.language === undefined) saved.language = window.UltraLocale?.getLanguage?.() || "en"
-  if (document.getElementById("settings-language")) document.getElementById("settings-language").value = saved.language
-  window.UltraLocale?.applyStaticTranslations?.()
 
   if (saved.hideGotPkmn == "true") {document.getElementById("settings-hide-got").value = "true"} else document.getElementById("settings-hide-got").value = "false"
   if (saved.alternateWildRotation == "true") {document.getElementById("settings-alternate-rotation").value = "true"} else document.getElementById("settings-alternate-rotation").value = "false"

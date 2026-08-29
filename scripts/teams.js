@@ -987,7 +987,7 @@ function updatePreviewTeam(){
 
             //change team item by clicking
             document.getElementById(`team-${i}-held-item`).addEventListener("click", e => { 
-                e.stopPropagation(); // Prevenir que se abra el menú de pokémon
+                e.stopPropagation(); // Prevenir que se abra el menú de Pokemon
                 
                 document.getElementById("item-menu-cancel").style.display = "inline"
                 document.getElementById("item-menu-remove").style.display = "inline"

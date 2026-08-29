@@ -3559,7 +3559,7 @@ pkmn.ditto = {
         spe: 48,
     },
     hiddenAbility: ability.imposter,
-    lore: `Believed to be the result of an attempt to replicate the ancestor of all Pokémon. The experiment did not achieve its intended goal, and the creature that emerged was deemed a failure.`
+    lore: `Believed to be the result of an attempt to replicate the ancestor of all Pokemon. The experiment did not achieve its intended goal, and the creature that emerged was deemed a failure.`
 }
 
 // 133 Eevee → Vaporeon / Jolteon / Flareon / Espeon / Umbreon / Leafeon / Glaceon / Sylveon
