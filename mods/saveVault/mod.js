@@ -33,12 +33,12 @@
 
   UltraMods.define({
     id: MOD_ID,
-    name: "Save Vault",
-    description: "Creates encrypted automatic cloud backups of your UltraPokechill save every five minutes.",
+    name: "存档保险库",
+    description: "每五分钟自动加密备份您的 UltraPokechill 存档至云端。",
     image: "img/items/parcel.png",
     version: VERSION,
     author: "UltraPokechill",
-    category: "Utility",
+    category: "实用工具",
     hooks: {
       onToggle(api, payload) {
         if (payload.enabled) install(api);
@@ -83,7 +83,7 @@
         <div role="dialog" aria-modal="true" aria-labelledby="sv-project-title">
           <button type="button" class="sv-announcement-x" data-sv-announcement-close aria-label="Close">&times;</button>
           <img class="sv-announcement-sprite" src="img/pkmn/sprite/pikachuPhd.png" alt="">
-          <div class="sv-announcement-copy"><small>A quick update</small><strong id="sv-project-title">The project isn't dead!</strong><p>I'm just busy xD</p><div class="sv-announcement-actions"><a href="https://guns.lol/rodk" target="_blank" rel="noopener noreferrer"><img class="sv-guns-icon" src="${GUNS_LOL_ICON}" alt="Guns.lol">guns.lol/rodk</a><button type="button" data-sv-announcement-close>Got it</button></div></div>
+          <div class="sv-announcement-copy"><small>最新动态</small><strong id="sv-project-title">这个项目并没有结束！</strong><p>我只是有点忙啦~</p><div class="sv-announcement-actions"><a href="https://guns.lol/rodk" target="_blank" rel="noopener noreferrer"><img class="sv-guns-icon" src="${GUNS_LOL_ICON}" alt="Guns.lol">guns.lol/rodk</a><button type="button" data-sv-announcement-close>确定</button></div></div>
         </div>`;
       overlay.addEventListener("click", event => {
         if (event.target === overlay || event.target.closest("[data-sv-announcement-close]")) overlay.remove();
@@ -182,7 +182,7 @@
     button.className = "menu-item";
     button.setAttribute("role", "button");
     button.tabIndex = 0;
-    button.innerHTML = '<img src="img/items/parcel.png" alt=""><span>Save Vault</span>';
+    button.innerHTML = '<img src="img/items/parcel.png" alt=""><span>存档保险库</span>';
     const open = event => {
       event.preventDefault();
       event.stopPropagation();
@@ -249,7 +249,7 @@
     root.innerHTML = `
       <section class="sv-card" role="dialog" aria-modal="true" aria-label="Save Vault">
         <header class="sv-head">
-          <div class="sv-title"><img src="img/items/parcel.png" alt=""><div><h2>Save Vault</h2><span class="sv-subtitle">Encrypted automatic save protection</span></div></div>
+          <div class="sv-title"><img src="img/items/parcel.png" alt=""><div><h2>存档保险库</h2><span class="sv-subtitle">自动加密存档保护</span></div></div>
           <button class="sv-close" type="button" data-action="close" aria-label="Close">×</button>
         </header>
         <div class="sv-body">${body}</div>
@@ -259,19 +259,19 @@
 
   function renderHome() {
     return `<div class="sv-stack">
-      <div class="sv-panel"><h3>Protect this save</h3><p>Save Vault keeps the last three encrypted copies of your normal UltraPokechill save. It backs up every five minutes while this page is open.</p><div class="sv-note">The server never receives your PIN or readable save. Your recovery code and five-digit PIN are both required to restore a backup.</div></div>
-      <div class="sv-actions"><button class="sv-primary" type="button" data-action="create">Create a vault</button><button class="sv-outline" type="button" data-action="recover">Recover an existing save</button></div>
-      <div class="sv-panel"><h3>Important</h3><p>Keep your recovery code outside this browser. If browser data is erased, the code plus PIN are how you regain access to your three saved copies.</p></div>
+      <div class="sv-panel"><h3>保护此存档</h3><p>存档保险库会为您保留最近三次正常存档的加密副本。只要此页面保持打开，系统就会每五分钟自动备份一次。</p><div class="sv-note">您的 PIN码 和原始存档内容绝对不会上传到服务器。恢复备份时，必须同时提供恢复代码和5位数 PIN 码。</div></div>
+      <div class="sv-actions"><button class="sv-primary" type="button" data-action="create">创建存档保险库</button><button class="sv-outline" type="button" data-action="recover">恢复已有存档</button></div>
+      <div class="sv-panel"><h3>重要提醒</h3><p>请务必将恢复代码保存在此浏览器之外的安全位置。一旦浏览器数据被清除，您需要同时提供恢复代码和 PIN 码才能找回您的三份存档备份。</p></div>
     </div>`;
   }
 
   function renderCreate() {
     return `<form class="sv-stack" data-form="create">
-      <div class="sv-panel"><h3>Create your vault</h3><p>Choose a five-digit PIN. It is used locally to encrypt and decrypt your backup; Save Vault does not upload it.</p>
-        <label>Five-digit PIN<input name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{5}" maxlength="5" required></label>
-        <label>Confirm PIN<input name="confirmPin" inputmode="numeric" autocomplete="new-password" pattern="\\d{5}" maxlength="5" required></label>
+      <div class="sv-panel"><h3>创建您的存档保险库</h3><p>请设置一个5位数的 PIN 码。此 PIN 码仅用于在本地加密和解密您的备份存档，存档保险库不会将其上传到服务器。</p>
+        <label>5位数 PIN 码<input name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{5}" maxlength="5" required></label>
+        <label>确认 PIN 码<input name="confirmPin" inputmode="numeric" autocomplete="new-password" pattern="\\d{5}" maxlength="5" required></label>
       </div>
-      <div class="sv-actions"><button class="sv-primary" type="submit">Create vault and first backup</button><button class="sv-outline" type="button" data-action="home">Back</button></div>
+      <div class="sv-actions"><button class="sv-primary" type="submit">创建保险库并首次备份</button><button class="sv-outline" type="button" data-action="home">返回</button></div>
     </form>`;
   }
 

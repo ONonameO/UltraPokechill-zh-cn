@@ -1,10 +1,10 @@
 {
   "id": "saveVault",
-  "name": "Save Vault",
-  "description": "Creates encrypted automatic cloud backups of your UltraPokechill save every five minutes.",
+  "name": "存档保险库",
+  "description": "每五分钟自动加密备份您的 UltraPokechill 存档至云端。",
   "image": "img/items/parcel.png",
   "version": "1.0.5",
   "author": "UltraPokechill",
-  "category": "Utility",
+  "category": "实用工具",
   "defaultEnabled": false
 }
