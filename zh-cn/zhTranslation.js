@@ -4597,6 +4597,22 @@
         return tag === "STYLE" || tag === "SCRIPT" || tag === "TEXTAREA";
     }
 
+    // 文本节点级兜底：当某个 <style>/<script>/<textarea> 的文本内容被
+    // 动态赋值（如 mod 先 appendChild 空元素、再设置 .textContent）时，
+    // MutationObserver 的 addedNodes 会直接带上"文本节点"，此时 walkSync
+    // 跳过的是该文本节点本身，并不会触发上面的元素级 isUntranslatable 判断，
+    // 导致 CSS/JS 源码被当成普通文案翻译（如 align-items -> align-物品）。
+    // 因此这里向上回溯祖先，只要处于这类元素内就整段跳过。
+    function isInsideUntranslatable(node) {
+        let cur = node.parentElement;
+        while (cur) {
+            const tag = cur.tagName;
+            if (tag === "STYLE" || tag === "SCRIPT" || tag === "TEXTAREA") return true;
+            cur = cur.parentElement;
+        }
+        return false;
+    }
+
     // 向上查找是否包含指定 class 的祖先元素
     function hasAncestorWithClass(el, className) {
         let cur = el.parentElement;
@@ -4636,6 +4652,7 @@
 
     function walkSync(node) {
         if (node.nodeType === Node.TEXT_NODE) {
+            if (isInsideUntranslatable(node)) return;
             if (translatedNodes.has(node)) return;
             if (!shouldTranslate(node)) return;
             const original = node.nodeValue;
