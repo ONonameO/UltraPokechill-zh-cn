@@ -325,7 +325,7 @@ function textData() {
 setInterval(saveGame, 1 * 60 * 1000); 
 
 document.addEventListener("keydown", (ev) => {
-  if (ev.key.toLowerCase() === "s") {
+  if (ev && typeof ev.key === "string" && ev.key.toLowerCase() === "s") {
     saveGame();
   }
 });

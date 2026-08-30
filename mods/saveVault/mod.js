@@ -258,7 +258,7 @@
       <section class="sv-card" role="dialog" aria-modal="true" aria-label="Save Vault">
         <header class="sv-head">
           <div class="sv-title"><img src="img/items/parcel.png" alt=""><div><h2>存档保险库</h2><span class="sv-subtitle">自动加密存档保护</span></div></div>
-          <button class="sv-close" type="button" data-action="close" aria-label="Close">×</button>
+          <button class="sv-close" type="button" data-action="close" aria-label="Close">X</button>
         </header>
         <div class="sv-body">${body}</div>
       </section>`;
@@ -309,7 +309,7 @@
     const snapshots = runtime.snapshots.slice().sort((a, b) => b.createdAt - a.createdAt);
     const list = snapshots.length ? snapshots.map(snapshot => `<div class="sv-snapshot"><div><strong>${formatDate(snapshot.createdAt)}</strong><span>${formatBytes(snapshot.size)} 已加密 · 槽位 ${snapshot.slot + 1}</span></div><button type="button" data-action="restore" data-slot="${snapshot.slot}">恢复此存档</button></div>`).join("") : '<div class="sv-empty">尚未发现云端备份。点击“立即备份”创建一个。</div>';
     return `<div class="sv-stack">
-      <div class="sv-panel"><h3>自动存档已开启</h3><p>上次本地备份：<strong>${last ? formatDate(last) : "尚未备份"}</strong>。只要本页面保持打开，系统就会每五分钟自动检查一次。</p><div class="sv-status">仅保留最新的三份加密存档。内容未变化的存档不会重复上传。</div><div class="sv-actions"><button class="sv-primary" type="button" data-action="backup">立即备份</button><button type="button" data-action="refresh">刷新备份记录</button></div></div>
+      <div class="sv-panel"><h3>自动存档已开启</h3><p>上次本地备份：<strong>${last ? formatDate(last) : "尚未备份"}</strong>。只要此页面保持打开，系统就会每五分钟自动备份一次。</p><div class="sv-status">仅保留最新的三份加密存档。内容未变化的存档不会重复上传。</div><div class="sv-actions"><button class="sv-primary" type="button" data-action="backup">立即备份</button><button type="button" data-action="refresh">刷新备份记录</button></div></div>
       <div class="sv-panel"><h3>恢复记录</h3><div class="sv-list">${list}</div></div>
       <div class="sv-panel"><h3>设备访问</h3><p>为了让自动备份能够运行，你的恢复代码仅保存在本浏览器中。</p><div class="sv-actions"><button type="button" data-action="show-local-code">显示恢复代码</button><button class="sv-danger" type="button" data-action="disconnect">移除本设备访问</button></div></div>
     </div>`;
@@ -328,7 +328,7 @@
       const code = getCredentials()?.code;
       if (!code) return;
       await copyText(code);
-      showToast("恢复代码已复制。");
+      showToast("恢复代码已复制");
     });
     root.querySelector('[data-role="code-confirm"]')?.addEventListener("change", event => {
       const finish = root.querySelector('[data-action="finish-code"]');
