@@ -157,7 +157,7 @@
 
   function formatNumber(value) {
     const safeNumber = Number.isFinite(value) ? value : 0;
-    return Math.max(0, Math.ceil(safeNumber)).toLocaleString("pt-BR");
+    return Math.max(0, Math.ceil(safeNumber)).toLocaleString("zh-CN");
   }
 
   function createApi(source) {
