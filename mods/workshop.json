@@ -4,22 +4,22 @@
   "mods": [
     {
       "id": "workshopWelcome",
-      "name": "Workshop Welcome",
-      "description": "Example download-only mod used to test the GitHub Pages Workshop flow.",
+      "name": "欢迎来到创意工坊",
+      "description": "这是一个仅供下载的示例Mod，用于测试 GitHub Pages 创意工坊的运作流程。",
       "version": "1.0.0",
       "author": "UltraPokechill",
-      "category": "Example",
+      "category": "示例",
       "file": "workshop/workshopWelcome.mod",
       "image": "img/items/endorsement.png",
       "tags": ["example", "workshop", "test"]
     },
     {
       "id": "betterDex",
-      "name": "Better Dex",
-      "description": "Adds monotype matching for duplicate type filters and move filters for equipped or learned moves.",
+      "name": "更好的图鉴",
+      "description": "在属性筛选中支持单属性匹配（可筛选包含该属性的所有宝可梦），并新增招式筛选功能，可按已装备或已习得的招式进行筛选。",
       "version": "1.1",
       "author": "UltraPokechill",
-      "category": "Pokemon UI",
+      "category": "图鉴",
       "file": "workshop/betterDex.mod",
       "image": "img/items/dex.png",
       "tags": ["dex", "filters", "moves", "quality-of-life"]

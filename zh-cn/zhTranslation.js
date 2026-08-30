@@ -1702,7 +1702,7 @@
         "is not a supported mod file.": "不是正确的mod文件。",
         "could not be loaded.": "无法加载。",
         "uses a reserved mods-folder id.": "使用了已有的Mod id。",
-        "loaded. Enable it to apply.": "已加载，请启用它使其生效。",
+        "loaded. Enable it to apply.": "Mod 已安装，请启用它使其生效。",
         "has no valid mod id.": "没有有效的Mod id。",
         "metadata loaded. Use .js for mod logic.": "元数据已加载。请使用.js文件编写Mod代码。",
         //textContent
