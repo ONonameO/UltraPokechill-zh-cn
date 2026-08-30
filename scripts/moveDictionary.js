@@ -3270,7 +3270,7 @@ move.twinBeam = {
     multihit: [2,2],
 }
 
-move.psychic = {
+move.movePsychic = {
     moveset: [`psychic`],
     split: "special",
     rarity: 3,

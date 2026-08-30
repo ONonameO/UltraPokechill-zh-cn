@@ -3684,7 +3684,7 @@
         "Freezy Frost": "冰冰霜冻",
         "Magical Torque": "魔法暴冲",
         "Mystical Fire": "魔法火焰",
-        "Noxious Lash": "剧毒鞭",
+        "Noxious Lash": "火毒鞭",
         "Noxious Torque": "剧毒暴冲",
         "Psycho Boost": "精神突进",
         "Savage Stinger": "野蛮针刺",
@@ -3941,6 +3941,7 @@
         "Focus Blast": "真气弹",
         "Psychic Fangs": "精神之牙",
         "Twin Beam": "双光束",
+        "Move Psychic": "精神强念",
         "Meteor Beam": "流星光束",
         "Phantom Force": "潜灵奇袭",
         "Night Slash": "暗袭要害",
@@ -4041,7 +4042,6 @@
         "Kings Shield": "王者盾牌",
         "Drum Beating": "鼓击",
         "Trop Kick": "热带踢",
-        "Fire Lash": "火焰鞭",
         "Clanging Scales": "鳞片噪音",
         "Shift Gear": "换档",
         "Gear Up": "辅助齿轮",
@@ -4365,7 +4365,8 @@
         "Memory": "记忆碟",
         "Festival Ticket": "圆庆票",
         "Neutral Mint": "性格薄荷",
-
+        "Tm": "TM",
+        
         //装饰
         "Chef Hat": "厨师帽",
         "Colored Parasol": "彩绘阳伞",
@@ -4518,7 +4519,7 @@
         const cached = _trCache.get(text);
         if (cached !== undefined) return cached;
         let result = applyRegexRules(text);
-        if (result === text) result = translateByTrie(result);
+        result = translateByTrie(result);
         if (_trCache.size > 200000) _trCache.clear();
         _trCache.set(text, result);
         return result;

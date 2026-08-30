@@ -1811,7 +1811,7 @@ item.auraSphereTm = {}
 //psychic
 item.confusionTm = {}
 item.psychoCutTm = {}
-item.psychicTm = {}
+item.movePsychicTm = {}
 //rock
 item.rockThrowTm = {}
 item.rockSlideTm = {}
