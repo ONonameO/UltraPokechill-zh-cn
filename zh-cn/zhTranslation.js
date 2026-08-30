@@ -60,6 +60,12 @@
         '请先完成新手教程'],
         [/^Complete the tutorial first/i,
         '请先完成新手教程'],
+        
+        //存档
+        [/^Are you sure you want to reset your save data\?/i,
+        '你确定要重置你的存档数据吗？'],
+        [/^Reset save/i,
+        '重置存档'],
 
         //解锁
         [/Defeat (.+) in VS to unlock/i,
@@ -1660,20 +1666,19 @@
         "There are no side-effects to this modifier": "此修改无任何副作用",
         "Credits": "鸣谢",
         "Wipe Data": "清空数据",
-        "Are you sure you want to reset your save data?": "你确定要重置你的存档数据吗？",
-        " save": "存档",
-
 
         //Mods菜单
         "Installed": "已安装",
+        "Open Workshop": "打开创意工坊",
         "Workshop": "创意工坊",
         "Update all": "更新全部",
+        "Refresh": "刷新",
         "Drop .mod files here": "把.mod文件拖到这里",
         ".mod is a renamed zip with mod.json, mod.js and optional icon.png.": ".mod是一个重命名的压缩包，包含mod.json、mod.js和可选的icon.png文件。",
-        // "Mods Folder": "Mods文件夹",
-        // "Imported": "导入",
         "Community mods are JavaScript packages. Install only mods you trust.": "创意工坊里的Mod是JavaScript包。请仅安装您信任的Mod。",
-        "Refresh": "刷新",
+        "Mods Folder": "Mods文件夹",
+        "Imported": "导入",
+        "Runtime": "运行环境",
         "Install": "安装",
         "Disabled": "已禁用",
         "✔ Enabled": "✔ 已启用",
@@ -1700,7 +1705,11 @@
         "loaded. Enable it to apply.": "已加载，请启用它使其生效。",
         "has no valid mod id.": "没有有效的Mod id。",
         "metadata loaded. Use .js for mod logic.": "元数据已加载。请使用.js文件编写Mod代码。",
-
+        //textContent
+        "Update": "更新",
+        "No workshop mods found.": "未找到创意工坊Mod。",
+        "Open the Workshop tab to load community mods.": "点击“创意工坊”选项卡以加载社区Mod。",
+        "Dismiss": "取消",
 
         //属性
         "Normal": "一般",
@@ -4576,9 +4585,47 @@
         return tag === "STYLE" || tag === "SCRIPT" || tag === "TEXTAREA";
     }
 
+    // 向上查找是否包含指定 class 的祖先元素
+    function hasAncestorWithClass(el, className) {
+        let cur = el.parentElement;
+        while (cur) {
+            if (cur.classList && cur.classList.contains(className)) return true;
+            cur = cur.parentElement;
+        }
+        return false;
+    }
+
+    // MOD 卡片局部汉化范围限定：
+    // 仅在 mod-card 组件内，对以下两类目标做汉化，其余内容保持原语言：
+    //   1) .mod-card-actions 容器内的全部元素（如 Enable/Disable/Update/Remove/Install 按钮）
+    //   2) .mod-card-top 容器内的 <span> 元素（如来源标签）
+    // 其余（标题 <strong>、描述 <p>、.mod-card-meta 等）不汉化。
+    // 注意：mod-card 之外的页面其余部分仍按全局规则正常汉化。
+    function shouldTranslate(textNode) {
+        // 不在任何 mod-card 内的文本节点 -> 走全局汉化
+        if (!hasAncestorWithClass(textNode, "mod-card")) return true;
+
+        // 1) .mod-card-actions 内的所有元素
+        if (hasAncestorWithClass(textNode, "mod-card-actions")) return true;
+
+        // 2) .mod-card-top 内的 <span> 元素（含 span 内嵌套文本）
+        if (hasAncestorWithClass(textNode, "mod-card-top")) {
+            let cur = textNode.parentElement;
+            while (cur) {
+                if (cur.tagName === "SPAN") return true;
+                if (cur.classList && cur.classList.contains("mod-card-top")) break;
+                cur = cur.parentElement;
+            }
+        }
+
+        // 其余 mod-card 内容保持原语言
+        return false;
+    }
+
     function walkSync(node) {
         if (node.nodeType === Node.TEXT_NODE) {
             if (translatedNodes.has(node)) return;
+            if (!shouldTranslate(node)) return;
             const original = node.nodeValue;
             const translated = translateText(original);
             if (original !== translated) node.nodeValue = translated;
