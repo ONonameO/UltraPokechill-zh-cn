@@ -902,7 +902,7 @@ frontierArray.sort((a, b) => a.data.tier - b.data.tier);
         document.getElementById("tooltipTop").style.display = `none`
         document.getElementById("tooltipTitle").innerHTML = training[ttdata].name
         document.getElementById("tooltipBottom").style.display = `none`
-        document.getElementById("tooltipMid").innerHTML = training[ttdata].info
+        document.getElementById("tooltipMid").innerHTML = `<div style="white-space: pre-line">${training[ttdata].info}</div>`
         openTooltip()
     }
 
