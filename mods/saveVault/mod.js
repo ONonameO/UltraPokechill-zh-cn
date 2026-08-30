@@ -3,7 +3,15 @@
 
   const MOD_ID = "saveVault";
   const VERSION = "1.0.5";
-  const SERVER_URL = "https://unexpectedx-savevault.howmany1337.workers.dev";
+  // 备份目标地址改为“当前项目运行时所在的同源服务器”（由 Start.bat 启动的本地服务器，
+  // 或部署后的站点域名），不再硬编码旧的外部服务器。若以 file:// 方式打开则回退到本地开发地址。
+  const SERVER_URL = (() => {
+    const origin = window.location && window.location.origin;
+    if (origin && origin !== "null" && /^https?:\/\//.test(origin)) {
+      return origin.replace(/\/+$/, "");
+    }
+    return "http://127.0.0.1:8000";
+  })();
   const CREDENTIALS_KEY = "ultraPokechill:saveVault:credentials:v1";
   const MENU_BUTTON_ID = "save-vault-menu-button";
   const ROOT_ID = "save-vault-root";
@@ -58,7 +66,7 @@
     try {
       if (window.localStorage?.getItem(ANNOUNCEMENT_STORAGE_KEY) === "1") return;
     } catch (error) {
-      console.warn("[Save Vault] announcement storage is unavailable", error);
+      console.warn("[存档保险库] 公告不可用", error);
     }
     if (window.__ultraProjectAnnouncementScheduled) return;
     window.__ultraProjectAnnouncementScheduled = true;
@@ -66,7 +74,7 @@
     const show = () => window.setTimeout(() => {
       if (window.__ultraProjectAnnouncementShown || document.getElementById(ANNOUNCEMENT_ID)) return;
       window.__ultraProjectAnnouncementShown = true;
-      try { window.localStorage?.setItem(ANNOUNCEMENT_STORAGE_KEY, "1"); } catch (error) { console.warn("[Save Vault] announcement could not be remembered", error); }
+      try { window.localStorage?.setItem(ANNOUNCEMENT_STORAGE_KEY, "1"); } catch (error) { console.warn("[存档保险库] 无法保存公告记录", error); }
       const overlay = document.createElement("div");
       overlay.id = ANNOUNCEMENT_ID;
       overlay.innerHTML = `
@@ -279,19 +287,19 @@
     const credentials = getCredentials();
     const code = credentials?.code || "";
     return `<div class="sv-stack">
-      <div class="sv-panel"><h3>Write down your recovery code</h3><p>This is the only time Save Vault shows a newly created code in full. Save it somewhere outside this browser.</p><div class="sv-code">${code}</div><div class="sv-actions"><button type="button" data-action="copy-code">Copy code</button></div></div>
-      <label class="sv-checkbox"><input type="checkbox" data-role="code-confirm"> <span>I saved this recovery code outside this browser.</span></label>
-      <div class="sv-actions"><button class="sv-primary" type="button" data-action="finish-code" disabled>Open Save Vault</button></div>
+      <div class="sv-panel"><h3>请记下你的恢复代码</h3><p>这是存档保险库唯一一次向您完整展示新生成的恢复代码。请将其保存在本浏览器之外的安全位置。</p><div class="sv-code">${code}</div><div class="sv-actions"><button type="button" data-action="copy-code">复制代码</button></div></div>
+      <label class="sv-checkbox"><input type="checkbox" data-role="code-confirm"> <span>我已将此恢复代码保存在本浏览器之外的安全位置。</span></label>
+      <div class="sv-actions"><button class="sv-primary" type="button" data-action="finish-code" disabled>打开存档保险库</button></div>
     </div>`;
   }
 
   function renderRecovery() {
     return `<form class="sv-stack" data-form="recovery">
-      <div class="sv-panel"><h3>Recover existing backups</h3><p>Enter the recovery code and the five-digit PIN used when this vault was created. The code stays in this browser only after the server confirms it.</p>
-        <label>Recovery code<input name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" required placeholder="SV1-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"></label>
-        <label>Five-digit PIN<input name="pin" inputmode="numeric" autocomplete="current-password" pattern="\\d{5}" maxlength="5" required></label>
+      <div class="sv-panel"><h3>恢复已有备份</h3><p>请输入创建此保险库时使用的恢复代码和 5 位数 PIN 码。在服务器确认之前，该代码仅保留在本浏览器中。</p>
+        <label>恢复代码<input name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" required placeholder="SV1-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"></label>
+        <label>5 位数 PIN 码<input name="pin" inputmode="numeric" autocomplete="current-password" pattern="\\d{5}" maxlength="5" required></label>
       </div>
-      <div class="sv-actions"><button class="sv-primary" type="submit">Find my backups</button><button class="sv-outline" type="button" data-action="home">Back</button></div>
+      <div class="sv-actions"><button class="sv-primary" type="submit">查找我的备份</button><button class="sv-outline" type="button" data-action="home">返回</button></div>
     </form>`;
   }
 
@@ -299,11 +307,11 @@
     const credentials = getCredentials();
     const last = Number(credentials?.lastBackupAt || 0);
     const snapshots = runtime.snapshots.slice().sort((a, b) => b.createdAt - a.createdAt);
-    const list = snapshots.length ? snapshots.map(snapshot => `<div class="sv-snapshot"><div><strong>${formatDate(snapshot.createdAt)}</strong><span>${formatBytes(snapshot.size)} encrypted · Slot ${snapshot.slot + 1}</span></div><button type="button" data-action="restore" data-slot="${snapshot.slot}">Restore this save</button></div>`).join("") : '<div class="sv-empty">No cloud backup has been found yet. Use “Back up now” to create one.</div>';
+    const list = snapshots.length ? snapshots.map(snapshot => `<div class="sv-snapshot"><div><strong>${formatDate(snapshot.createdAt)}</strong><span>${formatBytes(snapshot.size)} 已加密 · 槽位 ${snapshot.slot + 1}</span></div><button type="button" data-action="restore" data-slot="${snapshot.slot}">恢复此存档</button></div>`).join("") : '<div class="sv-empty">尚未发现云端备份。点击“立即备份”创建一个。</div>';
     return `<div class="sv-stack">
-      <div class="sv-panel"><h3>Automatic protection is on</h3><p>Last local backup: <strong>${last ? formatDate(last) : "not backed up yet"}</strong>. The next automatic check runs every five minutes while the page stays open.</p><div class="sv-status">Only the newest three encrypted snapshots are kept. Unchanged saves are not uploaded again.</div><div class="sv-actions"><button class="sv-primary" type="button" data-action="backup">Back up now</button><button type="button" data-action="refresh">Refresh history</button></div></div>
-      <div class="sv-panel"><h3>Recovery history</h3><div class="sv-list">${list}</div></div>
-      <div class="sv-panel"><h3>Device access</h3><p>Your recovery code is saved only in this browser to make automatic backups possible.</p><div class="sv-actions"><button type="button" data-action="show-local-code">Show recovery code</button><button class="sv-danger" type="button" data-action="disconnect">Remove this device access</button></div></div>
+      <div class="sv-panel"><h3>自动存档已开启</h3><p>上次本地备份：<strong>${last ? formatDate(last) : "尚未备份"}</strong>。只要本页面保持打开，系统就会每五分钟自动检查一次。</p><div class="sv-status">仅保留最新的三份加密存档。内容未变化的存档不会重复上传。</div><div class="sv-actions"><button class="sv-primary" type="button" data-action="backup">立即备份</button><button type="button" data-action="refresh">刷新备份记录</button></div></div>
+      <div class="sv-panel"><h3>恢复记录</h3><div class="sv-list">${list}</div></div>
+      <div class="sv-panel"><h3>设备访问</h3><p>为了让自动备份能够运行，你的恢复代码仅保存在本浏览器中。</p><div class="sv-actions"><button type="button" data-action="show-local-code">显示恢复代码</button><button class="sv-danger" type="button" data-action="disconnect">移除本设备访问</button></div></div>
     </div>`;
   }
 
@@ -320,7 +328,7 @@
       const code = getCredentials()?.code;
       if (!code) return;
       await copyText(code);
-      showToast("Recovery code copied.");
+      showToast("恢复代码已复制。");
     });
     root.querySelector('[data-role="code-confirm"]')?.addEventListener("change", event => {
       const finish = root.querySelector('[data-action="finish-code"]');
@@ -341,14 +349,14 @@
     const form = new FormData(event.currentTarget);
     const pin = String(form.get("pin") || "").trim();
     const confirmPin = String(form.get("confirmPin") || "").trim();
-    if (!/^\d{5}$/.test(pin)) return showToast("Choose exactly five digits for the PIN.", true);
-    if (pin !== confirmPin) return showToast("The PIN confirmation does not match.", true);
+    if (!/^\d{5}$/.test(pin)) return showToast("请设置为正好五位数字的 PIN 码。", true);
+    if (pin !== confirmPin) return showToast("两次输入的 PIN 码不一致。", true);
     const credentials = { version: 1, code: generateRecoveryCode(), pin, lastHash: "", lastBackupAt: 0 };
     saveCredentials(credentials);
     runtime.keyCache = undefined;
     runtime.proofCache = undefined;
     try {
-      showToast("Setting up encrypted vault…", false, true);
+      showToast("正在创建加密存档保险库…", false, true);
       await claimVault(credentials);
     } catch (error) {
       localStorage.removeItem(CREDENTIALS_KEY);
@@ -360,7 +368,7 @@
     try {
       await backupCurrentSave(true);
     } catch (error) {
-      showToast(`Vault was created, but the first backup needs retrying: ${readError(error)}`, true);
+      showToast(`存档保险库已创建，但首次备份需要重试：${readError(error)}`, true);
     }
   }
 
@@ -369,16 +377,16 @@
     const form = new FormData(event.currentTarget);
     const code = normalizeRecoveryCode(form.get("code"));
     const pin = String(form.get("pin") || "").trim();
-    if (!isRecoveryCode(code)) return showToast("That recovery code is not valid.", true);
-    if (!/^\d{5}$/.test(pin)) return showToast("Enter the five-digit PIN.", true);
+    if (!isRecoveryCode(code)) return showToast("该恢复代码无效。", true);
+    if (!/^\d{5}$/.test(pin)) return showToast("请输入 5 位数 PIN 码。", true);
     const candidate = { version: 1, code, pin, lastHash: "", lastBackupAt: 0 };
     try {
       const snapshots = await fetchSnapshots(candidate);
       // The recovery code identifies the encrypted vault, while the PIN is
       // deliberately unknown to the server. Verify it locally by decrypting a
       // real snapshot before this browser receives access to the dashboard.
-      if (!snapshots.length) throw new Error("No backup exists for this recovery code, so its PIN cannot be verified yet.");
-      showToast("Verifying recovery code and PIN…", false, true);
+      if (!snapshots.length) throw new Error("该恢复代码下不存在任何备份，因此 PIN 码暂无法验证。");
+      showToast("正在验证恢复代码与 PIN 码...", false, true);
       await verifyRecoveryCandidate(candidate, snapshots[0]);
       await claimVault(candidate);
       saveCredentials(candidate);
@@ -387,7 +395,7 @@
       runtime.snapshots = snapshots;
       runtime.view = "dashboard";
       renderVault();
-      showToast("Backups found. Choose one to restore.");
+      showToast("已找到备份。请选择一份进行恢复。");
     } catch (error) {
       showToast(readError(error), true);
     }
@@ -405,19 +413,19 @@
   async function fetchSnapshots(credentials) {
     const response = await vaultFetch("/v1/snapshots", { method: "GET" }, credentials);
     const data = await readJson(response);
-    if (!response.ok) throw new Error(serverMessage(data, "Could not load backup history."));
+    if (!response.ok) throw new Error(serverMessage(data, "无法加载备份记录。"));
     return Array.isArray(data.snapshots) ? data.snapshots : [];
   }
 
   async function verifyRecoveryCandidate(credentials, snapshot) {
     const slot = Number(snapshot?.slot);
-    if (!Number.isInteger(slot) || slot < 0 || slot > 2) throw new Error("The backup list is invalid.");
+    if (!Number.isInteger(slot) || slot < 0 || slot > 2) throw new Error("备份列表无效。");
     const response = await vaultFetch(`/v1/snapshots/${slot}`, { method: "GET" }, credentials);
-    if (!response.ok) throw new Error(serverMessage(await readJson(response), "Could not verify this backup."));
+    if (!response.ok) throw new Error(serverMessage(await readJson(response), "无法验证该备份。"));
     const raw = await decryptSnapshot(new Uint8Array(await response.arrayBuffer()), credentials);
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || !parsed.saved || !parsed.team) {
-      throw new Error("This recovery code does not contain a valid UltraPokechill backup.");
+      throw new Error("该恢复代码不包含有效的 UltraPokechill 备份。");
     }
   }
 
@@ -427,22 +435,22 @@
     if (!credentials) return;
     runtime.backupInFlight = true;
     try {
-      showToast(showResult ? "Encrypting your save…" : "Save Vault: saving encrypted backup…", false, true);
+      showToast(showResult ? "正在加密你的存档..." : "存档保险库：正在保存加密备份...", false, true);
       await claimVault(credentials);
       runtime.api?.save?.();
       const raw = localStorage.getItem("gameData");
-      if (!raw) throw new Error("The game does not have a save to protect yet.");
+      if (!raw) throw new Error("游戏尚未生成需要保护的存档。");
       const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object" || !parsed.saved || !parsed.team) throw new Error("The current game save is not valid.");
+      if (!parsed || typeof parsed !== "object" || !parsed.saved || !parsed.team) throw new Error("当前游戏存档无效。");
       const plain = textEncoder.encode(raw);
       const hash = await sha256Hex(plain);
       if (hash === credentials.lastHash) {
-        showToast("Save Vault: this save is already protected.");
+        showToast("存档保险库：该存档已受保护。");
         return;
       }
-      if (plain.byteLength > MAX_SNAPSHOT_BYTES) throw new Error("This save is too large for Save Vault.");
+      if (plain.byteLength > MAX_SNAPSHOT_BYTES) throw new Error("该存档过大，超出存档保险库的上限。");
       const envelope = await encryptSnapshot(plain, credentials);
-      if (envelope.byteLength > MAX_SNAPSHOT_BYTES) throw new Error("The encrypted backup is too large for Save Vault.");
+      if (envelope.byteLength > MAX_SNAPSHOT_BYTES) throw new Error("加密后的备份过大，超出存档保险库的上限。");
       const response = await vaultFetch("/v1/snapshots", {
         method: "POST",
         headers: { "Content-Type": "application/octet-stream" },
@@ -451,20 +459,20 @@
       const data = await readJson(response);
       if (!response.ok) {
         if (response.status === 429) {
-          showToast("Save Vault: backup will retry shortly.");
+          showToast("存档保险库：备份即将稍后重试。");
           return;
         }
-        throw new Error(serverMessage(data, "Could not save the encrypted backup."));
+        throw new Error(serverMessage(data, "无法保存加密后的备份。"));
       }
       credentials.lastHash = hash;
       credentials.lastBackupAt = Number(data.createdAt || Date.now());
       saveCredentials(credentials);
       await refreshSnapshots(showResult);
-      showToast(showResult ? "Encrypted backup saved successfully." : "Save Vault: backup protected.");
+      showToast(showResult ? "加密备份已保存成功。" : "存档保险库：备份已受保护。");
     } catch (error) {
       // Callers of manual operations still receive the error, but background
       // backups must replace their spinner with a useful notification as well.
-      if (!showResult) showToast(`Save Vault: ${readError(error)}`, true);
+      if (!showResult) showToast(`存档保险库：${readError(error)}`, true);
       throw error;
     } finally {
       runtime.backupInFlight = false;
@@ -472,36 +480,36 @@
   }
 
   async function restoreSnapshot(slot) {
-    if (!Number.isInteger(slot) || slot < 0 || slot > 2) throw new Error("Invalid backup slot.");
+    if (!Number.isInteger(slot) || slot < 0 || slot > 2) throw new Error("无效的备份槽位。");
     const credentials = getCredentials();
-    if (!credentials) throw new Error("This browser no longer has vault access.");
+    if (!credentials) throw new Error("本浏览器已不再拥有保险库访问权限。");
     const snapshot = runtime.snapshots.find(item => Number(item.slot) === slot);
     const description = snapshot ? formatDate(snapshot.createdAt) : "this backup";
-    if (!window.confirm(`Restore ${description}? Your current browser save will be replaced.`)) return;
-    showToast("Downloading and verifying backup…");
+    if (!window.confirm(`确定恢复 ${description}吗？你当前的浏览器存档将被替换。`)) return;
+    showToast("正在下载并验证备份...");
     const response = await vaultFetch(`/v1/snapshots/${slot}`, { method: "GET" }, credentials);
-    if (!response.ok) throw new Error(serverMessage(await readJson(response), "Could not download this backup."));
+    if (!response.ok) throw new Error(serverMessage(await readJson(response), "无法下载该备份。"));
     const encrypted = new Uint8Array(await response.arrayBuffer());
     const raw = await decryptSnapshot(encrypted, credentials);
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || !parsed.saved || !parsed.team) throw new Error("This backup is not a valid UltraPokechill save.");
+    if (!parsed || typeof parsed !== "object" || !parsed.saved || !parsed.team) throw new Error("该备份不是有效的 UltraPokechill 存档。");
     localStorage.setItem("gameData", raw);
     credentials.lastHash = await sha256Hex(textEncoder.encode(raw));
     credentials.lastBackupAt = Date.now();
     saveCredentials(credentials);
-    showToast("Save restored. Reloading the game…");
+    showToast("存档已恢复。正在重新加载游戏...");
     window.setTimeout(() => window.location.reload(), 650);
   }
 
   function disconnectDevice() {
-    if (!window.confirm("Remove the recovery code and PIN from this browser? Your cloud backups will remain safe, but automatic backup stops until you recover this vault again.")) return;
+    if (!window.confirm("确定要从本浏览器移除恢复代码和 PIN 码吗？你的云端备份仍然安全，但自动备份将停止，直到你再次恢复此保险库。")) return;
     localStorage.removeItem(CREDENTIALS_KEY);
     runtime.keyCache = undefined;
     runtime.proofCache = undefined;
     runtime.snapshots = [];
     runtime.view = "home";
     renderVault();
-    showToast("This browser no longer has Save Vault access.");
+    showToast("本浏览器已不再拥有存档保险库访问权限。");
   }
 
   async function vaultFetch(path, options, credentials) {
@@ -513,8 +521,8 @@
     try {
       return await fetch(`${SERVER_URL}${path}`, { ...options, headers, signal: controller.signal, cache: "no-store" });
     } catch (error) {
-      if (error?.name === "AbortError") throw new Error("Save Vault did not respond in time. Try again.");
-      throw new Error("Could not contact Save Vault. Check your connection and try again.");
+      if (error?.name === "AbortError") throw new Error("存档保险库未能及时响应，请重试。");
+      throw new Error("无法连接存档保险库，请检查网络连接后重试。");
     } finally {
       window.clearTimeout(timer);
     }
@@ -523,7 +531,7 @@
   async function claimVault(credentials) {
     const response = await vaultFetch("/v1/claim", { method: "POST" }, credentials);
     const data = await readJson(response);
-    if (!response.ok) throw new Error(serverMessage(data, "Could not verify the vault PIN."));
+    if (!response.ok) throw new Error(serverMessage(data, "无法验证保险库 PIN 码。"));
   }
 
   async function encryptSnapshot(plain, credentials) {
@@ -542,11 +550,11 @@
 
   async function decryptSnapshot(encrypted, credentials) {
     if (encrypted.byteLength < 36 || encrypted[0] !== 0x53 || encrypted[1] !== 0x56 || encrypted[2] !== 0x4c || encrypted[3] !== 0x54 || encrypted[4] !== 1) {
-      throw new Error("This backup has an unknown format.");
+      throw new Error("该备份格式未知。");
     }
     const gzip = encrypted[5] === 1;
     const ivLength = encrypted[6];
-    if (ivLength !== 12 || encrypted.byteLength <= 8 + ivLength) throw new Error("This backup is damaged.");
+    if (ivLength !== 12 || encrypted.byteLength <= 8 + ivLength) throw new Error("该备份已损坏。");
     const iv = encrypted.slice(8, 8 + ivLength);
     const cipher = encrypted.slice(8 + ivLength);
     let plain;
@@ -554,7 +562,7 @@
       const key = await getEncryptionKey(credentials);
       plain = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: AAD }, key, cipher));
     } catch (_) {
-      throw new Error("The recovery code or PIN is incorrect, or this backup was altered.");
+      throw new Error("恢复代码或 PIN 码不正确，或该备份已被篡改。");
     }
     const restored = gzip ? await decompress(plain) : plain;
     return textDecoder.decode(restored);
@@ -596,12 +604,12 @@
   }
 
   async function decompress(bytes) {
-    if (typeof DecompressionStream !== "function") throw new Error("This browser cannot open compressed Save Vault backups.");
+    if (typeof DecompressionStream !== "function") throw new Error("当前浏览器无法打开经过压缩的存档保险库备份。");
     try {
       const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
       return new Uint8Array(await new Response(stream).arrayBuffer());
     } catch (_) {
-      throw new Error("The compressed backup is damaged.");
+      throw new Error("经过压缩的备份已损坏。");
     }
   }
 
@@ -661,19 +669,19 @@
 
   function serverMessage(data, fallback) {
     const messages = {
-      invalid_recovery_code: "The recovery code is not valid.",
-      invalid_pin: "The recovery code or five-digit PIN is incorrect.",
-      invalid_pin_proof: "The five-digit PIN could not be verified.",
-      snapshot_not_found: "That backup no longer exists.",
-      snapshot_too_large: "This save is too large for Save Vault.",
-      save_too_soon: "Please wait a moment before another backup.",
-      origin_not_allowed: "This game address is not permitted to use Save Vault."
+      invalid_recovery_code: "恢复代码无效。",
+      invalid_pin: "恢复代码或 5 位数 PIN 码不正确。",
+      invalid_pin_proof: "5 位数 PIN 码无法被验证。",
+      snapshot_not_found: "该备份已不存在。",
+      snapshot_too_large: "该存档过大，超出存档保险库的上限。",
+      save_too_soon: "请稍候片刻再进行下一次备份。",
+      origin_not_allowed: "当前游戏地址未被允许使用存档保险库。"
     };
     return messages[data?.error] || fallback;
   }
 
   function readError(error) {
-    return String(error?.message || error || "Something went wrong.");
+    return String(error?.message || error || "出现了一些问题。");
   }
 
   async function copyText(value) {
@@ -705,7 +713,7 @@
   }
 
   function formatDate(value) {
-    try { return new Date(Number(value)).toLocaleString(); } catch (_) { return "Unknown time"; }
+    try { return new Date(Number(value)).toLocaleString(); } catch (_) { return "未知时间"; }
   }
 
   function formatBytes(value) {
