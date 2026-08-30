@@ -1,7 +1,7 @@
 "use strict";
 
 // UltraPokechill 存档保险库 —— 本地备份服务器
-// 同时托管游戏静态文件与 /v1/* 备份接口，使存档保险库模组（mod.js）的
+// 同时托管游戏静态文件与 /saveVault/* 备份接口，使存档保险库模组（mod.js）的
 // SERVER_URL = window.location.origin 能命中一个真正实现了备份协议的地址。
 // 纯 Node 内置模块实现，无任何外部依赖。
 //   启动：node server.js   （或PORT=xxxx node server.js）
@@ -13,8 +13,8 @@ const fsp = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
 
-const ROOT = path.resolve(__dirname, "..", "..", ".."); // 项目根目录（mods/saveVault/server -> 上三级）
-const DATA_DIR = path.join(__dirname, "data"); // 加密快照本地存储目录
+const ROOT = __dirname; // 项目根目录（server.js 本身位于根目录）
+const DATA_DIR = path.join(__dirname, "saveVault"); // 加密快照本地存储目录（根目录下的 saveVault 文件夹）
 const PORT = Number(process.env.PORT) || 8000;
 const HOST = "127.0.0.1";
 const MAX_BODY = 16 * 1024 * 1024; // 16MB 安全上限（模组侧已限制 8MB）
@@ -107,16 +107,16 @@ async function handleApi(req, res, url) {
     return sendJson(res, 400, { error: "invalid_recovery_code" });
   }
 
-  const parts = url.pathname.split("/").filter(Boolean); // ["v1","snapshots", ":slot?"]
+  const parts = url.pathname.split("/").filter(Boolean); // ["saveVault","snapshots", ":slot?"]
 
-  // POST /v1/claim —— 校验/登记保险库
+  // POST /saveVault/claim —— 校验/登记保险库
   if (parts.length === 2 && parts[1] === "claim") {
     if (req.method !== "POST") return sendJson(res, 405, { error: "method_not_allowed" });
     fs.mkdirSync(vaultDir(code), { recursive: true });
     return sendJson(res, 200, { ok: true });
   }
 
-  // /v1/snapshots
+  // /saveVault/snapshots
   if (parts.length === 2 && parts[1] === "snapshots") {
     if (req.method === "GET") {
       const meta = await readMeta(code);
@@ -157,7 +157,7 @@ async function handleApi(req, res, url) {
     return sendJson(res, 405, { error: "method_not_allowed" });
   }
 
-  // GET /v1/snapshots/:slot —— 返回原始加密字节
+  // GET /saveVault/snapshots/:slot —— 返回原始加密字节
   if (parts.length === 3 && parts[1] === "snapshots") {
     const slot = Number(parts[2]);
     if (![0, 1, 2].includes(slot)) return sendJson(res, 404, { error: "snapshot_not_found" });
@@ -207,7 +207,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(400);
     return res.end("Bad Request");
   }
-  if (url.pathname.startsWith("/v1/")) {
+  if (url.pathname.startsWith("/saveVault/")) {
     handleApi(req, res, url).catch(err => {
       console.error("[saveVault-server] 处理请求出错:", err);
       if (!res.headersSent) sendJson(res, 500, { error: "internal" });
@@ -219,7 +219,17 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`[saveVault-server] UltraPokechill 本地服务器已启动: http://${HOST}:${PORT}/`);
-  console.log(`[saveVault-server] 静态文件根目录: ${ROOT}`);
-  console.log(`[saveVault-server] 存档保险库备份接口: /v1/claim、/v1/snapshots`);
+  console.log(` [信息] 服务器已启动: http://${HOST}:${PORT}/`);
+  console.log(``);
+  console.log(`==========================================================================`);
+  console.log(``);
+  console.log(` [存档保险库] 存档备份接口: /saveVault/claim 、/saveVault/snapshots`);
+  console.log(` [存档保险库] 存档存储目录: ${DATA_DIR}`);
+  console.log(``);
+  console.log(`==========================================================================`);
+  console.log(``);
+  console.log(` [提示] 按任意键关闭服务器并退出...`);
+  console.log(``);
+  console.log(`==========================================================================`);
+  console.log(``);
 });

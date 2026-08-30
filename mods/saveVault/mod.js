@@ -257,7 +257,7 @@
     root.innerHTML = `
       <section class="sv-card" role="dialog" aria-modal="true" aria-label="Save Vault">
         <header class="sv-head">
-          <div class="sv-title"><img src="img/items/parcel.png" alt=""><div><h2>存档保险库</h2><span class="sv-subtitle">自动加密存档保护</span></div></div>
+          <div class="sv-title"><img src="img/items/parcel.png" alt=""><div><h2>存档保险库</h2><span class="sv-subtitle">自动加密备份存档</span></div></div>
           <button class="sv-close" type="button" data-action="close" aria-label="Close">X</button>
         </header>
         <div class="sv-body">${body}</div>
@@ -267,16 +267,16 @@
 
   function renderHome() {
     return `<div class="sv-stack">
-      <div class="sv-panel"><h3>保护此存档</h3><p>存档保险库会为您保留最近三次正常存档的加密副本。只要此页面保持打开，系统就会每五分钟自动备份一次。</p><div class="sv-note">您的 PIN码 和原始存档内容绝对不会上传到服务器。恢复备份时，必须同时提供恢复代码和5位数 PIN 码。</div></div>
-      <div class="sv-actions"><button class="sv-primary" type="button" data-action="create">创建存档保险库</button><button class="sv-outline" type="button" data-action="recover">恢复已有存档</button></div>
+      <div class="sv-panel"><h3>自动备份</h3><p>存档保险库会为您保留最近三次正常存档的加密副本。<br>只要此页面保持打开，系统就会每五分钟自动备份一次。</p><div class="sv-note">您的 PIN 码 和原始存档内容绝对不会上传到服务器。<br>恢复备份时，必须同时提供恢复代码和 5 位数 PIN 码。</div></div>
+      <div class="sv-actions"><button class="sv-primary" type="button" data-action="create">创建存档保险库</button><button class="sv-outline" type="button" data-action="recover">恢复已有备份</button></div>
       <div class="sv-panel"><h3>重要提醒</h3><p>请务必将恢复代码保存在此浏览器之外的安全位置。一旦浏览器数据被清除，您需要同时提供恢复代码和 PIN 码才能找回您的三份存档备份。</p></div>
     </div>`;
   }
 
   function renderCreate() {
     return `<form class="sv-stack" data-form="create">
-      <div class="sv-panel"><h3>创建您的存档保险库</h3><p>请设置一个5位数的 PIN 码。此 PIN 码仅用于在本地加密和解密您的备份存档，存档保险库不会将其上传到服务器。</p>
-        <label>5位数 PIN 码<input name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{5}" maxlength="5" required></label>
+      <div class="sv-panel"><h3>创建您的存档保险库</h3><p>请设置一个 5 位数的 PIN 码。此 PIN 码仅用于在本地加密和解密您的备份存档，存档保险库不会将其上传到服务器。</p>
+        <label>5 位数 PIN 码<input name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{5}" maxlength="5" required></label>
         <label>确认 PIN 码<input name="confirmPin" inputmode="numeric" autocomplete="new-password" pattern="\\d{5}" maxlength="5" required></label>
       </div>
       <div class="sv-actions"><button class="sv-primary" type="submit">创建保险库并首次备份</button><button class="sv-outline" type="button" data-action="home">返回</button></div>
@@ -295,7 +295,7 @@
 
   function renderRecovery() {
     return `<form class="sv-stack" data-form="recovery">
-      <div class="sv-panel"><h3>恢复已有备份</h3><p>请输入创建此保险库时使用的恢复代码和 5 位数 PIN 码。在服务器确认之前，该代码仅保留在本浏览器中。</p>
+      <div class="sv-panel"><h3>恢复已有备份</h3><p>请输入创建此保险库时使用的恢复代码和 5 位数 PIN 码。<br>在服务器确认之前，该代码仅保留在本浏览器中。</p>
         <label>恢复代码<input name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" required placeholder="SV1-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"></label>
         <label>5 位数 PIN 码<input name="pin" inputmode="numeric" autocomplete="current-password" pattern="\\d{5}" maxlength="5" required></label>
       </div>
@@ -309,9 +309,9 @@
     const snapshots = runtime.snapshots.slice().sort((a, b) => b.createdAt - a.createdAt);
     const list = snapshots.length ? snapshots.map(snapshot => `<div class="sv-snapshot"><div><strong>${formatDate(snapshot.createdAt)}</strong><span>${formatBytes(snapshot.size)} 已加密 · 槽位 ${snapshot.slot + 1}</span></div><button type="button" data-action="restore" data-slot="${snapshot.slot}">恢复此存档</button></div>`).join("") : '<div class="sv-empty">尚未发现云端备份。点击“立即备份”创建一个。</div>';
     return `<div class="sv-stack">
-      <div class="sv-panel"><h3>自动存档已开启</h3><p>上次本地备份：<strong>${last ? formatDate(last) : "尚未备份"}</strong>。只要此页面保持打开，系统就会每五分钟自动备份一次。</p><div class="sv-status">仅保留最新的三份加密存档。内容未变化的存档不会重复上传。</div><div class="sv-actions"><button class="sv-primary" type="button" data-action="backup">立即备份</button><button type="button" data-action="refresh">刷新备份记录</button></div></div>
+      <div class="sv-panel"><h3>自动存档已开启</h3><p>上次本地备份：<strong>${last ? formatDate(last) : "尚未备份"}</strong><br>只要此页面保持打开，系统就会每五分钟自动备份一次。</p><div class="sv-status">仅保留最新的三份加密存档。内容未变化的存档不会重复上传。</div><div class="sv-actions"><button class="sv-primary" type="button" data-action="backup">立即备份</button><button type="button" data-action="refresh">刷新备份记录</button></div></div>
       <div class="sv-panel"><h3>恢复记录</h3><div class="sv-list">${list}</div></div>
-      <div class="sv-panel"><h3>设备访问</h3><p>为了让自动备份能够运行，你的恢复代码仅保存在本浏览器中。</p><div class="sv-actions"><button type="button" data-action="show-local-code">显示恢复代码</button><button class="sv-danger" type="button" data-action="disconnect">移除本设备访问</button></div></div>
+      <div class="sv-panel"><h3>设备访问</h3><p>为了让自动备份能够运行，你的恢复代码将保存在本浏览器中。</p><div class="sv-actions"><button type="button" data-action="show-local-code">显示恢复代码</button><button class="sv-danger" type="button" data-action="disconnect">移除本设备访问</button></div></div>
     </div>`;
   }
 
@@ -395,7 +395,7 @@
       runtime.snapshots = snapshots;
       runtime.view = "dashboard";
       renderVault();
-      showToast("已找到备份。请选择一份进行恢复。");
+      showToast("已找到备份存档。请选择一份进行恢复。");
     } catch (error) {
       showToast(readError(error), true);
     }
@@ -411,7 +411,7 @@
   }
 
   async function fetchSnapshots(credentials) {
-    const response = await vaultFetch("/v1/snapshots", { method: "GET" }, credentials);
+    const response = await vaultFetch("/saveVault/snapshots", { method: "GET" }, credentials);
     const data = await readJson(response);
     if (!response.ok) throw new Error(serverMessage(data, "无法加载备份记录。"));
     return Array.isArray(data.snapshots) ? data.snapshots : [];
@@ -420,7 +420,7 @@
   async function verifyRecoveryCandidate(credentials, snapshot) {
     const slot = Number(snapshot?.slot);
     if (!Number.isInteger(slot) || slot < 0 || slot > 2) throw new Error("备份列表无效。");
-    const response = await vaultFetch(`/v1/snapshots/${slot}`, { method: "GET" }, credentials);
+    const response = await vaultFetch(`/saveVault/snapshots/${slot}`, { method: "GET" }, credentials);
     if (!response.ok) throw new Error(serverMessage(await readJson(response), "无法验证该备份。"));
     const raw = await decryptSnapshot(new Uint8Array(await response.arrayBuffer()), credentials);
     const parsed = JSON.parse(raw);
@@ -435,7 +435,7 @@
     if (!credentials) return;
     runtime.backupInFlight = true;
     try {
-      showToast(showResult ? "正在加密你的存档..." : "存档保险库：正在保存加密备份...", false, true);
+      showToast(showResult ? "正在加密你的存档..." : "[存档保险库] 正在保存加密存档...", false, true);
       await claimVault(credentials);
       runtime.api?.save?.();
       const raw = localStorage.getItem("gameData");
@@ -445,13 +445,13 @@
       const plain = textEncoder.encode(raw);
       const hash = await sha256Hex(plain);
       if (hash === credentials.lastHash) {
-        showToast("存档保险库：该存档已受保护。");
+        showToast("[存档保险库] 存档已备份。");
         return;
       }
       if (plain.byteLength > MAX_SNAPSHOT_BYTES) throw new Error("该存档过大，超出存档保险库的上限。");
       const envelope = await encryptSnapshot(plain, credentials);
-      if (envelope.byteLength > MAX_SNAPSHOT_BYTES) throw new Error("加密后的备份过大，超出存档保险库的上限。");
-      const response = await vaultFetch("/v1/snapshots", {
+      if (envelope.byteLength > MAX_SNAPSHOT_BYTES) throw new Error("加密后的存档过大，超出存档保险库的上限。");
+      const response = await vaultFetch("/saveVault/snapshots", {
         method: "POST",
         headers: { "Content-Type": "application/octet-stream" },
         body: envelope
@@ -459,20 +459,20 @@
       const data = await readJson(response);
       if (!response.ok) {
         if (response.status === 429) {
-          showToast("存档保险库：备份即将稍后重试。");
+          showToast("[存档保险库] 备份即将稍后重试。");
           return;
         }
-        throw new Error(serverMessage(data, "无法保存加密后的备份。"));
+        throw new Error(serverMessage(data, "无法保存加密后的存档。"));
       }
       credentials.lastHash = hash;
       credentials.lastBackupAt = Number(data.createdAt || Date.now());
       saveCredentials(credentials);
       await refreshSnapshots(showResult);
-      showToast(showResult ? "加密备份已保存成功。" : "存档保险库：备份已受保护。");
+      showToast(showResult ? "存档已备份成功。" : "[存档保险库] 存档已自动备份。");
     } catch (error) {
       // Callers of manual operations still receive the error, but background
       // backups must replace their spinner with a useful notification as well.
-      if (!showResult) showToast(`存档保险库：${readError(error)}`, true);
+      if (!showResult) showToast(`[存档保险库] ${readError(error)}`, true);
       throw error;
     } finally {
       runtime.backupInFlight = false;
@@ -485,14 +485,14 @@
     if (!credentials) throw new Error("本浏览器已不再拥有保险库访问权限。");
     const snapshot = runtime.snapshots.find(item => Number(item.slot) === slot);
     const description = snapshot ? formatDate(snapshot.createdAt) : "this backup";
-    if (!window.confirm(`确定恢复 ${description}吗？你当前的浏览器存档将被替换。`)) return;
-    showToast("正在下载并验证备份...");
-    const response = await vaultFetch(`/v1/snapshots/${slot}`, { method: "GET" }, credentials);
-    if (!response.ok) throw new Error(serverMessage(await readJson(response), "无法下载该备份。"));
+    if (!window.confirm(`确定恢复 ${description} 吗？你当前的浏览器存档将被替换。`)) return;
+    showToast("正在下载并验证存档...");
+    const response = await vaultFetch(`/saveVault/snapshots/${slot}`, { method: "GET" }, credentials);
+    if (!response.ok) throw new Error(serverMessage(await readJson(response), "无法下载该存档。"));
     const encrypted = new Uint8Array(await response.arrayBuffer());
     const raw = await decryptSnapshot(encrypted, credentials);
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || !parsed.saved || !parsed.team) throw new Error("该备份不是有效的 UltraPokechill 存档。");
+    if (!parsed || typeof parsed !== "object" || !parsed.saved || !parsed.team) throw new Error("该存档不是有效的 UltraPokechill 存档。");
     localStorage.setItem("gameData", raw);
     credentials.lastHash = await sha256Hex(textEncoder.encode(raw));
     credentials.lastBackupAt = Date.now();
@@ -529,7 +529,7 @@
   }
 
   async function claimVault(credentials) {
-    const response = await vaultFetch("/v1/claim", { method: "POST" }, credentials);
+    const response = await vaultFetch("/saveVault/claim", { method: "POST" }, credentials);
     const data = await readJson(response);
     if (!response.ok) throw new Error(serverMessage(data, "无法验证保险库 PIN 码。"));
   }

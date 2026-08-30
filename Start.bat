@@ -1,33 +1,27 @@
+ï»¿
 @echo off
-chcp 936 >nul
+chcp 65001 >nul
 title UltraPokechill
 
 echo.
-echo ========================================
-echo        UltraPokechill ±¾µØ·þÎñÆ÷
-echo ========================================
-echo.
-echo [ÐÅÏ¢] Ê¹ÓÃ Node Æô¶¯·þÎñÆ÷£¨º¬´æµµ±£ÏÕ¿â±¸·Ý½Ó¿Ú£©...
-echo [µØÖ·] ·ÃÎÊµØÖ·: http://127.0.0.1:8000/
-echo [ÌáÊ¾] °´ÈÎÒâ¼ü¹Ø±Õ·þÎñÆ÷²¢ÍË³ö...
-echo.
-echo ========================================
+echo ==========================================================================
+echo                       UltraPokechill æœ¬åœ°æœåŠ¡å™¨
+echo ==========================================================================
 echo.
 
-REM Æô¶¯ Node ·þÎñÆ÷£ºÍ¬Ê±ÍÐ¹ÜÓÎÏ·¾²Ì¬ÎÄ¼þÓë /v1 ±¸·Ý½Ó¿Ú
-if exist "D:\nodejs\node.exe" (
-  start /B "UltraPokechill Server" "D:\nodejs\node.exe" "%~dp0mods\saveVault\server\server.js"
+REM æ£€æµ‹ node æ˜¯å¦å¯ç”¨
+where node >nul 2>&1
+if %errorlevel%==0 (
+  echo  [ä¿¡æ¯] æ£€æµ‹åˆ° Node.jsï¼Œæ­£åœ¨å¯åŠ¨æœåŠ¡å™¨...
+  start /B node "%~dp0server.js"
+  start http://127.0.0.1:8000/
+  pause >nul
+  taskkill /F /IM node.exe >nul 2>&1
+  echo  æœåŠ¡å™¨å·²å…³é—­ã€‚
+  timeout /t 1 /nobreak >nul
 ) else (
-  start /B "UltraPokechill Server" node "%~dp0mods\saveVault\server\server.js"
+  echo  [é”™è¯¯] æœªæ£€æµ‹åˆ° Node.jsï¼Œæ— æ³•å¯åŠ¨æœåŠ¡å™¨ã€‚
+  echo  [æç¤º] è¯·å…ˆå®‰è£… Node.jsï¼Œå®‰è£…å®ŒæˆåŽé‡æ–°è¿è¡Œæœ¬è„šæœ¬ã€‚
+  echo.
+  pause
 )
-
-REM ´ò¿ªä¯ÀÀÆ÷
-start http://127.0.0.1:8000/
-
-pause >nul
-
-REM ¹Ø±Õ Node ½ø³Ì
-taskkill /F /IM node.exe >nul 2>&1
-
-echo ·þÎñÆ÷ÒÑ¹Ø±Õ¡£
-timeout /t 1 /nobreak >nul
