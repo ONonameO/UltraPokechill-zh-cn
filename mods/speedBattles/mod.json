@@ -1,0 +1,10 @@
+{
+  "id": "speedBattles",
+  "name": "Speed Battles",
+  "description": "Speeds battles by repeating normal combat ticks, preserving regular battle rules.",
+  "image": "img/items/quickClaw.png",
+  "version": "1.3",
+  "author": "UltraPokechill",
+  "category": "Battle",
+  "defaultEnabled": false
+}

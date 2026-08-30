@@ -1,29 +1,29 @@
 @echo off
 chcp 936 >nul
-title Ultra-PokeChill
+title UltraPokechill
 
 echo.
 echo ========================================
-echo        Ultra-PokeChill ±¾µØ·þÎñÆ÷
+echo        UltraPokechill ï¿½ï¿½ï¿½Ø·ï¿½ï¿½ï¿½ï¿½ï¿½
 echo ========================================
 echo.
-echo [ÐÅÏ¢] Ê¹ÓÃ Python Æô¶¯·þÎñÆ÷...
-echo [µØÖ·] ·ÃÎÊµØÖ·: http://127.0.0.1:8000/
-echo [ÌáÊ¾] °´ÈÎÒâ¼ü¹Ø±Õ·þÎñÆ÷²¢ÍË³ö...
+echo [ï¿½ï¿½Ï¢] Ê¹ï¿½ï¿½ Python ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½...
+echo [ï¿½ï¿½Ö·] ï¿½ï¿½ï¿½Êµï¿½Ö·: http://127.0.0.1:8000/
+echo [ï¿½ï¿½Ê¾] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø±Õ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½...
 echo.
 echo ========================================
 echo.
 
-REM Æô¶¯Python HTTP·þÎñÆ÷
+REM ï¿½ï¿½ï¿½ï¿½Python HTTPï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 start /B python -m http.server 8000 >nul 2>&1
 
-REM ´ò¿ªä¯ÀÀÆ÷
+REM ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 start http://127.0.0.1:8000/
 
 pause >nul
 
-REM ¹Ø±ÕPython½ø³Ì
+REM ï¿½Ø±ï¿½Pythonï¿½ï¿½ï¿½ï¿½
 taskkill /F /IM python.exe >nul 2>&1
 
-echo ·þÎñÆ÷ÒÑ¹Ø±Õ¡£
+echo ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹Ø±Õ¡ï¿½
 timeout /t 1 /nobreak >nul

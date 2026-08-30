@@ -19,6 +19,16 @@
         //纯数字: (\d+)
         //不限定: (.+)
 
+        //初始弹窗
+        [/A quick update/i, 
+        '最新动态'],
+        [/The project isn't dead!/i, 
+        '这个项目并没有结束！'],
+        [/I'm just busy xD/i, 
+        '我只是有点忙啦~'],
+        [/Got it/i, 
+        '确定'],
+
         //新手指导
         [/This project is entirely unofficial!/i, 
         '本项目是完全非官方的'],
@@ -1151,7 +1161,7 @@
         [/^Install a \.mod file$/i,
         '使用.mod文件安装'],        
         [/^Open Settings, click Mods, then drag and drop a \.mod file into the import area\. You can also click the drop area to select the file manually\. A \.mod file is a package made for UltraPokechill mods\.$/i,
-        '打开设置，点击 “Mod”，然后将.mod文件拖放到导入区域。你也可以点击导入区域手动选择文件。（.mod文件是为Ultra-PokeChill制作的Mod）'],        
+        '打开设置，点击 “Mod”，然后将.mod文件拖放到导入区域。你也可以点击导入区域手动选择文件。（.mod文件是为UltraPokechill制作的Mod）'],        
         [/^Enable or disable mods$/i,
         '启用或禁用 Mod'],        
         [/^Use the toggle on each mod card\. Some mods apply instantly, while others are safest after refreshing the page once\.$/i,
@@ -1290,21 +1300,18 @@
         [/^This is determined by the division of the host\. A higher division will exponentially increase the time required to modify the Pokemon$/i,
         '能量消耗由宿主宝可梦的评级决定, 评级越高, 遗传完成所需的时间将不断增加'],
 
-        //设置
-        [/^This is your savefile code/i,
-        '这是你的存档代码'],
-        [/^You can copy or paste savefile codes here to export or import saves/i,
-        '你可以在这复制或粘贴存档代码, 以导出或导入存档'],
-        [/^Are you sure you want to delete all data forever\?/i,
-        '你确定要永久删除所有数据吗?'],
         //鸣谢
         [/Made by/i,
         '作者:'],
-        [/Pokemon and trainer sprites by Pokemon Showdown \(Including artists: Beliot419, kyledove, Gnomowladny, Brumirage and ZacWeavile. Go check their work. Now.\)/i,
+        [/UltraPokechill Modded Version by rod1337x on discord/i,
+        'UltraPokechill 改版 — 由 Discord 上的 rod1337x 制作'],
+        [/Mod support and the Workshop system were made for this version with the community in mind, so players can install, share, and create their own mods\./i,
+        '此版本在开发时就考虑到了社区的需求，因此提供了Mod支持和创意工坊系统，以便玩家可以安装、分享和制作自己的Mod。'],
+        [/Pokemon and trainer sprites by Pokemon Showdown \(Including artists: Beliot419, kyledove, Gnomowladny, Brumirage and ZacWeavile\. Go check their work\. Now\.\)/i,
         '宝可梦和训练家图像由 PokemonShowdown 提供(包括艺术家: Beliot419, kyledove, Gnomowladny, Brumirage 和 ZacWeavile。去看看他们的作品吧。现在立刻马上。)'],
         [/Gen 9 sprites by KingOfThe-X-Roads/i,
         '第9世代的图像由 KingOfThe-X-Roads 提供'],
-        [/All characters and related assets featured in this game are the exclusive property of Nintendo, Creatures Inc., and The Pokemon Company, and are used here strictly for non-commercial purposes./i,
+        [/All characters and related assets featured in this game are the exclusive property of Nintendo, Creatures Inc\., and The Pokemon Company, and are used here strictly for non-commercial purposes\./i,
         '本游戏中的所有角色和相关资产均为 任天堂、Creatures股份公司 和 宝可梦公司 的专有财产, 仅用于非商业用途。'],
 
         //更新
@@ -1617,6 +1624,9 @@
         "Export Data": "导出存档",
         "Import Data": "导入存档",
         "Data to Text": "以文本形式处理存档",
+        "This is your savefile code": "这是你的存档代码",
+        "You can copy or paste savefile codes here to export or import saves": "你可以在这复制或粘贴存档代码，以导出或导入存档",
+        "Copy": "复制",
         "Copy": "复制",
         "Paste": "粘贴",
         "Load": "加载",
@@ -1632,6 +1642,8 @@
         "spooky": "幽灵",
         "Hide non-new Pokemon got in summary": "隐藏战斗总结中出现的非新宝可梦 ",
         "Sustract 1 to current Wild Area rotation": "当前旷野地带的轮换周期减 1 ",
+        "enable": "启用",
+        "disable": "禁用",
         "Game modifiers": "游戏模式修改器",
         "Game Modifiers": "游戏模式修改器",
         "Right Click/Long press to see the details": "右键单击/长按 查看详细信息",
@@ -1640,30 +1652,55 @@
         "If any of your Pokemon get defeated while battling a trainer of VS Trainers, it will permanently be unusuable until you turn this mode off": "在对战训练家的战斗中, 若任何宝可梦被击败, 它将永久无法使用, 直至关闭此模式",
         "Hard Mode": "困难模式",
         "Trainers have twice the health. Only applies to VS Trainers": "训练家的宝可梦生命值变为两倍(仅适用于对战训练家)",
-        "Cheats": "便利",
+        "Cheats": "作弊",
         "No IVs": "满个体值(IV)",
         "All of your Pokemon have functionally max IVs regardless of their actual IVs. This can be toggled off without any permanent changes": "所有宝可梦的个体值(IVs)均视为满值, 与实际个体值无关。此效果可随时关闭, 且不会造成永久性改动",
         "Longer AFK": "更长的挂机时间",
         "Fatigue damage is reduced by x3": "疲劳伤害降低至原来的1/3",
         "There are no side-effects to this modifier": "此修改无任何副作用",
-        "ENABLED": "启用",
-        "DISABLED": "禁用",
         "Credits": "鸣谢",
         "Wipe Data": "清空数据",
+        "Are you sure you want to reset your save data?": "你确定要重置你的存档数据吗？",
+        " save": "存档",
+
 
         //Mods菜单
         "Installed": "已安装",
         "Workshop": "创意工坊",
         "Update all": "更新全部",
-        "All workshop mods are up to date.": "所有创意工坊Mod已更新至最新版本。",
         "Drop .mod files here": "把.mod文件拖到这里",
         ".mod is a renamed zip with mod.json, mod.js and optional icon.png.": ".mod是一个重命名的压缩包，包含mod.json、mod.js和可选的icon.png文件。",
-        "Mods Folder": "Mods文件夹",
-        "Imported": "导入",
+        // "Mods Folder": "Mods文件夹",
+        // "Imported": "导入",
         "Community mods are JavaScript packages. Install only mods you trust.": "创意工坊里的Mod是JavaScript包。请仅安装您信任的Mod。",
         "Refresh": "刷新",
         "Install": "安装",
-        "Enable": "禁用",
+        "Disabled": "已禁用",
+        "✔ Enabled": "✔ 已启用",
+        //setStatus
+        "was toggled, but its activation hook failed. Check the console.": "已启用，但其激活挂钩失效，请检查控制台。",
+        "Refreshing workshop...": "正在刷新创意工坊...",
+        "Loading workshop...": "正在加载创意工坊...",
+        "Workshop index could not be loaded.": "无法加载创意工坊索引。",
+        "Mod updated. Reloading...": "Mod更新，正在重载...",
+        "Checking workshop updates...": "正在检查创意工坊更新...",
+        "All workshop mods are up to date.": "所有创意工坊Mod已更新至最新版本。",
+        "Updating": "正在更新",
+        "Downloading": "正在下载",
+        "Updated": "更新",
+        "Reloading": "正在重载",
+        "No mods could be updated. Check the console or try again.": "没有Mod可以更新，请检查控制台或重试。",
+        "Workshop entry has no downloadable .mod file.": "创意工坊没有可下载的.mod文件。",
+        "is already installed.": "已经安装。",
+        "could not be installed.": "无法安装。",
+        "Loading mods...": "正在加载Mod...",
+        "is not a supported mod file.": "不是正确的mod文件。",
+        "could not be loaded.": "无法加载。",
+        "uses a reserved mods-folder id.": "使用了已有的Mod id。",
+        "loaded. Enable it to apply.": "已加载，请启用它使其生效。",
+        "has no valid mod id.": "没有有效的Mod id。",
+        "metadata loaded. Use .js for mod logic.": "元数据已加载。请使用.js文件编写Mod代码。",
+
 
         //属性
         "Normal": "一般",
@@ -4530,6 +4567,15 @@
     // 配合上方 translateText 的缓存 + 非拉丁预筛 + 下方 WeakSet 去重，每帧重复文本近乎免费，主线程不再被阻塞。
     const translatedNodes = new WeakSet();
 
+    // 这些元素的"文本"不是可翻译界面文案，而是代码/样式源码，
+    // 一旦被翻译会破坏规则本身（如把 CSS 选择器/属性名翻成中文导致样式失效）。
+    // 必须整棵跳过，绝不进入其文本节点。
+    function isUntranslatable(node) {
+        if (node.nodeType !== Node.ELEMENT_NODE) return false;
+        const tag = node.tagName;
+        return tag === "STYLE" || tag === "SCRIPT" || tag === "TEXTAREA";
+    }
+
     function walkSync(node) {
         if (node.nodeType === Node.TEXT_NODE) {
             if (translatedNodes.has(node)) return;
@@ -4540,6 +4586,7 @@
             return;
         }
         if (node.nodeType !== Node.ELEMENT_NODE) return;
+        if (isUntranslatable(node)) return;
         if (node.shadowRoot) walkSync(node.shadowRoot);
         for (const child of node.childNodes) walkSync(child);
     }
@@ -4547,6 +4594,7 @@
     const observer = new MutationObserver(mutations => {
         for (const m of mutations) {
             for (const node of m.addedNodes) {
+                if (isUntranslatable(node)) continue;
                 walkSync(node);
             }
         }

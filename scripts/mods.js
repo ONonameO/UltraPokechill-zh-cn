@@ -116,11 +116,11 @@
     return {
       id,
       name: cleanText(definition.name, id),
-      description: cleanText(definition.description, "No description."),
+      description: cleanText(definition.description, "暂无描述"),
       image: cleanImage(definition.image),
       version: cleanText(definition.version, "1.0"),
-      author: cleanText(definition.author, "Unknown"),
-      category: cleanText(definition.category, source === "folder" ? "Mods Folder" : "Imported"),
+      author: cleanText(definition.author, "未知"),
+      category: cleanText(definition.category, source === "folder" ? "Mods文件夹" : "导入"),
       source,
       sourceFile: cleanText(definition.sourceFile, ""),
       workshop: definition.workshop === true,
@@ -743,9 +743,9 @@
     list.innerHTML = "";
 
     const sourceLabels = {
-      folder: "Mods folder",
-      imported: "Imported",
-      runtime: "Runtime"
+      folder: "Mods文件夹",
+      imported: "导入",
+      runtime: "运行环境"
     };
 
     const mods = Object.values(registry).sort((a, b) => {
@@ -773,7 +773,7 @@
       title.textContent = mod.name;
 
       const tag = document.createElement("span");
-      tag.textContent = mod.workshop ? "Workshop" : sourceLabels[mod.source] || mod.source;
+      tag.textContent = mod.workshop ? "创意工坊" : sourceLabels[mod.source] || mod.source;
 
       top.append(title, tag);
 
@@ -806,7 +806,7 @@
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = isEnabled(mod.id) ? "mod-toggle active" : "mod-toggle";
-      toggle.textContent = isEnabled(mod.id) ? "Enabled" : "Disabled";
+      toggle.textContent = isEnabled(mod.id) ? "✔ Enabled" : "Disabled";
       toggle.addEventListener("click", () => setEnabled(mod.id, !isEnabled(mod.id)));
       actions.appendChild(toggle);
 
@@ -839,10 +839,10 @@
     return {
       id,
       name: cleanText(entry.name, id),
-      description: cleanText(entry.description, "No description."),
+      description: cleanText(entry.description, "暂无描述"),
       version: cleanText(entry.version, "1.0"),
-      author: cleanText(entry.author, "Community"),
-      category: cleanText(entry.category, "Workshop"),
+      author: cleanText(entry.author, "社区"),
+      category: cleanText(entry.category, "创意工坊"),
       image: cleanImage(imagePath),
       sourceUrl,
       fileName: cleanText(entry.fileName, sourceName),
@@ -957,7 +957,7 @@
       title.textContent = entry.name;
 
       const tag = document.createElement("span");
-      tag.textContent = "Workshop";
+      tag.textContent = "创意工坊";
 
       top.append(title, tag);
 
@@ -999,7 +999,7 @@
           const toggle = document.createElement("button");
           toggle.type = "button";
           toggle.className = isEnabled(installed.id) ? "mod-toggle active" : "mod-toggle";
-          toggle.textContent = isEnabled(installed.id) ? "Enabled" : "Enable";
+          toggle.textContent = isEnabled(installed.id) ? "✔ Enabled" : "Disabled";
           toggle.addEventListener("click", () => setEnabled(installed.id, !isEnabled(installed.id)));
           actions.appendChild(toggle);
         }
