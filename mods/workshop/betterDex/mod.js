@@ -375,20 +375,22 @@ function hasRequestedMove(pokemon, moveId, scope = "any") {
 }
 
 function updateStatus(shown, useMonotype, useMove) {
-  const status = document.getElementById(STATUS_ID);
-  if (status) {
-    const parts = [];
-    if (useMonotype) parts.push("单属性");
-    if (useMove) parts.push(formatName(runtime.state.moveId));
-    status.textContent = parts.length > 0 ? `找到 ${shown} 只 | ${parts.join(" | ")}` : "";
-  }
-
   if (!useMonotype && !useMove) return;
   const total = document.getElementById("pokedex-total");
   if (!total) return;
+
+  // 参考原版图鉴的写法，但 totalPokemon 统计「符合当前筛选条件的宝可梦总数」
+  // （包含尚未捕捉的），gotPokemon 为其中已捕获的数量
+  const { totalPokemon, gotPokemon } = getFilteredDexCounts(useMonotype, useMove);
   total.style.display = "flex";
-  total.style.background = "rgba(91, 114, 163, 1)";
-  total.textContent = `找到 ${shown} 只`;
+  if (gotPokemon === totalPokemon) {
+    // 与原版图鉴一致：全部捕获完成时显示金色背景 + 奖杯图标
+    total.style.background = "rgba(187, 146, 85, 1)";
+    total.innerHTML = `已捕捉: ${gotPokemon} / ${totalPokemon} <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><defs><mask id="SVGBetterDexTrophy"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="M8 44h8m-4 0V4"/><path fill="#555555" d="M40 6H12v16h28l-4-8z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#SVGBetterDexTrophy)"/></svg>`;
+  } else {
+    total.style.background = "rgba(91, 114, 163, 1)";
+    total.textContent = `已捕捉: ${gotPokemon} / ${totalPokemon}`;
+  }
 }
 
 function getMoveEntries() {
@@ -411,6 +413,26 @@ function getMove(id) {
 function getPokemon(id) {
   const allPokemon = runtime.api?.pkmn || readGlobal("pkmn") || {};
   return id ? allPokemon[id] : undefined;
+}
+
+function getFilteredDexCounts(useMonotype, useMove) {
+  const allPokemon = runtime.api?.pkmn || readGlobal("pkmn") || {};
+  const moveId = runtime.state?.moveId || "";
+  const moveScope = runtime.state?.moveScope || "any";
+  let totalPokemon = 0;
+  let gotPokemon = 0;
+  for (const id in allPokemon) {
+    const pokemon = allPokemon[id];
+    if (!pokemon || typeof pokemon !== "object") continue;
+    // 与原版图鉴一致：未获取且标记为不可获得的宝可梦不计入图鉴总量
+    if (pokemon.caught === 0 && pokemon.tagObtainedIn === "unobtainable") continue;
+    // 仅统计符合当前筛选条件的宝可梦（包含尚未捕捉的）
+    if (useMonotype && !isMatchingMonotype(pokemon)) continue;
+    if (useMove && !hasRequestedMove(pokemon, moveId, moveScope)) continue;
+    totalPokemon++;
+    if (pokemon.caught > 0) gotPokemon++;
+  }
+  return { totalPokemon, gotPokemon };
 }
 
 function findMoveByText(value) {
