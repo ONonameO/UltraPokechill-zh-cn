@@ -73,38 +73,48 @@ function installStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
+    /* 与原版图鉴筛选行保持一致：控件为「内容宽度并居中」，不强行占满整行，
+       从而让招式筛选行的左右边距与原版筛选区域一致（原版由 .pokedex-filters-menu
+       的 align-items:center 决定，每行都是内容宽度居中，而非铺满整行） */
     #${CONTROLS_ID} {
       align-items: center;
       display: flex;
       flex-wrap: wrap;
-      gap: 0.45rem;
+      gap: 0.5rem;
       justify-content: center;
-      width: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
     #${CONTROLS_ID} select,
     #${CONTROLS_ID} input {
-      background: var(--dark1);
-      border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 0.35rem;
-      color: white;
+      font-size: 1rem;
+      padding: 0.2rem 0.5rem;
+      background-color: var(--dark2);
+      color: var(--light2);
+      outline: none;
+      border: none;
+      border-radius: 10rem;
+      white-space: nowrap;
+      cursor: pointer;
+      width: auto;
       font-family: inherit;
-      font-size: 0.95rem;
-      height: 2rem;
-      min-width: min(12rem, 100%);
-      padding: 0 0.45rem;
+      box-sizing: border-box;
+      /* 固定宽度 + 不伸缩：输入招式名或筛选项变化时，整行总宽度保持不变，
+         不再发生位移或向右偏移 */
+      flex: 0 0 auto;
+      width: 11rem;
+    }
+
+    #${CONTROLS_ID} input {
+      cursor: text;
     }
 
     #${CONTROLS_ID} button {
-      background: rgb(155, 102, 77);
-      border: 0;
-      border-radius: 0.35rem;
-      color: white;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.95rem;
-      height: 2rem;
-      padding: 0 0.7rem;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
     }
 
     #${CONTROLS_ID} button:hover,
@@ -117,24 +127,43 @@ function installStyles() {
       outline: none;
     }
 
+    /* 「清除招式」按钮：视觉样式（颜色/边框/字体/尺寸/悬停）与「清空筛选」.clear-filters 完全一致。
+       原版 .clear-filters 没有悬停高亮，因此这里也去除悬停效果以保持一致。 */
+    #${CONTROLS_ID} #${CLEAR_BUTTON_ID} {
+      font-size: 1rem;
+      padding: 0.2rem 0.5rem;
+      background-color: var(--dark2);
+      color: var(--light2);
+      outline: none;
+      border: none;
+      border-radius: 10rem;
+      white-space: nowrap;
+      cursor: pointer;
+      width: auto;
+      font-family: inherit;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #${CONTROLS_ID} #${CLEAR_BUTTON_ID}:hover,
+    #${CONTROLS_ID} #${CLEAR_BUTTON_ID}:focus-visible {
+      filter: none;
+    }
+
     #${STATUS_ID} {
       color: var(--light2);
       font-size: 0.85rem;
       line-height: 1.1;
-      min-width: 8rem;
       text-align: center;
     }
 
     @media (max-width: 720px) {
       #${CONTROLS_ID} select,
-      #${CONTROLS_ID} input,
-      #${CONTROLS_ID} button {
+      #${CONTROLS_ID} input {
         flex: 1 1 9rem;
         min-width: 0;
-      }
-
-      #${STATUS_ID} {
-        flex: 1 1 100%;
+        width: auto;
       }
     }
   `;

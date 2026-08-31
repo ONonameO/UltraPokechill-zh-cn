@@ -2418,7 +2418,8 @@
 
     const SEARCH_INPUT_IDS = [
         'pokedex-search',
-        'dictionary-search'
+        'dictionary-search',
+        'better-dex-move-search'
     ];
 
     const CN_LIST = Object.entries(EN_TO_CN)
@@ -2446,17 +2447,26 @@
         document.body.appendChild(hintBox);
     }
 
-    function waitForInput() {
-        const inputs = SEARCH_INPUT_IDS
-        .map(id => document.getElementById(id))
-        .filter(Boolean);
+    const boundInputIds = new Set();
 
-        if (!inputs.length) {
-            setTimeout(waitForInput, 300);
-            return;
+    function waitForInput() {
+        let pending = false;
+
+        for (const id of SEARCH_INPUT_IDS) {
+            if (boundInputIds.has(id)) continue;
+
+            const input = document.getElementById(id);
+            if (!input) {
+                pending = true;
+                continue;
+            }
+
+            bindInput(input);
+            boundInputIds.add(id);
         }
 
-        inputs.forEach(input => bindInput(input));
+        // 继续轮询，直到所有搜索栏（含 betterDex 动态创建的招式搜索栏）都成功绑定
+        if (pending) setTimeout(waitForInput, 300);
     }
 
 
