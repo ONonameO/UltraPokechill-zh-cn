@@ -60,13 +60,13 @@
     },
     {
     "id": "Pokerus Filter",
-    "name": "Pokerus filter",
-    "description": "Adding a filter in the pokedex to find the pokemons that carry the virus faster.",
+    "name": "宝可病毒筛选",
+    "description": "在图鉴中新增一个筛选器，以便快速查找携带宝可病毒的宝可梦。",
     "file": "workshop/PokerusFilter.mod",
     "image": "img/items/colburBerry.png",
     "version": "1.0",
     "author": "LPF",
-    "category": "Pokedex"
+    "category": "图鉴"
 },
     {
       "id": "editTeamFightAgain",
