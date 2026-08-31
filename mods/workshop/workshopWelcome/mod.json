@@ -1,9 +1,0 @@
-{
-  "id": "workshopWelcome",
-  "name": "欢迎来到创意工坊",
-  "description": "这是一个仅供下载的示例Mod，用于测试 GitHub Pages 创意工坊的运作流程。",
-  "image": "img/items/endorsement.png",
-  "version": "1.0.0",
-  "author": "UltraPokechill",
-  "category": "示例"
-}

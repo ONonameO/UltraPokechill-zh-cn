@@ -26,11 +26,11 @@
     },
     {
       "id": "betterMoveSorting",
-      "name": "Better Move Sorting",
-      "description": "Adds sorting controls and move keywords to a Pokemon's learned move list.",
+      "name": "更好的招式排序",
+      "description": "在宝可梦的已习得招式列表中新增排序功能与招式关键词筛选。",
       "version": "1.5",
       "author": "UltraPokechill",
-      "category": "Pokemon UI",
+      "category": "宝可梦 UI",
       "file": "workshop/betterMoveSorting.mod",
       "image": "img/items/tmNormal.png",
       "tags": ["moves", "sorting", "pokemon-ui", "quality-of-life"]
