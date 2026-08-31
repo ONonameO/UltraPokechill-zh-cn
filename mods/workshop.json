@@ -27,12 +27,12 @@
     {
       "id": "betterMoveSorting",
       "name": "更好的招式排序",
-      "description": "在宝可梦的已习得招式列表中新增排序功能与招式关键词筛选。",
+      "description": "在宝可梦的已习得招式列表中，新增招式关键词筛选与排序功能，并为每个招式添加相关标签。",
       "version": "1.5",
       "author": "UltraPokechill",
       "category": "宝可梦 UI",
       "file": "workshop/betterMoveSorting.mod",
-      "image": "img/items/tmNormal.png",
+      "image": "img/items/tmWater.png",
       "tags": ["moves", "sorting", "pokemon-ui", "quality-of-life"]
     },
     {

@@ -42,8 +42,8 @@ const runtime = {
 UltraMods.define({
   id: MOD_ID,
   name: "更好的招式排序",
-  description: "在宝可梦的已习得招式列表中新增排序功能与招式关键词筛选。",
-  image: "img/items/tmNormal.png",
+  description: "在宝可梦的已习得招式列表中，新增招式关键词筛选与排序功能，并为每个招式添加相关标签。",
+  image: "img/items/tmWater.png",
   version: "1.5",
   author: "UltraPokechill",
   category: "宝可梦 UI",
@@ -119,6 +119,22 @@ function installStyles() {
       color: white;
     }
 
+    /* 标签容器：承载某招式匹配到的全部标签，整体靠右并与类型图标对齐。 */
+    .better-move-sort-tags {
+      align-items: center;
+      display: inline-flex;
+      flex: 0 0 auto;
+      flex-wrap: wrap;
+      gap: 0.2rem;
+      justify-content: flex-end;
+      line-height: 1;
+      margin-left: auto;
+      margin-right: 0.35rem;
+      max-width: 100%;
+      overflow: hidden;
+      z-index: 2;
+    }
+
     .better-move-sort-tag {
       align-items: center;
       background: rgba(239, 226, 181, 0.18);
@@ -130,14 +146,11 @@ function installStyles() {
       font-size: 0.72rem;
       justify-content: center;
       line-height: 1;
-      margin-left: auto;
-      margin-right: 0.35rem;
       max-width: 6.2rem;
       overflow: hidden;
       padding: 0.12rem 0.22rem;
       text-overflow: ellipsis;
       white-space: nowrap;
-      z-index: 2;
     }
 
     #pkmn-editor-current-moves .pkmn-movebox,
@@ -152,8 +165,8 @@ function installStyles() {
       margin-left: auto;
     }
 
-    #pkmn-editor-current-moves .pkmn-movebox:has(> .better-move-sort-tag) img,
-    #pkmn-editor-movepool .pkmn-movebox:has(> .better-move-sort-tag) img {
+    #pkmn-editor-current-moves .pkmn-movebox:has(> .better-move-sort-tags) img,
+    #pkmn-editor-movepool .pkmn-movebox:has(> .better-move-sort-tags) img {
       margin-left: 0;
     }
 
@@ -172,9 +185,13 @@ function installStyles() {
         min-width: 0;
       }
 
+      .better-move-sort-tags {
+        gap: 0.15rem;
+        margin-right: 0.25rem;
+      }
+
       .better-move-sort-tag {
         font-size: 0.58rem;
-        margin-right: 0.25rem;
         max-width: 4.8rem;
         padding: 0.09rem 0.16rem;
       }
@@ -280,23 +297,34 @@ function annotateMoveBox(element) {
   const moveData = getMove(element.dataset.move);
   if (!moveData) return;
 
-  const label = getPrimaryTag(moveData);
-  const existing = element.querySelector(".better-move-sort-tag");
+  const labels = getMoveTags(moveData);
+  const container = element.querySelector(".better-move-sort-tags");
+  const existingKey = container
+    ? Array.from(container.querySelectorAll(".better-move-sort-tag")).map(tag => tag.textContent).sort().join("|")
+    : "";
+  const newKey = [...labels].sort().join("|");
 
-  if (!label || label === "Basic") {
-    existing?.remove();
+  if (labels.length === 0) {
+    container?.remove();
     return;
   }
 
-  if (existing?.textContent === label) return;
-  existing?.remove();
+  if (existingKey === newKey) return;
+  container?.remove();
 
   const typeIcon = element.querySelector("img");
-  const tag = document.createElement("small");
-  tag.className = "better-move-sort-tag";
-  tag.textContent = label;
-  if (typeIcon) element.insertBefore(tag, typeIcon);
-  else element.appendChild(tag);
+  const wrapper = document.createElement("span");
+  wrapper.className = "better-move-sort-tags";
+
+  labels.forEach(label => {
+    const tag = document.createElement("small");
+    tag.className = "better-move-sort-tag";
+    tag.textContent = label;
+    wrapper.appendChild(tag);
+  });
+
+  if (typeIcon) element.insertBefore(wrapper, typeIcon);
+  else element.appendChild(wrapper);
 }
 
 function compareMoveBoxes(left, right, mode) {
@@ -362,36 +390,41 @@ function classRank(moveData) {
 }
 
 function tagRank(moveData) {
-  const tag = getPrimaryTag(moveData);
-  if (tag === "蓄力") return 0;
-  if (tag === "防御系数") return 1;
-  if (tag === "多段攻击") return 2;
-  if (tag === "高速") return 3;
-  if (tag === "低速") return 4;
-  if (tag === "变化") return 5;
-  if (tag === "限制") return 6;
-  if (tag === "特殊效果") return 7;
-  if (tag === "专属") return 8;
-  return 9;
+  const tags = getMoveTags(moveData);
+  if (tags.length === 0) return 9;
+  return Math.min(...tags.map(tagRankValue));
 }
 
-function getPrimaryTag(moveData) {
-  if (moveData.buildup !== undefined) return "蓄力";
-  if (hasDefensePowerScaling(moveData)) return "防御系数";
-  if (moveData.multihit) return "多段攻击";
-  if (timerValue(moveData) < getDefaultTimer()) return "高速";
-  if (timerValue(moveData) > getDefaultTimer()) return "低速";
-  if (powerValue(moveData) <= 0) return "变化";
-  if (moveData.restricted) return "限制";
-  if (moveData.hitEffect || moveData.castEffect || moveData.powerMod) return "特殊效果";
-  if (moveData.moveset === undefined) return "专属";
-  return "Basic";
+function getMoveTags(moveData) {
+  const tags = [];
+  if (powerValue(moveData) <= 0) tags.push("变化");
+  if (moveData.moveset === undefined) tags.push("专属");
+  if (moveData.restricted) tags.push("限制");
+  if (timerValue(moveData) < getDefaultTimer()) tags.push("高速");
+  if (timerValue(moveData) > getDefaultTimer()) tags.push("低速");
+  if (moveData.multihit) tags.push("多段攻击");
+  if (moveData.buildup !== undefined) {
+    tags.push("威力递增");
+    return tags;
+  }
+  if (moveData.powerMod !== undefined) tags.push("威力浮动");
+  if (moveData.hitEffect !== undefined) tags.push("追加效果");
+  if (moveData.castEffect !== undefined) tags.push("特殊效果");
+  return tags;
 }
 
-function hasDefensePowerScaling(moveData) {
-  if (typeof moveData?.powerMod !== "function") return false;
-  const source = Function.prototype.toString.call(moveData.powerMod);
-  return /\bdefup[12]\b/.test(source) || /\bsdefup[12]\b/.test(source);
+function tagRankValue(tag) {
+  if (tag === "专属") return 0;
+  if (tag === "限制") return 1;
+  if (tag === "高速") return 2;
+  if (tag === "低速") return 3;
+  if (tag === "多段攻击") return 4;
+  if (tag === "威力递增") return 5;
+  if (tag === "威力浮动") return 6;
+  if (tag === "追加效果") return 7;
+  if (tag === "特殊效果") return 8;
+  if (tag === "变化") return 9;
+  return 10;
 }
 
 function getDefaultTimer() {
