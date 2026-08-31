@@ -6,15 +6,6 @@
     let origUpdatePokedex = null;
     let origResetFilters = null;
 
-    function highlightSelect(sel) {
-        if (sel.value !== "all") {
-            sel.style.background = "#b388cc";
-            sel.style.color = "white";
-        } else {
-            sel.style.background = "";
-            sel.style.color = "";
-        }
-    }
 
     function renderPkrsFilter() {
         // ── inject the <select> ──
@@ -30,7 +21,6 @@
             if (clearBtn) clearBtn.parentElement.insertBefore(select, clearBtn);
 
             select.addEventListener("change", () => {
-                highlightSelect(select);
                 if (typeof updatePokedex === "function") updatePokedex();
             });
         }
@@ -62,7 +52,7 @@
             resetPokedexFilters = function () {
                 origResetFilters.apply(this, arguments);
                 const sel = document.getElementById(selectId);
-                if (sel) { sel.value = "all"; highlightSelect(sel); }
+                if (sel) { sel.value = "all"; }
             };
         }
     }

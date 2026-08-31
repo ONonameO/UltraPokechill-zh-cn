@@ -38,7 +38,7 @@
         if (select.querySelector('option[value="' + optionValue + '"]')) return;
         const opt = document.createElement("option");
         opt.value = optionValue;
-        opt.textContent = "incomplete families";
+        opt.textContent = "未集齐的闪光家族";
         select.appendChild(opt);
     }
 
@@ -164,12 +164,12 @@
 
     UltraMods.define({
         id: modId,
-        name: "Incomplete Families",
-        description: "Option for the shiny filter that shows the pokemons famillies that are not fully shiny",
+        name: "未集齐的闪光家族",
+        description: "闪光筛选中新增一个选项，用于筛选尚未完全集齐闪光形态的宝可梦家族。",
         image: "icon.png",
         version: "1.1",
         author: "LPF",
-        category: "Pokedex",
+        category: "图鉴",
         hooks: {
             onToggle(api, payload) {
                 if (payload.enabled)
