@@ -379,9 +379,9 @@ function updateStatus(shown, useMonotype, useMove) {
   const total = document.getElementById("pokedex-total");
   if (!total) return;
 
-  // 参考原版图鉴的写法，但 totalPokemon 统计「符合当前筛选条件的宝可梦总数」
+  // 参考原版图鉴的写法，但 totalPokemon 统计「符合当前全部筛选条件的宝可梦总数」
   // （包含尚未捕捉的），gotPokemon 为其中已捕获的数量
-  const { totalPokemon, gotPokemon } = getFilteredDexCounts(useMonotype, useMove);
+  const { totalPokemon, gotPokemon } = getFilteredDexCounts();
   total.style.display = "flex";
   if (gotPokemon === totalPokemon) {
     // 与原版图鉴一致：全部捕获完成时显示金色背景 + 奖杯图标
@@ -415,10 +415,142 @@ function getPokemon(id) {
   return id ? allPokemon[id] : undefined;
 }
 
-function getFilteredDexCounts(useMonotype, useMove) {
+// 读取原版图鉴当前所有筛选控件的值
+function readPokedexFilters() {
+  const val = id => {
+    const el = document.getElementById(id);
+    return el ? el.value : "all";
+  };
+  return {
+    type1: val("pokedex-filter-type"),
+    type2: val("pokedex-filter-type-2"),
+    level: val("pokedex-filter-level"),
+    ability: val("pokedex-filter-ability"),
+    evolution: val("pokedex-filter-evolution"),
+    division: val("pokedex-filter-division"),
+    ribbon: val("pokedex-filter-ribbon"),
+    signature: val("pokedex-filter-signature"),
+    shiny: val("pokedex-filter-shiny"),
+    search: (val("pokedex-search") || "").trim().toLowerCase()
+  };
+}
+
+// 安全读取原版图鉴内部的全局对象/函数（缺失时返回 undefined，绝不抛出）
+function safeGlobal(name) {
+  try {
+    return readGlobal(name);
+  } catch (error) {
+    return undefined;
+  }
+}
+
+// 安全调用可能抛错的全局函数，失败时回退为 fallback（避免筛选逻辑崩溃影响界面）
+function safeCallResult(callback, fallback) {
+  try {
+    return callback();
+  } catch (error) {
+    return fallback;
+  }
+}
+
+// 判断某只宝可梦是否符合原版图鉴的全部筛选条件（与原版 updatePokedex 的过滤逻辑保持一致）
+function matchesOriginalFilters(pokemon, id, f) {
+  // 属性筛选（type1 / type2 任一需包含该属性）
+  if (f.type1 !== "all" && !(Array.isArray(pokemon.type) && pokemon.type.includes(f.type1))) return false;
+  if (f.type2 !== "all" && !(Array.isArray(pokemon.type) && pokemon.type.includes(f.type2))) return false;
+
+  // 等级区间筛选
+  if (f.level !== "all") {
+    const lv = Number(f.level);
+    if (!(pokemon.level <= lv && pokemon.level >= lv - 19)) return false;
+  }
+
+  // 特性稀有度筛选
+  if (f.ability !== "all") {
+    const abilityData = safeGlobal("ability") || {};
+    let pkmnAbility = pokemon.ability;
+    if (pkmnAbility == null) {
+      const learnFn = safeGlobal("learnPkmnAbility");
+      if (typeof learnFn === "function") pkmnAbility = safeCallResult(() => learnFn(pokemon.id), undefined);
+    }
+    if (f.ability !== "4") {
+      if (abilityData[pkmnAbility]?.rarity !== f.ability) return false;
+    } else {
+      if (pokemon.hiddenAbilityUnlocked === true || pokemon.hiddenAbility == null) return false;
+    }
+  }
+
+  // 进化筛选
+  if (f.evolution !== "all") {
+    let missingEvolution = false;
+    let missingLevelEvolution = false;
+    if (typeof pokemon.evolve === "function") {
+      const evos = safeCallResult(() => pokemon.evolve(), {}) || {};
+      for (const evo in evos) {
+        if (evos[evo]?.pkmn?.caught === 0) {
+          missingEvolution = true;
+          if (evos[evo]?.level !== undefined) missingLevelEvolution = true;
+        }
+      }
+    }
+    if (!missingEvolution) return false;
+    if (f.evolution === "level-only" && !missingLevelEvolution) return false;
+  }
+
+  // 分部筛选
+  if (f.division !== "all") {
+    const fn = safeGlobal("returnPkmnDivision");
+    if (typeof fn === "function" && safeCallResult(() => fn(pokemon), null) !== f.division) return false;
+  }
+
+  // 绶带筛选
+  if (f.ribbon !== "all" && pokemon.ribbons == null) return false;
+
+  // 招牌 / 蛋招式筛选
+  if (f.signature === "false" && pokemon.signature == null) return false;
+  if (f.signature === "egg" && pokemon.eggMove == null) return false;
+
+  // 异色筛选
+  if (f.shiny === "true" && pokemon.shiny !== true) return false;
+  if (f.shiny === "false" && pokemon.shiny === true) return false;
+  if (f.shiny === "sign" || f.shiny === "signall") {
+    const fn = safeGlobal("giveStarsign");
+    if (typeof fn === "function") {
+      const res = safeCallResult(() => fn(String(id), "check"), "incomplete");
+      if (f.shiny === "sign" && (pokemon.starsignList == null || pokemon.shiny !== true || res === "complete")) return false;
+      if (f.shiny === "signall" && res !== "complete") return false;
+    }
+  }
+
+  // 搜索筛选：名称 / 特性 / 隐藏特性 / 招式池 子串匹配（家族展开为尽力而为）
+  if (f.search !== "") {
+    const t = f.search;
+    const name = String(pokemon.name != null ? pokemon.name : id).toLowerCase();
+    let hit = name.includes(t);
+    if (!hit && pokemon.ability && String(pokemon.ability).toLowerCase().includes(t)) hit = true;
+    if (!hit && pokemon.hiddenAbility && pokemon.hiddenAbility.id && String(pokemon.hiddenAbility.id).toLowerCase().includes(t)) hit = true;
+    if (!hit && Array.isArray(pokemon.movepool) && pokemon.movepool.some(m => String(m).toLowerCase().includes(t))) hit = true;
+    if (!hit) {
+      const famFn = safeGlobal("getEvolutionFamily");
+      if (typeof famFn === "function") {
+        const fam = safeCallResult(() => famFn(pokemon), []) || [];
+        if (fam.some(member => member && String(member.name != null ? member.name : member.id).toLowerCase().includes(t))) hit = true;
+      }
+    }
+    if (!hit) return false;
+  }
+
+  return true;
+}
+
+function getFilteredDexCounts() {
   const allPokemon = runtime.api?.pkmn || readGlobal("pkmn") || {};
+  const filters = readPokedexFilters();
+  const useMonotype = isDuplicateTypeFilterActive();
+  const useMove = Boolean(runtime.state?.moveId);
   const moveId = runtime.state?.moveId || "";
   const moveScope = runtime.state?.moveScope || "any";
+
   let totalPokemon = 0;
   let gotPokemon = 0;
   for (const id in allPokemon) {
@@ -426,7 +558,9 @@ function getFilteredDexCounts(useMonotype, useMove) {
     if (!pokemon || typeof pokemon !== "object") continue;
     // 与原版图鉴一致：未获取且标记为不可获得的宝可梦不计入图鉴总量
     if (pokemon.caught === 0 && pokemon.tagObtainedIn === "unobtainable") continue;
-    // 仅统计符合当前筛选条件的宝可梦（包含尚未捕捉的）
+    // 同时满足原版图鉴的全部筛选条件（逻辑与）
+    if (!matchesOriginalFilters(pokemon, id, filters)) continue;
+    // 同时满足 betterDex 的筛选条件（单属性 / 招式）
     if (useMonotype && !isMatchingMonotype(pokemon)) continue;
     if (useMove && !hasRequestedMove(pokemon, moveId, moveScope)) continue;
     totalPokemon++;
