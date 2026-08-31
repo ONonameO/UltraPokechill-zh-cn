@@ -124,11 +124,11 @@
     },
     {
       "id": "backupMod",
-      "name": "Backup Mod",
-      "description": "Automatically sends clean Discord save backups every 10 minutes. Check the Backup Mod guide entry before using.",
+      "name": "Discord 备份",
+      "description": "每 10 分钟自动备份存档至 Discord ，使用前请务必阅读此 Mod 指南。",
       "version": "1.2",
       "author": "UltraPokechill",
-      "category": "Safety",
+      "category": "实用工具",
       "file": "workshop/backupMod.mod",
       "image": "mods/workshop/backupModIcon.png",
       "tags": ["backup", "discord", "webhook", "save", "safety"]
