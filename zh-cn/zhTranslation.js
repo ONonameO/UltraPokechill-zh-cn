@@ -1673,7 +1673,7 @@
         "Refresh": "刷新",
         "Drop .mod files here": "把.mod文件拖到这里",
         ".mod is a renamed zip with mod.json, mod.js and optional icon.png.": ".mod是一个重命名的压缩包，包含mod.json、mod.js和可选的icon.png文件。",
-        "Community mods are JavaScript packages. Install only mods you trust.": "创意工坊里的Mod是JavaScript包。请仅安装您信任的Mod。",
+        "Community mods are JavaScript packages. Install only mods you trust.": "创意工坊里的Mod是JavaScript包，请仅安装您信任的Mod。",
         "Mods Folder": "Mods文件夹",
         "Imported": "导入",
         "Runtime": "运行环境",
