@@ -118,36 +118,25 @@
     let _ifShowIds = undefined;
 
     function computeIncompleteFamilyIds() {
-        const processed = new Set();
-        const familyMap = new Map();
+        // perf fix B: static family grouping is precomputed once (getPokedexFamilyMap);
+        // here we only recompute the shiny/caught flags, which do change.
+        const familyMap = getPokedexFamilyMap();
+        const showIds = new Set();
 
-        for (const id in pkmn) {
-            const mon = pkmn[id];
-            if (!mon || processed.has(id)) continue;
-
-            const family = getEvolutionFamily(mon);
+        familyMap.forEach(function (memberIds) {
             let hasShiny = false;
             let hasNonShiny = false;
-            const memberIds = [];
-
-            for (const member of family) {
-                if (member.caught <= 0) continue;
-                memberIds.push(member.id);
-                if (member.shiny === true) hasShiny = true;
+            for (const mid of memberIds) {
+                const m = pkmn[mid];
+                if (!m || m.caught <= 0) continue;
+                if (m.shiny === true) hasShiny = true;
                 else hasNonShiny = true;
-                processed.add(member.id);
             }
-
-            const familyKey = memberIds.slice().sort().join(",");
-            if (familyKey && !familyMap.has(familyKey)) {
-                familyMap.set(familyKey, { hasShiny: hasShiny, hasNonShiny: hasNonShiny, memberIds: memberIds });
-            }
-        }
-
-        const showIds = new Set();
-        familyMap.forEach(function (info) {
-            if (info.hasShiny && info.hasNonShiny) {
-                info.memberIds.forEach(function (mid) { showIds.add(mid); });
+            if (hasShiny && hasNonShiny) {
+                for (const mid of memberIds) {
+                    const m = pkmn[mid];
+                    if (m && m.caught > 0) showIds.add(mid);
+                }
             }
         });
         return showIds;

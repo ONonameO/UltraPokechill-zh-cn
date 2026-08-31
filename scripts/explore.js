@@ -5182,8 +5182,11 @@ let fusePkmn;
 let searchedPkmn = []
 
 
+let __lastFilteredPkmnIds = [];
+
 function updatePokedex(){
 
+    __lastFilteredPkmnIds = [];
     if (document.getElementById(`pokedex-menu`).style.display!=="flex") return
 
     document.getElementById(`pokedex-list`).innerHTML = ""
@@ -5317,6 +5320,7 @@ function updatePokedex(){
         if (pkmn[i].caught==0 && pkmn[i].tagObtainedIn == "unobtainable") continue
 
         totalPokemon++
+        __lastFilteredPkmnIds.push(i)
 
         if (pkmn[i].caught==0) continue
 
@@ -9579,8 +9583,8 @@ function getEvolutionFamily(base) {
             }
         }
         
-        // search evos (backwards)
-        const preEvos = findPreEvolutions(current);
+        // search evos (backwards) via prebuilt reverse index (perf fix A)
+        const preEvos = getPreEvoIndex().get(current.id) || [];
         for (const preEvo of preEvos) {
             stack.push(preEvo);
         }
@@ -9594,6 +9598,45 @@ function getEvolutionFamily(base) {
 
 
 
+
+// ── perf fix A/B: prebuilt reverse-evolution index + static family map (computed once) ──
+let __preEvoIndex = null;
+function getPreEvoIndex() {
+    if (__preEvoIndex) return __preEvoIndex;
+    __preEvoIndex = new Map();
+    for (const id in pkmn) {
+        const mon = pkmn[id];
+        if (typeof mon.evolve === "function") {
+            const evoObj = mon.evolve();
+            for (const slot in evoObj) {
+                const target = evoObj[slot].pkmn;
+                if (target) {
+                    if (!__preEvoIndex.has(target.id)) __preEvoIndex.set(target.id, []);
+                    __preEvoIndex.get(target.id).push(mon);
+                }
+            }
+        }
+    }
+    return __preEvoIndex;
+}
+
+// Static family → member id list, computed once and reused (perf fix B).
+let __familyMembershipMap = null;
+function getPokedexFamilyMap() {
+    if (__familyMembershipMap) return __familyMembershipMap;
+    __familyMembershipMap = new Map();
+    const processed = new Set();
+    for (const id in pkmn) {
+        const mon = pkmn[id];
+        if (!mon || processed.has(id)) continue;
+        const family = getEvolutionFamily(mon);
+        const memberIds = [];
+        family.forEach(m => { memberIds.push(m.id); processed.add(m.id); });
+        const key = memberIds.slice().sort().join(",");
+        if (key) __familyMembershipMap.set(key, memberIds);
+    }
+    return __familyMembershipMap;
+}
 
 function returnHighestStat(pokemon) { //ignores hp bst, used for beast boost etc
     return Object.keys(pokemon.bst)
@@ -10781,12 +10824,25 @@ function updatePokedexTotal() {
       if (mon.caught > 0) gotPokemon++;
     }
   } else {
-    for (const i in pkmn) {
-      const mon = pkmn[i];
-      if (!passesPokedexFilters(i)) continue;
-      if (!passesModFilters(mon, i)) continue;
-      totalPokemon++;
-      if (mon.caught > 0) gotPokemon++;
+    const baseIds = __lastFilteredPkmnIds;
+    if (baseIds.length === 0) {
+      // fallback: pokedex list not yet computed this cycle
+      for (const i in pkmn) {
+        const mon = pkmn[i];
+        if (!passesPokedexFilters(i)) continue;
+        if (!passesModFilters(mon, i)) continue;
+        totalPokemon++;
+        if (mon.caught > 0) gotPokemon++;
+      }
+    } else {
+      // perf fix C: reuse the filtered id set already computed by updatePokedex
+      for (const id of baseIds) {
+        const mon = pkmn[id];
+        if (!mon) continue;
+        if (!passesModFilters(mon, id)) continue;
+        totalPokemon++;
+        if (mon.caught > 0) gotPokemon++;
+      }
     }
   }
 
