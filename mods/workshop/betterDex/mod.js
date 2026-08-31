@@ -5,7 +5,6 @@ const MOVE_SELECT_ID = "better-dex-move-select";
 const MOVE_SEARCH_ID = "better-dex-move-search";
 const MOVE_SCOPE_ID = "better-dex-move-scope";
 const CLEAR_BUTTON_ID = "better-dex-clear-move";
-const STATUS_ID = "better-dex-status";
 const UPDATE_PATCH = "__betterDexUpdatePatch";
 const RESET_PATCH = "__betterDexResetPatch";
 
@@ -73,21 +72,18 @@ function installStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-    /* 与原版图鉴筛选行保持一致：控件为「内容宽度并居中」，不强行占满整行，
-       从而让招式筛选行的左右边距与原版筛选区域一致（原版由 .pokedex-filters-menu
-       的 align-items:center 决定，每行都是内容宽度居中，而非铺满整行） */
+
     #${CONTROLS_ID} {
-      align-items: center;
       display: flex;
+      justify-content: center;
+      align-items: center;
       flex-wrap: wrap;
       gap: 0.5rem;
-      justify-content: center;
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      width: 100%;
     }
 
     #${CONTROLS_ID} select,
+    #${CONTROLS_ID} button,
     #${CONTROLS_ID} input {
       font-size: 1rem;
       padding: 0.2rem 0.5rem;
@@ -97,24 +93,25 @@ function installStyles() {
       border: none;
       border-radius: 10rem;
       white-space: nowrap;
-      cursor: pointer;
-      width: auto;
-      font-family: inherit;
-      box-sizing: border-box;
-      /* 固定宽度 + 不伸缩：输入招式名或筛选项变化时，整行总宽度保持不变，
-         不再发生位移或向右偏移 */
-      flex: 0 0 auto;
-      width: 11rem;
     }
 
+    #${CONTROLS_ID} #${MOVE_SCOPE_ID},
+    #${CONTROLS_ID} #${CLEAR_BUTTON_ID} {
+      width: auto;
+      cursor: pointer;
+    }
+    
     #${CONTROLS_ID} input {
+      width: 14.3rem;
       cursor: text;
     }
 
-    #${CONTROLS_ID} button {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
+    #${CONTROLS_ID} #${MOVE_SELECT_ID} {
+      width: 9rem;
+    }
+
+    #${CONTROLS_ID} #${CLEAR_BUTTON_ID} {
+      background-color: rgb(155, 102, 77);
     }
 
     #${CONTROLS_ID} button:hover,
@@ -127,45 +124,6 @@ function installStyles() {
       outline: none;
     }
 
-    /* 「清除招式」按钮：视觉样式（颜色/边框/字体/尺寸/悬停）与「清空筛选」.clear-filters 完全一致。
-       原版 .clear-filters 没有悬停高亮，因此这里也去除悬停效果以保持一致。 */
-    #${CONTROLS_ID} #${CLEAR_BUTTON_ID} {
-      font-size: 1rem;
-      padding: 0.2rem 0.5rem;
-      background-color: var(--dark2);
-      color: var(--light2);
-      outline: none;
-      border: none;
-      border-radius: 10rem;
-      white-space: nowrap;
-      cursor: pointer;
-      width: auto;
-      font-family: inherit;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #${CONTROLS_ID} #${CLEAR_BUTTON_ID}:hover,
-    #${CONTROLS_ID} #${CLEAR_BUTTON_ID}:focus-visible {
-      filter: none;
-    }
-
-    #${STATUS_ID} {
-      color: var(--light2);
-      font-size: 0.85rem;
-      line-height: 1.1;
-      text-align: center;
-    }
-
-    @media (max-width: 720px) {
-      #${CONTROLS_ID} select,
-      #${CONTROLS_ID} input {
-        flex: 1 1 9rem;
-        min-width: 0;
-        width: auto;
-      }
-    }
   `;
   document.head.appendChild(style);
 }
@@ -184,15 +142,17 @@ function ensureControls() {
       <option value="equipped">已装备的招式</option>
       <option value="learned">已习得的招式</option>
     </select>
-    <input id="${MOVE_SEARCH_ID}" type="text" placeholder="Search Move">
+    <input id="${MOVE_SEARCH_ID}" type="text" placeholder="搜索招式...">
     <select id="${MOVE_SELECT_ID}">
       <option value="">move</option>
     </select>
     <button id="${CLEAR_BUTTON_ID}" type="button">清除招式</button>
-    <span id="${STATUS_ID}"></span>
   `;
 
-  filtersRow.appendChild(controls);
+  // 作为「原版筛选行」(nth-of-type(3)) 的同级兄弟行插入 .pokedex-filters-menu，
+  // 由菜单自身的 align-items:center 居中，从而与原版每行（标题/分隔线/筛选行/搜索框）
+  // 保持左右边距一致，不再因嵌套进筛选行内部混排而发生左溢出/右收缩。
+  filtersRow.after(controls);
 
   const scope = document.getElementById(MOVE_SCOPE_ID);
   const search = document.getElementById(MOVE_SEARCH_ID);
@@ -323,8 +283,9 @@ function refreshMoveOptions() {
     return;
   }
 
-  const filtered = searchText
-    ? moves.filter(entry => entry.label.toLowerCase().includes(searchText) || entry.id.toLowerCase().includes(searchText))
+  const needle = normalizeMoveToken(searchText);
+  const filtered = needle
+    ? moves.filter(entry => normalizeMoveToken(entry.id).includes(needle) || normalizeMoveToken(entry.name).includes(needle))
     : moves;
 
   select.innerHTML = `<option value="">move</option>` + filtered.map(entry => (
@@ -428,7 +389,11 @@ function getMoveEntries() {
   const moves = runtime.api?.move || readGlobal("move") || {};
   runtime.moveEntries = Object.keys(moves)
     .filter(id => getMove(id)?.id === id)
-    .map(id => ({ id, label: formatName(id) }))
+    // id  = 招式对象键（如 machPunk），是原版百科搜索所用的权威标识
+    // name = 稳定的英文原名 rename（如 machPunch），不随中文 locale 变化，
+    //        用于兼容中文插件把“音速拳”转回英文原名（Mach Punch）后的匹配
+    // label = 展示用名称（formatName，可能为中文「音速拳」），仅用于显示，不参与匹配
+    .map(id => ({ id, name: getMove(id)?.rename || id, label: formatName(id) }))
     .sort((left, right) => left.label.localeCompare(right.label));
 
   return runtime.moveEntries;
@@ -599,11 +564,11 @@ function getFilteredDexCounts() {
 }
 
 function findMoveByText(value) {
-  const needle = String(value || "").trim().toLowerCase();
-  if (!needle) return "";
+  const norm = normalizeMoveToken(value);
+  if (!norm) return "";
 
   const exact = getMoveEntries().find(entry => (
-    entry.id.toLowerCase() === needle || entry.label.toLowerCase() === needle
+    normalizeMoveToken(entry.id) === norm || normalizeMoveToken(entry.name) === norm
   ));
   return exact?.id || "";
 }
@@ -642,6 +607,12 @@ function escapeHtml(value) {
 
 function escapeAttr(value) {
   return escapeHtml(value);
+}
+
+// 规范化招式匹配键：转小写并去除所有非字母数字字符，
+// 使 "Mach Punch" / "machpunch" / "Mach-Punch" 等均能互相匹配（对齐百科按 id 模糊匹配的逻辑）
+function normalizeMoveToken(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 function safeCall(callback) {
