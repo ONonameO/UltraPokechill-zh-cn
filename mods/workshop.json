@@ -37,11 +37,11 @@
     },
     {
       "id": "shinyEvolve",
-      "name": "Shiny Evolve",
-      "description": "Makes evolutions from shiny Pokemon unlock shiny evolved units.",
+      "name": "闪光进化",
+      "description": "闪光宝可梦进化后仍保持闪光形态。",
       "version": "1.6",
       "author": "UltraPokechill",
-      "category": "Evolution",
+      "category": "进化",
       "file": "workshop/shinyEvolve.mod",
       "image": "img/items/shinyStone.png",
       "tags": ["evolution", "shiny", "quality-of-life"]
@@ -49,11 +49,11 @@
 
     {
       "id": "cosmoemEvolves",
-      "name": "Cosmoem Evolves",
-      "description": "Adds Cosmog Candy to the shop to evolve Cosmoem into Solgaleo during the day or Lunala during the night.",
+      "name": "科斯莫姆进化",
+      "description": "商店中新增科斯莫古糖果，白天使用可使科斯莫姆进化为索尔迦雷欧，夜晚使用则进化为露奈雅拉。",
       "version": "1.4",
       "author": "UltraPokechill",
-      "category": "Evolution",
+      "category": "进化",
       "file": "workshop/CosmoemEvolves.mod",
       "image": "img/items/cosmogCandy.png",
       "tags": ["evolution", "cosmoem", "cosmog", "shop"]

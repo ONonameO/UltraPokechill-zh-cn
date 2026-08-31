@@ -2061,7 +2061,11 @@
         "String Shot": "吐丝",
         "X Scissor": "十字剪",
         "Spectral Thief": "暗影偷盗",
+
         //道具
+        //Mod
+        "Cosmog Candy": "科斯莫古糖果",
+        
         //携带物
         "Black Belt": "黑带",
         "Metal Coat": "金属膜",

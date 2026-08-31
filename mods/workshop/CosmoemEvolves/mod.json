@@ -1,0 +1,10 @@
+{
+  "id": "cosmoemEvolves",
+  "name": "科斯莫姆进化",
+  "description": "商店中新增科斯莫古糖果，白天使用可使科斯莫姆进化为索尔迦雷欧，夜晚使用则进化为露奈雅拉。",
+  "image": "img/items/cosmogCandy.png",
+  "version": "1.4",
+  "author": "UltraPokechill",
+  "category": "进化",
+  "defaultEnabled": false
+}
