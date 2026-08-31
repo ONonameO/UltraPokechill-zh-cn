@@ -113,10 +113,63 @@
         });
     }
 
+    /* ── count predicate for the unified pokedex total ── */
+    let _ifActiveKey = undefined;
+    let _ifShowIds = undefined;
+
+    function computeIncompleteFamilyIds() {
+        const processed = new Set();
+        const familyMap = new Map();
+
+        for (const id in pkmn) {
+            const mon = pkmn[id];
+            if (!mon || processed.has(id)) continue;
+
+            const family = getEvolutionFamily(mon);
+            let hasShiny = false;
+            let hasNonShiny = false;
+            const memberIds = [];
+
+            for (const member of family) {
+                if (member.caught <= 0) continue;
+                memberIds.push(member.id);
+                if (member.shiny === true) hasShiny = true;
+                else hasNonShiny = true;
+                processed.add(member.id);
+            }
+
+            const familyKey = memberIds.slice().sort().join(",");
+            if (familyKey && !familyMap.has(familyKey)) {
+                familyMap.set(familyKey, { hasShiny: hasShiny, hasNonShiny: hasNonShiny, memberIds: memberIds });
+            }
+        }
+
+        const showIds = new Set();
+        familyMap.forEach(function (info) {
+            if (info.hasShiny && info.hasNonShiny) {
+                info.memberIds.forEach(function (mid) { showIds.add(mid); });
+            }
+        });
+        return showIds;
+    }
+
+    function ifCountPredicate(mon, id) {
+        const select = document.getElementById("pokedex-filter-shiny");
+        const active = !!select && select.value === optionValue;
+        const key = active ? optionValue : "inactive";
+        if (_ifActiveKey !== key) {
+            _ifActiveKey = key;
+            _ifShowIds = active ? computeIncompleteFamilyIds() : null;
+        }
+        if (!active || !_ifShowIds) return true;
+        return _ifShowIds.has(id);
+    }
+
     /* ── render / remove ── */
     function renderIFFilter() {
         injectStyles();
         addOption();
+        if (typeof registerPokedexCountFilter === "function") registerPokedexCountFilter(modId, ifCountPredicate);
 
         if (!patched) {
             patched = true;
@@ -127,6 +180,7 @@
                 origUpdatePokedex.apply(this, arguments);
                 try {
                     applyIncompleteFamiliesFilter();
+                    if (typeof updatePokedexTotal === "function") updatePokedexTotal();
                 } catch (err) {
                     console.error("[IncompleteFamilies] error in updatePokedex hook:", err);
                 }
@@ -160,6 +214,8 @@
             origResetFilters = null;
             patched = false;
         }
+        if (typeof unregisterPokedexCountFilter === "function") unregisterPokedexCountFilter(modId);
+        updatePokedex();
     }
 
     UltraMods.define({

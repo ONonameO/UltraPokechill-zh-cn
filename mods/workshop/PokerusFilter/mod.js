@@ -7,7 +7,15 @@
     let origResetFilters = null;
 
 
+    function pkrsCountPredicate(mon, id) {
+        const sel = document.getElementById(selectId);
+        if (!sel || sel.value === "all") return true;
+        return mon.pokerus === true;
+    }
+
     function renderPkrsFilter() {
+        if (typeof registerPokedexCountFilter === "function") registerPokedexCountFilter(modId, pkrsCountPredicate);
+
         // ── inject the <select> ──
         if (!document.getElementById(selectId)) {
             const select = document.createElement("select");
@@ -47,6 +55,7 @@
                         div.style.display = "none";
                     }
                 });
+                if (typeof updatePokedexTotal === "function") updatePokedexTotal();
             };
 
             resetPokedexFilters = function () {
@@ -70,6 +79,8 @@
             origResetFilters = null;
             patched = false;
         }
+        if (typeof unregisterPokedexCountFilter === "function") unregisterPokedexCountFilter(modId);
+        updatePokedex();
     }
 
     UltraMods.define({

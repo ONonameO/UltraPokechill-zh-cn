@@ -5884,17 +5884,7 @@ if (document.getElementById("pokedex-search").value!="") {
     }
 
 
-    document.getElementById(`pokedex-total`).innerHTML = `Caught: ${gotPokemon} / ${totalPokemon}`
-    if (gotPokemon == totalPokemon) {document.getElementById(`pokedex-total`).style.background = "rgba(187, 146, 85, 1)";     document.getElementById(`pokedex-total`).innerHTML = `Caught: ${gotPokemon} / ${totalPokemon} <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><defs><mask id="SVGIz3eBe9X"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="M8 44h8m-4 0V4"/><path fill="#555555" d="M40 6H12v16h28l-4-8z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#SVGIz3eBe9X)"/></svg>`
-}
-    else document.getElementById(`pokedex-total`).style.background = "rgba(91, 114, 163, 1)"
-
-    document.getElementById(`pokedex-total`).style.display = "flex"
-    if (document.getElementById(`pokedex-filter-level`).value !== "all") document.getElementById(`pokedex-total`).style.display = "none"
-    //if (document.getElementById(`pokedex-filter-tag`).value !== "all") document.getElementById(`pokedex-total`).style.display = "none"
-    if (document.getElementById(`pokedex-filter-ability`).value !== "all") document.getElementById(`pokedex-total`).style.display = "none"
-    if (document.getElementById(`pokedex-filter-evolution`).value !== "all") document.getElementById(`pokedex-total`).style.display = "none"
-    if (document.getElementById("pokedex-search").value!="") document.getElementById(`pokedex-total`).style.display = "none"
+    updatePokedexTotal()
 
 }
 
@@ -10686,3 +10676,126 @@ window.addEventListener('load', function() {
     if (saved.arenaCard1 == undefined) createArenaCards()
     //updateTeamExp()
 });
+
+// Registry of extra pokedex filters contributed by mods (betterDex,
+// IncompleteFamilies, PokerusFilter, ...). Each predicate(pokemon, id)
+// returns true when the pokemon should be included in the count while that
+// mod's filter is active. This lets totalPokemon reflect mod filtering even
+// though the rendered list only contains caught pokemon.
+window.__pokedexCountFilters = window.__pokedexCountFilters || {};
+function registerPokedexCountFilter(modId, predicate) {
+  window.__pokedexCountFilters[modId] = predicate;
+}
+function unregisterPokedexCountFilter(modId) {
+  delete window.__pokedexCountFilters[modId];
+}
+
+// Base pokedex filter logic. Returns true when pokemon `i` passes all base
+// filters (type/level/ability/division/ribbon/signature/shiny/evolution/tag).
+// Mirrors the inline filter loop inside updatePokedex(); keep the two in sync.
+// Does NOT cover search or mod filters (handled separately).
+function passesPokedexFilters(i) {
+  const mon = pkmn[i];
+  if (mon.ability == undefined) mon.ability = learnPkmnAbility(mon.id);
+  const typeEl = document.getElementById("pokedex-filter-type");
+  const type2El = document.getElementById("pokedex-filter-type-2");
+  const levelEl = document.getElementById("pokedex-filter-level");
+  const abilityEl = document.getElementById("pokedex-filter-ability");
+  const divisionEl = document.getElementById("pokedex-filter-division");
+  const ribbonEl = document.getElementById("pokedex-filter-ribbon");
+  const signatureEl = document.getElementById("pokedex-filter-signature");
+  const shinyEl = document.getElementById("pokedex-filter-shiny");
+  const evolutionEl = document.getElementById("pokedex-filter-evolution");
+
+  if (typeEl && typeEl.value !== "all" && !mon.type.includes(typeEl.value)) return false;
+  if (type2El && type2El.value !== "all" && !mon.type.includes(type2El.value)) return false;
+  if (levelEl && levelEl.value !== "all") {
+    const lv = +levelEl.value;
+    if (!(mon.level <= lv && mon.level >= lv - 19)) return false;
+  }
+  if (abilityEl && abilityEl.value !== "all") {
+    if (abilityEl.value != "4" && ability[mon.ability].rarity != abilityEl.value) return false;
+    if (abilityEl.value == "4" && (mon.hiddenAbilityUnlocked == true || mon.hiddenAbility == undefined)) return false;
+  }
+  if (divisionEl && divisionEl.value !== "all" && returnPkmnDivision(mon) != divisionEl.value) return false;
+  if (ribbonEl && ribbonEl.value !== "all" && mon.ribbons == undefined) return false;
+  if (signatureEl && signatureEl.value == "false" && mon.signature == undefined) return false;
+  if (signatureEl && signatureEl.value == "egg" && mon.eggMove == undefined) return false;
+  if (shinyEl && shinyEl.value == "true" && mon.shiny != true) return false;
+  if (shinyEl && shinyEl.value == "false" && mon.shiny == true) return false;
+  if (shinyEl && shinyEl.value == "sign" && (mon.starsignList == undefined || mon.shiny != true || giveStarsign(i, "check") == "complete")) return false;
+  if (shinyEl && shinyEl.value == "signall" && giveStarsign(i, "check") != "complete") return false;
+
+  if (tagSystemTagSearch.length > 0) {
+    if (!mon.tagList || mon.tagList.length === 0) return false;
+    const hasMatchingTag = mon.tagList.some(pkmnTag =>
+      tagSystemTagSearch.some(searchTag => pkmnTag.name === searchTag.name && pkmnTag.color === searchTag.color)
+    );
+    if (!hasMatchingTag) return false;
+  }
+
+  if (mon.evolve !== undefined) {
+    let missingEvolution = false;
+    let missingLevelEvolution = false;
+    const evos = mon.evolve();
+    for (const evo in evos) {
+      if (evos[evo].pkmn.caught == 0) {
+        missingEvolution = true;
+        if (evos[evo].level !== undefined) missingLevelEvolution = true;
+      }
+    }
+    if (evolutionEl && evolutionEl.value !== "all" && !missingEvolution) return false;
+    if (evolutionEl && evolutionEl.value == "level-only" && !missingLevelEvolution) return false;
+  }
+
+  if (mon.caught == 0 && mon.tagObtainedIn == "unobtainable") return false;
+  return true;
+}
+
+function passesModFilters(mon, id) {
+  const filters = window.__pokedexCountFilters;
+  for (const modId in filters) {
+    if (!filters[modId](mon, id)) return false;
+  }
+  return true;
+}
+
+function updatePokedexTotal() {
+  const totalEl = document.getElementById("pokedex-total");
+  const menu = document.getElementById("pokedex-menu");
+  if (!totalEl || !menu || menu.style.display !== "flex") return;
+
+  const searchEl = document.getElementById("pokedex-search");
+  const searchValue = (searchEl ? searchEl.value : "").trim();
+  const searchActive = searchValue !== "" && Array.isArray(searchedPkmn) && searchedPkmn.length > 0;
+
+  let totalPokemon = 0;
+  let gotPokemon = 0;
+
+  if (searchActive) {
+    for (const r of searchedPkmn) {
+      const mon = r && r.item;
+      if (!mon) continue;
+      if (!passesModFilters(mon, mon.id)) continue;
+      totalPokemon++;
+      if (mon.caught > 0) gotPokemon++;
+    }
+  } else {
+    for (const i in pkmn) {
+      const mon = pkmn[i];
+      if (!passesPokedexFilters(i)) continue;
+      if (!passesModFilters(mon, i)) continue;
+      totalPokemon++;
+      if (mon.caught > 0) gotPokemon++;
+    }
+  }
+
+  totalEl.style.display = "flex";
+  totalEl.innerHTML = `Caught: ${gotPokemon} / ${totalPokemon}`;
+  if (gotPokemon === totalPokemon) {
+    totalEl.style.background = "rgba(187, 146, 85, 1)";
+    totalEl.innerHTML = `Caught: ${gotPokemon} / ${totalPokemon} <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><defs><mask id="SVGIz3eBe9X"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="M8 44h8m-4 0V4"/><path fill="#555555" d="M40 6H12v16h28l-4-8z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#SVGIz3eBe9X)"/></svg>`;
+  } else {
+    totalEl.style.background = "rgba(91, 114, 163, 1)";
+  }
+}

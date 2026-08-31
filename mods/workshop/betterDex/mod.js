@@ -44,12 +44,14 @@ function install(api, state) {
   patchPokedex();
   patchResetFilters();
   refreshMoveOptions();
+  registerPokedexCountFilter(MOD_ID, betterDexCountPredicate);
   applyBetterDexFilters();
 }
 
 function uninstall() {
   restorePokedex();
   restoreResetFilters();
+  unregisterPokedexCountFilter(MOD_ID);
   document.getElementById(CONTROLS_ID)?.remove();
   document.getElementById(STYLE_ID)?.remove();
   runtime.api = undefined;
@@ -299,6 +301,16 @@ function refreshMoveOptions() {
   select.dataset.betterDexOptionsKey = optionsKey;
 }
 
+function betterDexCountPredicate(mon) {
+  const useMonotype = isDuplicateTypeFilterActive();
+  const useMove = Boolean(runtime.state && runtime.state.moveId);
+  if (!useMonotype && !useMove) return true;
+  let ok = true;
+  if (useMonotype) ok = ok && isMatchingMonotype(mon);
+  if (useMove) ok = ok && hasRequestedMove(mon, runtime.state.moveId, runtime.state.moveScope);
+  return ok;
+}
+
 function applyBetterDexFilters() {
   const list = document.getElementById("pokedex-list");
   if (!list) return;
@@ -308,7 +320,7 @@ function applyBetterDexFilters() {
 
   const cards = Array.from(list.querySelectorAll("[data-pkmn-editor]"));
   if (cards.length === 0) {
-    updateStatus(0, false, false);
+    if (typeof updatePokedexTotal === "function") updatePokedexTotal();
     return;
   }
 
@@ -332,7 +344,7 @@ function applyBetterDexFilters() {
       shown++;
     }
 
-    updateStatus(shown, useMonotype, useMove);
+    if (typeof updatePokedexTotal === "function") updatePokedexTotal();
   } finally {
     runtime.applying = false;
   }
@@ -361,14 +373,6 @@ function hasRequestedMove(pokemon, moveId, scope = "any") {
   return equipped || learned || memory;
 }
 
-function updateStatus(shown, useMonotype, useMove) {
-  if (!useMonotype && !useMove) return;
-  const total = document.getElementById("pokedex-total");
-  if (!total) return;
-  total.style.display = "flex";
-  total.style.background = "rgba(91, 114, 163, 1)";
-  total.textContent = `Shown: ${shown}`;
-}
 
 function getMoveEntries() {
   if (runtime.moveEntries) return runtime.moveEntries;
@@ -376,10 +380,6 @@ function getMoveEntries() {
   const moves = runtime.api?.move || readGlobal("move") || {};
   runtime.moveEntries = Object.keys(moves)
     .filter(id => getMove(id)?.id === id)
-    // id  = 招式对象键（如 machPunk），是原版百科搜索所用的权威标识
-    // name = 稳定的英文原名 rename（如 machPunch），不随中文 locale 变化，
-    //        用于兼容中文插件把“音速拳”转回英文原名（Mach Punch）后的匹配
-    // label = 展示用名称（formatName，可能为中文「音速拳」），仅用于显示，不参与匹配
     .map(id => ({ id, name: getMove(id)?.rename || id, label: formatName(id) }))
     .sort((left, right) => left.label.localeCompare(right.label));
 
