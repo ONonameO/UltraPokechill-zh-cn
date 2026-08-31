@@ -1,0 +1,9 @@
+{
+    "id": "incomplete_famillies",
+    "name": "Incomplete Families",
+    "description": "Option for the shiny filter that shows the pokemons famillies that are not fully shiny",
+    "image": "icon.png",
+    "version": "1.1",
+    "author": "LPF",
+    "category": "Pokedex"
+}
