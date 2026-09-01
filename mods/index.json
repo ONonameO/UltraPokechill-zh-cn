@@ -5,6 +5,7 @@
     "mythos.mod",
     "allStarters.mod",
     "speedBattles.mod",
-    "movePresets.mod"
+    "movePresets.mod",
+    "pokechillHelper.mod"
   ]
 }

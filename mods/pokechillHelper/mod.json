@@ -1,0 +1,10 @@
+{
+  "id": "pokechillHelper",
+  "name": "Pokechill 助手",
+  "description": "非全局战斗加速（基于回合推进）+ 倍速滑动条与输入框（1-50x）+ 跳过时间 + 自动重开。",
+  "image": "img/items/quickClaw.png",
+  "version": "1.0",
+  "author": "黄黄",
+  "category": "实用工具",
+  "defaultEnabled": false
+}
