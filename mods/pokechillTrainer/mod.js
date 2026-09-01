@@ -652,7 +652,7 @@ function buildFloatingUI(api, state) {
   const comboInput = document.createElement("input");
   comboInput.type = "text";
   comboInput.className = "pch-combo-input";
-  comboInput.placeholder = "选择 / 搜索特性…";
+  comboInput.placeholder = "选择 / 搜索特性 . . .";
   comboInput.setAttribute("autocomplete", "off");
   const comboList = document.createElement("div");
   comboList.className = "pch-combo-list";

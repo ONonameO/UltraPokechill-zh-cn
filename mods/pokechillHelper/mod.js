@@ -325,20 +325,16 @@ function installStyles() {
       padding: 0.55rem 0.6rem;
     }
 
-    .pch-speed-header {
+    .pch-section-title {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.4rem;
-    }
-    .pch-speed-title {
-      display: flex;
-      align-items: center;
       gap: 0.4rem;
       color: var(--dark2);
       font-weight: bold;
       font-size: 1rem;
     }
+
 
     .pch-speed-row {
       display: flex;
@@ -393,13 +389,14 @@ function installStyles() {
       color: white;
     }
 
-    .pch-skip-row {
-      display: flex; 
-      gap: 0.4rem; 
-      border-top: 2px solid rgba(54, 52, 47, 0.3);
-      border-bottom: 2px solid rgba(54, 52, 47, 0.3);
-      padding: 0.8rem 0.1rem;
+    .pch-divider {
+      height: 0;
       margin: 0.5rem 0;
+      border-top: 2px solid rgba(54, 52, 47, 0.3);
+    }
+    .pch-skip-row {
+      display: flex;
+      gap: 0.4rem;
     }
     .pch-skip-row .pch-btn { flex: 1; }
 
@@ -458,18 +455,13 @@ function buildFloatingUI(api, state) {
   const content = document.createElement("div");
   content.className = "pch-content";
 
-  // 倍速标题行：标题文字 + 当前倍速(nx)
+  // 倍速标题行（仅标题，倍速数值由滑块/输入框控制，不再渲染 nx）
   const speedHeader = document.createElement("div");
-  speedHeader.className = "pch-speed-header";
-  const speedTitle = document.createElement("div");
-  speedTitle.className = "pch-speed-title";
+  speedHeader.className = "pch-section-title";
   const label = document.createElement("span");
-  label.className = "pch-label";
-  label.textContent = "⏳ 战斗速度: ";
-  const current = document.createElement("span");
-  current.className = "pch-current";
-  speedTitle.append(label, current);
-  speedHeader.append(speedTitle);
+  label.className = "pch-section-title";
+  label.textContent = "⏳ 战斗速度";
+  speedHeader.append(label);
 
   // 倍速行：滑动条 + 输入框
   const speedRow = document.createElement("div");
@@ -505,12 +497,23 @@ function buildFloatingUI(api, state) {
     grid.appendChild(button);
   }
 
+  // 跳过时间模块：上下两条 pch-divider 分隔线（参考 pokechillTrainer），
+  // 标题位于上方分隔线正下方，分隔线在标题之上
+  const skipDividerTop = document.createElement("div");
+  skipDividerTop.className = "pch-divider";
+  const skipTitle = document.createElement("div");
+  skipTitle.className = "pch-section-title";
+  skipTitle.textContent = "⏰ 跳过时间";
+
   // 跳过时间行：沿用原脚本的 60 分钟 / 12 小时（要求2）
   const skipRow = document.createElement("div");
   skipRow.className = "pch-skip-row";
   const skip1 = makeButton("🕙 60分钟", () => { skipTime(1); flash(skip1); });
   const skip12 = makeButton("🌙 12小时", () => { skipTime(12); flash(skip12); });
   skipRow.append(skip1, skip12);
+
+  const skipDividerBottom = document.createElement("div");
+  skipDividerBottom.className = "pch-divider";
 
   // 自动重开行：按钮内含 ON/OFF 与(次数)，右侧对齐（要求7）
   const rejoinRow = document.createElement("div");
@@ -543,7 +546,7 @@ function buildFloatingUI(api, state) {
   foot.className = "pch-foot";
   foot.textContent = "Ctrl+Shift+↑/↓ 调整战斗速度";
 
-  content.append(speedHeader, speedRow, grid, skipRow, rejoinRow, foot);
+  content.append(speedHeader, speedRow, grid, skipDividerTop, skipTitle, skipRow, skipDividerBottom, rejoinRow, foot);
   ui.append(header, content);
 
   // 事件
@@ -617,10 +620,8 @@ function updateFloatingUI(api, state) {
 
   const slider = uiEl.querySelector(".pch-slider");
   const input = uiEl.querySelector(".pch-input");
-  const current = uiEl.querySelector(".pch-current");
   if (document.activeElement !== slider) slider.value = String(speed);
   if (document.activeElement !== input) input.value = String(speed);
-  current.textContent = `${speed}x`;
 
   uiEl.querySelectorAll(".pch-speed-grid .pch-btn").forEach(btn => {
     btn.classList.toggle("active", Number(btn.dataset.speed) === speed);
@@ -631,7 +632,7 @@ function updateFloatingUI(api, state) {
   if (rejoinBtn) {
     rejoinBtn.classList.toggle("active", ar.enabled);
     const status = rejoinBtn.querySelector(".pch-rejoin-status");
-    if (status) status.textContent = ar.enabled ? `ON (${ar.count})` : "OFF";
+    if (status) status.textContent = ar.enabled ? `ON ( ${ar.count} )` : "OFF";
   }
 }
 
