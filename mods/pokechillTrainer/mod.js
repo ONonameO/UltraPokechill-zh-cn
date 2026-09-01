@@ -562,7 +562,7 @@ function installStyles() {
       right: 0.3rem;  /* 右缩进*/
       bottom: 0.3rem; /* 下缩进*/
       left: 0.3rem;   /* 左缩进*/
-      border: 1px solid var(--light2);
+      border: 2px solid var(--light2);
       border-radius: 0.35rem;
       pointer-events: none; /* 让鼠标事件穿透，不阻挡点击 */
     }
@@ -1087,7 +1087,7 @@ function updateFloatingUI(api, state) {
     uiRefs.comboInput.value = getAbilityName(currentTargetId);
   }
 
-  uiRefs.toggleBtn.textContent = state.autoTraining ? "⏸️ 停止训练" : "▶️ 开启自动训练";
+  uiRefs.toggleBtn.textContent = state.autoTraining ? "⏸️ 　停止训练　" : "▶️ 开启自动训练";
   uiRefs.toggleBtn.classList.toggle("active", state.autoTraining);
 }
 
