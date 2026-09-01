@@ -5,6 +5,7 @@
 
 const MOD_ID = "pokechillTrainer";
 const STYLE_ID = "pokechill-trainer-style";
+const TOOLTIP_DELAY = 500; // tooltip 悬停延迟显示（毫秒）
 
 // 特性中文字典（原样移植）
 const ABILITY_CN_DICT = {
@@ -223,6 +224,10 @@ let uiRefs = null;         // 浮窗内关键 DOM 引用
 let lastTrainingPokemon = null; // 上次渲染下拉框时的训练宝可梦 ID
 let comboOutsideClick = null;   // 下拉框外部点击关闭监听
 let tooltipEl = null;           // 特性描述 tooltip 元素
+let tooltipTimer = null;       // tooltip 延迟显示计时器
+let tooltipOptCurrent = null;  // 当前悬停、正在计时的选项
+let tooltipPendingRect = null; // 触发选项的边界（延迟到点时用于定位）
+let comboListEl = null;        // 下拉面板元素（供 tooltip 左右自适应定位）
 
 UltraMods.define({
   id: MOD_ID,
@@ -522,7 +527,7 @@ function installStyles() {
     }
     .pch-combo-option:last-child { border-bottom: 0; }
     .pch-combo-option:hover, .pch-combo-option.active {
-      background: rgb(90, 133, 113);
+      background: var(--light1);
       color: white;
     }
     .pch-combo-empty {
@@ -779,6 +784,7 @@ function confirmTarget(api, abilityId, input) {
 
 // 下拉框交互：打开 / 过滤 / 选中 / 外部点击关闭
 function setupCombo(api, input, list, combo) {
+  comboListEl = list; // 供 tooltip 左右自适应定位读取面板位置
   function positionList() {
     const comboRect = combo.getBoundingClientRect();
     list.style.width = comboRect.width + "px";
@@ -802,7 +808,7 @@ function setupCombo(api, input, list, combo) {
   }
   function close() {
     list.classList.remove("open");
-    hideTooltip();
+    cancelTooltip();
   }
   input.addEventListener("focus", open);
   input.addEventListener("click", event => { event.stopPropagation(); open(); });
@@ -822,22 +828,39 @@ function setupCombo(api, input, list, combo) {
     confirmTarget(api, opt.dataset.id, input);
     close();
   });
-  // 悬停选项 -> 显示特性描述 tooltip
+  // 悬停选项 -> 延迟显示特性描述 tooltip（默认 TOOLTIP_DELAY 毫秒）
+  function scheduleTooltip(opt) {
+    if (tooltipOptCurrent === opt) return; // 同一选项内移动不重置计时器
+    tooltipOptCurrent = opt;
+    if (tooltipTimer) clearTimeout(tooltipTimer);
+    tooltipTimer = setTimeout(() => {
+      if (tooltipOptCurrent === opt && opt && opt._tipHtml && tooltipPendingRect) {
+        showTooltip(opt._tipHtml, tooltipPendingRect);
+      }
+      tooltipTimer = null;
+    }, TOOLTIP_DELAY);
+  }
+  function cancelTooltip() {
+    if (tooltipTimer) { clearTimeout(tooltipTimer); tooltipTimer = null; }
+    tooltipOptCurrent = null;
+    tooltipPendingRect = null;
+    hideTooltip();
+  }
   list.addEventListener("mouseover", event => {
     const opt = event.target.closest(".pch-combo-option");
-    if (!opt || !opt._tipHtml) return;
-    const r = opt.getBoundingClientRect();
-    showTooltip(opt._tipHtml, r.right, r.top);
+    if (!opt || !opt._tipHtml) { cancelTooltip(); return; }
+    tooltipPendingRect = opt.getBoundingClientRect();
+    scheduleTooltip(opt);
   });
   list.addEventListener("mousemove", event => {
     const opt = event.target.closest(".pch-combo-option");
     if (!opt || !opt._tipHtml) return;
-    const r = opt.getBoundingClientRect();
-    showTooltip(opt._tipHtml, r.right, r.top);
+    tooltipPendingRect = opt.getBoundingClientRect();
+    scheduleTooltip(opt);
   });
   list.addEventListener("mouseout", event => {
     const opt = event.target.closest(".pch-combo-option");
-    if (opt) hideTooltip();
+    if (opt) cancelTooltip();
   });
   // 点击浮窗外部关闭列表
   comboOutsideClick = event => {
@@ -855,17 +878,40 @@ function getTooltip() {
   }
   return tooltipEl;
 }
-function showTooltip(html, x, y) {
+// 显示 tooltip：依据下拉面板（浮窗）位置动态决定显示在左侧或右侧，
+// 确保不遮挡选项列表；垂直方向对齐触发选项并夹到视口内。
+function showTooltip(html, r) {
   const t = getTooltip();
   t.innerHTML = html;
   t.style.display = "block";
-  const r = t.getBoundingClientRect();
-  let left = x + 12;
-  let top = y + 12;
-  if (left + r.width > window.innerWidth - 8) left = x - r.width - 12;
+  const tr = t.getBoundingClientRect();
+  const gap = 12;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  let left;
+  if (comboListEl) {
+    const lr = comboListEl.getBoundingClientRect();
+    const spaceRight = vw - lr.right;   // 面板右侧可用宽度
+    const spaceLeft = lr.left;          // 面板左侧可用宽度
+    if (spaceRight >= tr.width + gap) {
+      left = lr.right + gap;            // 右侧充足 -> 显示在面板右侧
+    } else if (spaceLeft >= tr.width + gap) {
+      left = lr.left - tr.width - gap;  // 否则左侧充足 -> 显示在面板左侧
+    } else {
+      // 两侧都不够：放在空间更大的一侧，随后夹到视口内
+      left = spaceRight >= spaceLeft ? lr.right + gap : lr.left - tr.width - gap;
+    }
+  } else {
+    left = r.right + gap;
+  }
+  if (left + tr.width > vw - 8) left = vw - tr.width - 8;
   if (left < 8) left = 8;
-  if (top + r.height > window.innerHeight - 8) top = window.innerHeight - r.height - 8;
+
+  let top = r.top;
+  if (top + tr.height > vh - 8) top = vh - tr.height - 8;
   if (top < 8) top = 8;
+
   t.style.left = left + "px";
   t.style.top = top + "px";
 }
@@ -959,6 +1005,10 @@ function removeFloatingUI() {
     document.removeEventListener("mousedown", comboOutsideClick);
     comboOutsideClick = null;
   }
+  if (tooltipTimer) { clearTimeout(tooltipTimer); tooltipTimer = null; }
+  tooltipOptCurrent = null;
+  tooltipPendingRect = null;
+  comboListEl = null;
   if (tooltipEl && tooltipEl.parentNode) tooltipEl.parentNode.removeChild(tooltipEl);
   tooltipEl = null;
   if (uiEl && uiEl.parentNode) uiEl.parentNode.removeChild(uiEl);
