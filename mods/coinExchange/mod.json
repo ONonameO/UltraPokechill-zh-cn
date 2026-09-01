@@ -1,0 +1,10 @@
+{
+  "id": "coinExchange",
+  "name": "银币换金币",
+  "description": "商店中新增「银币换金币」兑换项，可用银色王冠批量兑换金色王冠。",
+  "image": "img/items/goldenBottleCap.png",
+  "version": "2.1.0",
+  "author": "人民当家做主 & 我不是西药",
+  "category": "商店",
+  "defaultEnabled": false
+}
