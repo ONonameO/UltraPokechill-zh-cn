@@ -1,6 +1,6 @@
 {
-  "id": "pokechillTrainer",
-  "name": "Pokechill 特性训练助手",
+  "id": "abilityTrainer",
+  "name": "特性训练助手",
   "description": "在进行特性训练时，自动重复训练直到刷出目标特性，省去手动重复尝试的复杂操作。",
   "image": "img/items/blackBelt.png",
   "version": "1.0",

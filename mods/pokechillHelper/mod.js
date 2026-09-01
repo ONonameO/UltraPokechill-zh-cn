@@ -276,7 +276,7 @@ function installStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-    .pch-floating {
+    .pokechill-helper-floating {
       position: fixed;
       top: 10px;
       left: 10px;
@@ -292,7 +292,7 @@ function installStyles() {
       overflow: hidden;
     }
 
-    .pch-header {
+    .pokechill-helper-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -301,12 +301,12 @@ function installStyles() {
       padding: 0.45rem 0.6rem;
       cursor: grab;
     }
-    .pch-title {
+    .pokechill-helper-title {
       font-weight: bold;
       font-size: 1.15rem;
       pointer-events: none;
     }
-    .pch-toggle-btn {
+    .pokechill-helper-toggle-btn {
       background: transparent;
       border: 0;
       color: var(--light2);
@@ -315,9 +315,9 @@ function installStyles() {
       line-height: 1;
       padding: 0 0.2rem;
     }
-    .pch-toggle-btn:hover { transform: scale(1.15); }
+    .pokechill-helper-toggle-btn:hover { transform: scale(1.15); }
 
-    .pch-content {
+    .pokechill-helper-content {
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
@@ -326,10 +326,9 @@ function installStyles() {
       padding: 0.55rem 0.6rem;
     }
 
-    .pch-section-title {
+    .pokechill-helper-section-title {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 0.4rem;
       color: var(--dark2);
       font-weight: bold;
@@ -337,21 +336,21 @@ function installStyles() {
     }
 
 
-    .pch-speed-row {
+    .pokechill-helper-speed-row {
       display: flex;
       align-items: center;
       gap: 0.4rem;
       flex-wrap: wrap;
     }
 
-    .pch-slider {
+    .pokechill-helper-slider {
       flex: 1;
       min-width: 110px;
       accent-color: rgb(90, 133, 113);
       cursor: pointer;
     }
 
-    .pch-input {
+    .pokechill-helper-input {
       width: 3.5rem;
       background: var(--dark2);
       color: var(--light2);
@@ -362,17 +361,17 @@ function installStyles() {
       padding: 0.2rem 0.35rem;
       text-align: center;
     }
-    .pch-input::-webkit-outer-spin-button,
-    .pch-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .pch-input { -moz-appearance: textfield; }
+    .pokechill-helper-input::-webkit-outer-spin-button,
+    .pokechill-helper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .pokechill-helper-input { -moz-appearance: textfield; }
 
-    .pch-speed-grid {
+    .pokechill-helper-speed-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 0.35rem;
     }
 
-    .pch-btn {
+    .pokechill-helper-btn {
       background: var(--light1);
       color: var(--light2);
       border: 0;
@@ -383,30 +382,30 @@ function installStyles() {
       cursor: pointer;
       transition: filter 0.1s, background 0.1s, transform 0.05s;
     }
-    .pch-btn:hover { background: #685F4B; }
-    .pch-btn:active { transform: translateY(1px); }
-    .pch-btn.active {
+    .pokechill-helper-btn:hover { background: #685F4B; }
+    .pokechill-helper-btn:active { transform: translateY(1px); }
+    .pokechill-helper-btn.active {
       background: rgb(90, 133, 113);
       color: white;
     }
 
-    .pch-divider {
+    .pokechill-helper-divider {
       height: 0;
       margin: 0.5rem 0;
       border-top: 2px solid rgba(54, 52, 47, 0.3);
     }
-    .pch-skip-row {
+    .pokechill-helper-skip-row {
       display: flex;
       gap: 0.4rem;
     }
-    .pch-skip-row .pch-btn { flex: 1; }
+    .pokechill-helper-skip-row .pokechill-helper-btn { flex: 1; }
 
-    .pch-rejoin-row {
+    .pokechill-helper-rejoin-row {
       display: flex;
       align-items: center;
       gap: 0.4rem;
     }
-    .pch-autorejoin {
+    .pokechill-helper-autorejoin {
       flex: 1;
       width: 100%;
       display: flex;
@@ -414,11 +413,11 @@ function installStyles() {
       justify-content: space-between;
       text-align: left;
     }
-    .pch-rejoin-status {
+    .pokechill-helper-rejoin-status {
       margin-left: auto;
     }
 
-    .pch-foot {
+    .pokechill-helper-foot {
       margin-top: 0.35rem;
       font-size: 0.7rem;
       font-weight: bold;
@@ -439,43 +438,43 @@ function installStyles() {
 function buildFloatingUI(api, state) {
   const ui = document.createElement("div");
   ui.id = "pokechill-helper-ui";
-  ui.className = "pch-floating";
+  ui.className = "pokechill-helper-floating";
 
   const header = document.createElement("div");
-  header.className = "pch-header";
+  header.className = "pokechill-helper-header";
   const title = document.createElement("span");
-  title.className = "pch-title";
+  title.className = "pokechill-helper-title";
   title.textContent = "⚡ Pokechill 助手";
   const toggleBtn = document.createElement("button");
   toggleBtn.type = "button";
-  toggleBtn.className = "pch-toggle-btn";
+  toggleBtn.className = "pokechill-helper-toggle-btn";
   toggleBtn.title = "折叠 / 展开";
   toggleBtn.textContent = "➖";
   header.append(title, toggleBtn);
 
   const content = document.createElement("div");
-  content.className = "pch-content";
+  content.className = "pokechill-helper-content";
 
   // 倍速标题行（仅标题，倍速数值由滑块/输入框控制，不再渲染 nx）
   const speedHeader = document.createElement("div");
-  speedHeader.className = "pch-section-title";
+  speedHeader.className = "pokechill-helper-section-title";
   const label = document.createElement("span");
-  label.className = "pch-section-title";
+  label.className = "pokechill-helper-section-title";
   label.textContent = "⏳ 战斗速度";
   speedHeader.append(label);
 
   // 倍速行：滑动条 + 输入框
   const speedRow = document.createElement("div");
-  speedRow.className = "pch-speed-row";
+  speedRow.className = "pokechill-helper-speed-row";
   const slider = document.createElement("input");
   slider.type = "range";
-  slider.className = "pch-slider";
+  slider.className = "pokechill-helper-slider";
   slider.min = String(MIN_SPEED);
   slider.max = String(MAX_SPEED);
   slider.step = "1";
   const input = document.createElement("input");
   input.type = "text";
-  input.className = "pch-input";
+  input.className = "pokechill-helper-input";
   input.inputMode = "numeric";
   input.placeholder = String(MIN_SPEED);
   input.title = `输入 ${MIN_SPEED}-${MAX_SPEED} 的整数`;
@@ -483,11 +482,11 @@ function buildFloatingUI(api, state) {
 
   // 倍速按钮：6 个，2 行 × 3 列
   const grid = document.createElement("div");
-  grid.className = "pch-speed-grid";
+  grid.className = "pokechill-helper-speed-grid";
   for (const option of SPEEDS) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "pch-btn";
+    button.className = "pokechill-helper-btn";
     button.dataset.speed = String(option);
     button.textContent = `${option}x`;
     button.addEventListener("click", event => {
@@ -498,35 +497,35 @@ function buildFloatingUI(api, state) {
     grid.appendChild(button);
   }
 
-  // 跳过时间模块：上下两条 pch-divider 分隔线（参考 pokechillTrainer），
+  // 跳过时间模块：上下两条 pokechill-helper-divider 分隔线（参考 pokechillTrainer），
   // 标题位于上方分隔线正下方，分隔线在标题之上
   const skipDividerTop = document.createElement("div");
-  skipDividerTop.className = "pch-divider";
+  skipDividerTop.className = "pokechill-helper-divider";
   const skipTitle = document.createElement("div");
-  skipTitle.className = "pch-section-title";
+  skipTitle.className = "pokechill-helper-section-title";
   skipTitle.textContent = "⏰ 跳过时间";
 
   // 跳过时间行：沿用原脚本的 1小时 / 12 小时（要求2）
   const skipRow = document.createElement("div");
-  skipRow.className = "pch-skip-row";
+  skipRow.className = "pokechill-helper-skip-row";
   const skip1 = makeButton("🕙 1小时", () => { skipTime(1); flash(skip1); });
   const skip12 = makeButton("🌙 12小时", () => { skipTime(12); flash(skip12); });
   skipRow.append(skip1, skip12);
 
   const skipDividerBottom = document.createElement("div");
-  skipDividerBottom.className = "pch-divider";
+  skipDividerBottom.className = "pokechill-helper-divider";
 
   // 自动重开行：按钮内含 ON/OFF 与(次数)，右侧对齐（要求7）
   const rejoinRow = document.createElement("div");
-  rejoinRow.className = "pch-rejoin-row";
+  rejoinRow.className = "pokechill-helper-rejoin-row";
   const rejoinBtn = document.createElement("button");
   rejoinBtn.type = "button";
-  rejoinBtn.className = "pch-btn pch-autorejoin";
+  rejoinBtn.className = "pokechill-helper-btn pokechill-helper-autorejoin";
   const rejoinLabel = document.createElement("span");
-  rejoinLabel.className = "pch-rejoin-label";
+  rejoinLabel.className = "pokechill-helper-rejoin-label";
   rejoinLabel.textContent = "🔄 自动重开";
   const rejoinStatus = document.createElement("span");
-  rejoinStatus.className = "pch-rejoin-status";
+  rejoinStatus.className = "pokechill-helper-rejoin-status";
   rejoinBtn.append(rejoinLabel, rejoinStatus);
   rejoinBtn.addEventListener("click", event => {
     event.preventDefault();
@@ -544,7 +543,7 @@ function buildFloatingUI(api, state) {
   rejoinRow.append(rejoinBtn);
 
   const foot = document.createElement("div");
-  foot.className = "pch-foot";
+  foot.className = "pokechill-helper-foot";
   foot.textContent = "Ctrl+Shift+↑/↓ 调整战斗速度";
 
   content.append(speedHeader, speedRow, grid, skipDividerTop, skipTitle, skipRow, skipDividerBottom, rejoinRow, foot);
@@ -581,7 +580,7 @@ function buildFloatingUI(api, state) {
 function makeButton(text, onClick) {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = "pch-btn";
+  b.className = "pokechill-helper-btn";
   b.textContent = text;
   b.addEventListener("click", event => {
     event.preventDefault();
@@ -629,20 +628,20 @@ function updateFloatingUI(api, state) {
   if (!uiEl) return;
   const speed = clampSpeed(state.speed);
 
-  const slider = uiEl.querySelector(".pch-slider");
-  const input = uiEl.querySelector(".pch-input");
+  const slider = uiEl.querySelector(".pokechill-helper-slider");
+  const input = uiEl.querySelector(".pokechill-helper-input");
   if (document.activeElement !== slider) slider.value = String(speed);
   if (document.activeElement !== input) input.value = String(speed);
 
-  uiEl.querySelectorAll(".pch-speed-grid .pch-btn").forEach(btn => {
+  uiEl.querySelectorAll(".pokechill-helper-speed-grid .pokechill-helper-btn").forEach(btn => {
     btn.classList.toggle("active", Number(btn.dataset.speed) === speed);
   });
 
   const ar = state.autoRejoin;
-  const rejoinBtn = uiEl.querySelector(".pch-autorejoin");
+  const rejoinBtn = uiEl.querySelector(".pokechill-helper-autorejoin");
   if (rejoinBtn) {
     rejoinBtn.classList.toggle("active", ar.enabled);
-    const status = rejoinBtn.querySelector(".pch-rejoin-status");
+    const status = rejoinBtn.querySelector(".pokechill-helper-rejoin-status");
     if (status) status.textContent = ar.enabled ? `ON ( ${ar.count} )` : "OFF";
   }
 }
@@ -655,8 +654,8 @@ function toggleCollapse(api, state) {
 
 function collapseUI(collapsed) {
   if (!uiEl) return;
-  const content = uiEl.querySelector(".pch-content");
-  const btn = uiEl.querySelector(".pch-toggle-btn");
+  const content = uiEl.querySelector(".pokechill-helper-content");
+  const btn = uiEl.querySelector(".pokechill-helper-toggle-btn");
   if (collapsed) {
     content.style.display = "none";
     btn.textContent = "➕";

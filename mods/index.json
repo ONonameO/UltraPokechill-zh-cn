@@ -7,6 +7,6 @@
     "speedBattles.mod",
     "movePresets.mod",
     "pokechillHelper/mod.js",
-    "pokechillTrainer/mod.js"
+    "abilityTrainer/mod.js"
   ]
 }

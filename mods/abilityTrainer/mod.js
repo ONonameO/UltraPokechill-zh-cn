@@ -1,10 +1,10 @@
-// Pokechill 特性训练助手 — 改写自 pokechill特性训练助手-1.0.user.js
+// 特性训练助手 — 改写自 特性训练助手-1.0.user.js
 //  - 保留原脚本的浮窗功能（搜索目标特性 + 自动重试直到获得目标特性）；
 //  - UI 为独立浮窗（可拖拽 / 折叠），美术与交互沿用 pokechillHelper 的视觉风格；
 //  - 通过 UltraMods 接口注册为游戏 mod，加载逻辑与原脚本一致（直接读取页面全局 saved/pkmn/ability）。
 
-const MOD_ID = "pokechillTrainer";
-const STYLE_ID = "pokechill-trainer-style";
+const MOD_ID = "abilityTrainer";
+const STYLE_ID = "ability-trainer-style";
 const TOOLTIP_DELAY = 300; // tooltip 悬停延迟显示（毫秒）
 
 // 特性中文字典（原样移植）
@@ -231,7 +231,7 @@ let comboListEl = null;        // 下拉面板元素（供 tooltip 左右自适�
 
 UltraMods.define({
   id: MOD_ID,
-  name: "Pokechill 特性训练助手",
+  name: "特性训练助手",
   description: "在进行特性训练时，自动重复训练直到刷出目标特性，省去手动重复尝试的复杂操作。",
   image: "img/items/blackBelt.png",
   version: "1.0",
@@ -425,7 +425,7 @@ function installStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-    .pch-floating {
+    .ability-trainer-floating {
       position: fixed;
       top: 10px;
       left: 10px;
@@ -440,7 +440,7 @@ function installStyles() {
       box-sizing: border-box;
     }
 
-    .pch-header {
+    .ability-trainer-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -450,12 +450,12 @@ function installStyles() {
       border-radius: 0.5rem 0.5rem 0 0;
       cursor: grab;
     }
-    .pch-title {
+    .ability-trainer-title {
       font-weight: bold;
       font-size: 1.15rem;
       pointer-events: none;
     }
-    .pch-toggle-btn {
+    .ability-trainer-toggle-btn {
       background: transparent;
       border: 0;
       color: var(--light2);
@@ -464,9 +464,9 @@ function installStyles() {
       line-height: 1;
       padding: 0 0.2rem;
     }
-    .pch-toggle-btn:hover { transform: scale(1.15); }
+    .ability-trainer-toggle-btn:hover { transform: scale(1.15); }
 
-    .pch-content {
+    .ability-trainer-content {
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
@@ -476,7 +476,7 @@ function installStyles() {
       border-radius: 0 0 0.5rem 0.5rem;
     }
 
-    .pch-section-title {
+    .ability-trainer-section-title {
       display: flex;
       align-items: center;
       gap: 0.4rem;
@@ -485,11 +485,11 @@ function installStyles() {
       font-size: 1rem;
     }
 
-    .pch-combo {
+    .ability-trainer-combo {
       position: relative;
       width: 100%;
     }
-    .pch-combo-input {
+    .ability-trainer-combo-input {
       width: 100%;
       box-sizing: border-box;
       background: var(--dark2);
@@ -500,9 +500,9 @@ function installStyles() {
       font-size: 0.9rem;
       padding: 0.35rem 0.45rem;
     }
-    .pch-combo-input::placeholder { color: rgba(236, 222, 183, 0.6); }
+    .ability-trainer-combo-input::placeholder { color: rgba(236, 222, 183, 0.6); }
 
-    .pch-combo-list {
+    .ability-trainer-combo-list {
       display: none;
       flex-direction: column;
       position: fixed;
@@ -515,8 +515,8 @@ function installStyles() {
       border-radius: 0 0 0.3rem 0.3rem;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
-    .pch-combo-list.open { display: flex; }
-    .pch-combo-option {
+    .ability-trainer-combo-list.open { display: flex; }
+    .ability-trainer-combo-option {
       padding: 0.5rem 0.55rem;
       color: var(--light2);
       cursor: pointer;
@@ -526,22 +526,22 @@ function installStyles() {
       white-space: normal;
       word-break: break-word;
     }
-    .pch-combo-option:last-child { border-bottom: 0; }
-    .pch-combo-option:hover {
+    .ability-trainer-combo-option:last-child { border-bottom: 0; }
+    .ability-trainer-combo-option:hover {
       background: var(--light1);
       color: white;
     }
-    .pch-combo-option.active {
+    .ability-trainer-combo-option.active {
       background: rgb(90, 133, 113);
       color: white;
     }
-    .pch-combo-empty {
+    .ability-trainer-combo-empty {
       padding: 0.4rem 0.45rem;
       color: rgba(236, 222, 183, 0.6);
       font-size: 0.85rem;
     }
 
-    .pch-tooltip {
+    .ability-trainer-tooltip {
       position: fixed;
       display: none;
       max-width: 260px;
@@ -555,8 +555,8 @@ function installStyles() {
       z-index: 1400;
       pointer-events: none;
     }
-    .pch-tooltip b { color: var(--light2); }
-    .pch-tooltip::before{
+    .ability-trainer-tooltip b { color: var(--light2); }
+    .ability-trainer-tooltip::before{
       content: '';
       position: absolute;
       top: 0.3rem;    /* 上缩进*/
@@ -568,20 +568,20 @@ function installStyles() {
       pointer-events: none; /* 让鼠标事件穿透，不阻挡点击 */
     }
 
-    .pch-divider {
+    .ability-trainer-divider {
       height: 0;
       margin: 0.5rem 0;
       border-top: 2px solid rgba(54, 52, 47, 0.3);
     }
 
-    .pch-info {
+    .ability-trainer-info {
       font-size: 0.9rem;
       font-weight: 600;
       white-space: pre-wrap;
       color: var(--light1);
     }
 
-    .pch-btn {
+    .ability-trainer-btn {
       background: var(--light1);
       color: var(--light2);
       border: 0;
@@ -593,14 +593,14 @@ function installStyles() {
       cursor: pointer;
       transition: filter 0.1s, background 0.1s, transform 0.05s;
     }
-    .pch-btn:hover { background: #685F4B; }
-    .pch-btn:active { transform: translateY(1px); }
-    .pch-btn.active {
+    .ability-trainer-btn:hover { background: #685F4B; }
+    .ability-trainer-btn:active { transform: translateY(1px); }
+    .ability-trainer-btn.active {
       background: rgb(90, 133, 113);
       color: white;
     }
 
-    .pch-foot {
+    .ability-trainer-foot {
       margin-top: 0.35rem;
       font-size: 0.68rem;
       font-weight: bold;
@@ -614,57 +614,57 @@ function installStyles() {
 
 function buildFloatingUI(api, state) {
   const ui = document.createElement("div");
-  ui.id = "pokechill-trainer-ui";
-  ui.className = "pch-floating";
+  ui.id = "ability-trainer-ui";
+  ui.className = "ability-trainer-floating";
 
   const header = document.createElement("div");
-  header.className = "pch-header";
+  header.className = "ability-trainer-header";
   const title = document.createElement("span");
-  title.className = "pch-title";
+  title.className = "ability-trainer-title";
   title.textContent = "💊 特性训练助手";
   const toggleBtn = document.createElement("button");
   toggleBtn.type = "button";
-  toggleBtn.className = "pch-toggle-btn";
+  toggleBtn.className = "ability-trainer-toggle-btn";
   toggleBtn.title = "折叠 / 展开";
   toggleBtn.textContent = "➖";
   header.append(title, toggleBtn);
 
   const content = document.createElement("div");
-  content.className = "pch-content";
+  content.className = "ability-trainer-content";
 
   // ===== 当前信息（需求1：置于目标特性上方）=====
   const infoTitle = document.createElement("div");
-  infoTitle.className = "pch-section-title";
+  infoTitle.className = "ability-trainer-section-title";
   infoTitle.textContent = "📋 当前信息";
   const pkmnLine = document.createElement("div");
-  pkmnLine.className = "pch-info";
+  pkmnLine.className = "ability-trainer-info";
   pkmnLine.textContent = "宝可梦：未选择";
   const abilityLine = document.createElement("div");
-  abilityLine.className = "pch-info";
+  abilityLine.className = "ability-trainer-info";
   abilityLine.textContent = "特　性：未知";
 
   // ===== 目标特性（需求2：可搜索下拉选择框）=====
   const targetTitle = document.createElement("div");
-  targetTitle.className = "pch-section-title";
+  targetTitle.className = "ability-trainer-section-title";
   targetTitle.textContent = "🎯 目标特性";
 
   const combo = document.createElement("div");
-  combo.className = "pch-combo";
+  combo.className = "ability-trainer-combo";
   const comboInput = document.createElement("input");
   comboInput.type = "text";
-  comboInput.className = "pch-combo-input";
+  comboInput.className = "ability-trainer-combo-input";
   comboInput.placeholder = "选择 / 搜索特性 . . .";
   comboInput.setAttribute("autocomplete", "off");
   const comboList = document.createElement("div");
-  comboList.className = "pch-combo-list";
+  comboList.className = "ability-trainer-combo-list";
   combo.append(comboInput, comboList);
 
   // 状态
   const statusTitle = document.createElement("div");
-  statusTitle.className = "pch-section-title";
+  statusTitle.className = "ability-trainer-section-title";
   statusTitle.textContent = "📊 状态";
   const statusLabel = document.createElement("div");
-  statusLabel.className = "pch-info";
+  statusLabel.className = "ability-trainer-info";
   statusLabel.textContent = "未开始";
 
   // 操作按钮
@@ -672,15 +672,15 @@ function buildFloatingUI(api, state) {
   const clearBtn = makeButton("🔄 　重　　置　", () => onClearTarget(api));
 
   const foot = document.createElement("div");
-  foot.className = "pch-foot";
+  foot.className = "ability-trainer-foot";
   foot.textContent = "自动重试直到获得目标特性";
 
   const divider1 = document.createElement("div");
-  divider1.className = "pch-divider";
+  divider1.className = "ability-trainer-divider";
   const divider2 = document.createElement("div");
-  divider2.className = "pch-divider";
+  divider2.className = "ability-trainer-divider";
   const divider3 = document.createElement("div");
-  divider3.className = "pch-divider";
+  divider3.className = "ability-trainer-divider";
 
   content.append(
     infoTitle, pkmnLine, abilityLine,
@@ -768,14 +768,14 @@ function renderComboOptions(api, filterText) {
   });
   if (matches.length === 0) {
     const empty = document.createElement("div");
-    empty.className = "pch-combo-empty";
+    empty.className = "ability-trainer-combo-empty";
     empty.textContent = pkmnId ? "无匹配特性" : "请先选择训练宝可梦";
     list.appendChild(empty);
     return;
   }
   for (const id of matches) {
     const opt = document.createElement("div");
-    opt.className = "pch-combo-option";
+    opt.className = "ability-trainer-combo-option";
     opt.dataset.id = id;
     opt.textContent = getAbilityName(id);
     const cn = ABILITY_CN_DICT[id] ? ABILITY_CN_DICT[id] : id;
@@ -859,7 +859,7 @@ function setupCombo(api, input, list, combo) {
     }
   });
   list.addEventListener("click", event => {
-    const opt = event.target.closest(".pch-combo-option");
+    const opt = event.target.closest(".ability-trainer-combo-option");
     if (!opt) return;
     event.stopPropagation();
     confirmTarget(api, opt.dataset.id, input);
@@ -867,17 +867,17 @@ function setupCombo(api, input, list, combo) {
   });
   // 悬停选项 -> 延迟显示特性描述 tooltip（默认 TOOLTIP_DELAY 毫秒）
   list.addEventListener("mouseover", event => {
-    const opt = event.target.closest(".pch-combo-option");
+    const opt = event.target.closest(".ability-trainer-combo-option");
     if (!opt || !opt._tipHtml) { cancelTooltip(); return; }
     scheduleTooltip(opt, opt._tipHtml, opt.getBoundingClientRect(), comboListEl);
   });
   list.addEventListener("mousemove", event => {
-    const opt = event.target.closest(".pch-combo-option");
+    const opt = event.target.closest(".ability-trainer-combo-option");
     if (!opt || !opt._tipHtml) return;
     scheduleTooltip(opt, opt._tipHtml, opt.getBoundingClientRect(), comboListEl);
   });
   list.addEventListener("mouseout", event => {
-    const opt = event.target.closest(".pch-combo-option");
+    const opt = event.target.closest(".ability-trainer-combo-option");
     if (opt) cancelTooltip();
   });
   // 点击浮窗外部关闭列表
@@ -891,7 +891,7 @@ function setupCombo(api, input, list, combo) {
 function getTooltip() {
   if (!tooltipEl) {
     tooltipEl = document.createElement("div");
-    tooltipEl.className = "pch-tooltip";
+    tooltipEl.className = "ability-trainer-tooltip";
     document.body.appendChild(tooltipEl);
   }
   return tooltipEl;
@@ -997,7 +997,7 @@ function refreshCurrentInfo(api) {
 function makeButton(text, onClick) {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = "pch-btn";
+  b.className = "ability-trainer-btn";
   b.textContent = text;
   b.addEventListener("click", event => {
     event.preventDefault();
@@ -1110,8 +1110,8 @@ function toggleCollapse(api, state) {
 
 function collapseUI(collapsed) {
   if (!uiEl) return;
-  const content = uiEl.querySelector(".pch-content");
-  const btn = uiEl.querySelector(".pch-toggle-btn");
+  const content = uiEl.querySelector(".ability-trainer-content");
+  const btn = uiEl.querySelector(".ability-trainer-toggle-btn");
   if (collapsed) {
     content.style.display = "none";
     btn.textContent = "➕";
