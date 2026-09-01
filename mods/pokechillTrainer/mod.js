@@ -505,7 +505,8 @@ function installStyles() {
       overflow-y: auto;
       background: var(--dark2);
       border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 0.3rem;
+      border-top: 0;
+      border-radius: 0 0 0.3rem 0.3rem;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
     .pch-combo-list.open { display: flex; }
@@ -549,8 +550,8 @@ function installStyles() {
 
     .pch-divider {
       height: 0;
-      margin: 0.05rem 0;
-      border-top: 1px solid rgba(54, 52, 47, 0.3);
+      margin: 0.5rem 0;
+      border-top: 2px solid rgba(54, 52, 47, 0.3);
     }
 
     .pch-info {
@@ -779,14 +780,17 @@ function confirmTarget(api, abilityId, input) {
 // 下拉框交互：打开 / 过滤 / 选中 / 外部点击关闭
 function setupCombo(api, input, list, combo) {
   function positionList() {
-    if (!uiEl) return;
-    const uiRect = uiEl.getBoundingClientRect();
-    list.style.width = uiRect.width + "px";
+    const comboRect = combo.getBoundingClientRect();
+    list.style.width = comboRect.width + "px";
     const listRect = list.getBoundingClientRect();
-    let top = uiRect.top - listRect.height - 6;
-    let left = uiRect.left;
-    if (top < 8) top = uiRect.bottom + 6; // 顶部空间不足时改在卡片下方
-    if (left + uiRect.width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - uiRect.width - 8);
+    // 紧贴搜索栏正下方，无缝衔接（顶部空间不足时向上收拢）
+    let top = comboRect.bottom;
+    let left = comboRect.left;
+    const maxBottom = window.innerHeight - 8;
+    if (top + listRect.height > maxBottom) {
+      top = Math.max(8, maxBottom - listRect.height);
+    }
+    if (left + comboRect.width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - comboRect.width - 8);
     if (left < 8) left = 8;
     list.style.left = left + "px";
     list.style.top = top + "px";
