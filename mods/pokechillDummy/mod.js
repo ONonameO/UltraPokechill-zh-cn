@@ -7,6 +7,8 @@ const DUMMY_SPRITE_URL = "mods/customDummyIcon.png";
 let activeApi = null;
 let imgErrorHandler = null;
 let originalUpdateVS = null;
+let pendingReopenConfig = false;   // 标记：本次 pkmn 编辑器是由「配置技能」按钮打开，关闭后应重弹配置面板
+let editorCloseObserver = null;    // 监听 #pkmn-editor 关闭，用于自动重开配置面板
 const VS_PATCH = "__pokechillDummyVsPatch";
 
 UltraMods.define({
@@ -14,7 +16,7 @@ UltraMods.define({
   name: "Pokechill 自定义木桩",
   description: "基于 UltraMods API 构建自定义木桩训练区：可配置属性/等级/技能的木桩，支持锁血，用于测试配队与伤害。由 mod 管理器独立启用或禁用。",
   image: "mods/customDummyIcon.png",
-  version: "2.0.0",
+  version: "2.0.4",
   author: "人民当家做主",
   category: "实用工具",
   defaultEnabled: false,
@@ -30,6 +32,7 @@ UltraMods.define({
     // 战斗开始（entering dummy area）：确保满血（锁血基础行为）
     onCombatStart(api, payload, state) {
       if (payload?.areaId !== DUMMY_AREA_ID) return;
+      syncDummyConfig(api);  // 把编辑器里配置好的技能与等级同步进战斗用的区域对象
       resetDummyHp(api);
     },
     // 玩家每次对木桩造成伤害后：若开启锁血则回满（不再显示伤害飘字）
@@ -61,11 +64,12 @@ function install(api, state) {
 
   ensureNoneAbility(api);
   registerDummyPokemon(api);   // 通过 UltraMods api.pkmn 注册木桩宝可梦
-  registerDummyArea(api);      // 通过 UltraMods api.areas 注册木桩区域（原生 setWildPkmn 会自动生成）
-  patchUpdateVS(api);          // 带标记 + 可还原的卡片注入（无对应钩子时的既范式）
+  registerDummyArea(api);      // 通过 UltraMods api.areas 注册木桩区域（type:"vs" 确保再战/战后返回 VS 菜单正常；原生占位卡由 injectDummyVsCard 移除并替换为注入卡片）
+  patchUpdateVS(api);          // 带标记 + 可还原：在原生 updateVS 重渲染后重新注入木桩卡片（游戏无对应钩子）
   setupImageErrorHandler(api);
   addMobileStyles();
   ensureConfigPanel(api);
+  setupEditorCloseWatcher(api);  // 监听 pkmn 编辑器关闭，关闭后（由「配置技能」打开时）自动重弹配置面板
 
   api.refreshGame();
 }
@@ -75,6 +79,8 @@ function uninstall(api) {
   if (api.areas) delete api.areas[DUMMY_AREA_ID];
   removeImageErrorHandler();
   restoreUpdateVS();
+  if (editorCloseObserver) { editorCloseObserver.disconnect(); editorCloseObserver = null; }
+  pendingReopenConfig = false;
   document.getElementById("dummy-config-panel")?.remove();
   document.getElementById("dummy-vs-card")?.remove();
   document.getElementById("dummy-mobile-style")?.remove();
@@ -105,7 +111,7 @@ function registerDummyPokemon(api) {
   if (api.pkmn[DUMMY_PKMN_ID]) return; // 已存在则保留既有配置
   api.pkmn[DUMMY_PKMN_ID] = {
     id: DUMMY_PKMN_ID,
-    rename: "DUCK",
+    rename: "自定义测试木桩",
     type: ["normal"],
     bst: { hp: 6, atk: 4, def: 2, satk: 4, sdef: 2, spe: 4 },
     level: 100,
@@ -130,9 +136,15 @@ function registerDummyPokemon(api) {
 
 function registerDummyArea(api) {
   if (api.areas[DUMMY_AREA_ID]) return;
+  // 必须带 type:"vs" 与 sprite：原生「再战 / 战后返回 VS 菜单 / updateVS 渲染」都依赖 type:"vs"。
+  // 缺 type:"vs" 会导致：战后落到旅行界面（leaveCombat 行 891 判 type），且自动再战（HackTimer 触发 rejoinArea，
+  // 行 1312 把 currentArea 置 undefined 再于 1353 设为 lastAreaJoined）时 areas[currentArea] 取不到 → initialiseArea 崩溃。
+  // 原生 updateVS 会为它渲染一张占位卡，随后由 injectDummyVsCard 移除并替换为我们自己的可点击卡片，
+  // 故玩家实际只会看到注入的卡片（sprite 仅占位卡用，指向已存在训练师图，避免 404）。
   api.areas[DUMMY_AREA_ID] = {
     name: DUMMY_AREA_NAME,
     background: "gym",
+    sprite: "scientist",
     trainer: true,
     type: "vs",
     level: 100,
@@ -165,6 +177,17 @@ function refreshDummyMovepool(api) {
   dummy.movepool = newMovepool;
 }
 
+// 把木桩在编辑器里配置好的技能与等级同步进战斗使用的区域对象
+// （原生 setWildPkmn 的 trainer 分支只读 areas[...].team.slot1Moves 与 areas[...].level，
+//  不会读 pkmn.moves / pkmn.level，因此必须同步到区域对象；否则等级始终为注册时的 100）
+function syncDummyConfig(api) {
+  const dummy = api.pkmn?.[DUMMY_PKMN_ID];
+  const area = api.areas?.[DUMMY_AREA_ID];
+  if (!dummy || !area || !area.team) return;
+  area.team.slot1Moves = [dummy.moves.slot1, dummy.moves.slot2, dummy.moves.slot3, dummy.moves.slot4];
+  area.level = Math.min(100, Math.max(1, Number(dummy.level) || 100));
+}
+
 // ---------- VS 卡片注入（带标记 + 可还原的全局函数 patch） ----------
 
 function patchUpdateVS(api) {
@@ -191,13 +214,13 @@ function restoreUpdateVS() {
 }
 
 function injectDummyVsCard(api) {
-  // 移除原生为木桩区域渲染的占位卡片（非首张会被置灰为 ???）
+  // 木桩区域已注册 type:"vs"，原生 updateVS 会渲染一张占位卡（非首张会被置灰为 ???），先移除它
   const baseName = document.getElementById("trainer-name-" + DUMMY_AREA_NAME);
   if (baseName) {
     const baseCard = baseName.closest(".vs-card");
     if (baseCard) baseCard.remove();
   }
-  // 已注入则跳过（避免 updateVS 重复渲染导致重复注入）
+  // 已注入则跳过（避免原生 updateVS 重渲染导致重复注入）
   if (document.getElementById("dummy-vs-card")) return;
 
   const listing = document.getElementById("vs-listing");
@@ -222,7 +245,8 @@ function injectDummyVsCard(api) {
     </div>
   `;
   card.addEventListener("click", () => openConfigPanel(api));
-  listing.appendChild(card);
+  // 放到列表最上方显示（原生卡片已在上一步被移除，故无冲突）
+  listing.prepend(card);
 }
 
 // ---------- 图片错误处理（让木桩精灵正确显示） ----------
@@ -291,6 +315,20 @@ function addMobileStyles() {
 }
 
 // ---------- 配置面板 ----------
+
+// 监听 pkmn 编辑器（#pkmn-editor）关闭；当其由「配置技能」打开后关闭时，自动重新弹出配置面板
+function setupEditorCloseWatcher(api) {
+  if (editorCloseObserver) return;
+  const editor = document.getElementById("pkmn-editor");
+  if (!editor) return;
+  editorCloseObserver = new MutationObserver(() => {
+    if (editor.style.display === "none" && pendingReopenConfig) {
+      pendingReopenConfig = false;
+      openConfigPanel(api);   // 重新弹出配置面板，便于继续配置或点「确定」进入战斗
+    }
+  });
+  editorCloseObserver.observe(editor, { attributes: true, attributeFilter: ["style"] });
+}
 
 function generateStarOptions(selected) {
   let options = "";
@@ -460,6 +498,7 @@ function ensureConfigPanel(api) {
       api.ability.none = { id: "none", rename: "无", rarity: 1, type: ["all"], info: () => "没有任何效果。" };
     }
     if (typeof tooltipData === "function") {
+      pendingReopenConfig = true;   // 标记：编辑器关闭后应自动重弹配置面板
       tooltipData("pkmnEditor", DUMMY_PKMN_ID);
     } else {
       alert("无法打开编辑器，请刷新页面重试。");

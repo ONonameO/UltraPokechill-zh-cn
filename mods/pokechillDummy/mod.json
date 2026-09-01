@@ -1,9 +1,9 @@
 {
   "id": "pokechillDummy",
   "name": "Pokechill 自定义木桩",
-  "description": "基于 UltraMods API 构建自定义木桩训练区：可配置属性/等级/技能的木桩，支持锁血，用于测试配队与伤害。由 mod 管理器独立启用或禁用。",
+  "description": "基于 UltraMods API 构建自定义木桩训练区：可配置属性/等级/技能的木桩，支持锁血，用于测试配队与伤害。注册为 type:\"vs\" 训练区以确保再战与战后返回 VS 菜单正常，同时移除原生占位卡、直接注入可点击卡片（玩家仅见注入卡片）；已内置 96x96 木桩精灵，技能配置通过 onCombatStart 同步至战斗。由 mod 管理器独立启用或禁用。",
   "image": "mods/customDummyIcon.png",
-  "version": "2.0.0",
+  "version": "2.0.4",
   "author": "人民当家做主",
   "category": "实用工具",
   "defaultEnabled": false
