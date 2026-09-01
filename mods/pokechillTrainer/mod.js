@@ -225,17 +225,16 @@ let lastTrainingPokemon = null; // 上次渲染下拉框时的训练宝可梦 ID
 let comboOutsideClick = null;   // 下拉框外部点击关闭监听
 let tooltipEl = null;           // 特性描述 tooltip 元素
 let tooltipTimer = null;       // tooltip 延迟显示计时器
-let tooltipOptCurrent = null;  // 当前悬停、正在计时的选项
-let tooltipPendingRect = null; // 触发选项的边界（延迟到点时用于定位）
+let tooltipPending = null;     // 待显示 tooltip 描述：{ target, html, rect, anchorEl }
 let comboListEl = null;        // 下拉面板元素（供 tooltip 左右自适应定位）
 
 UltraMods.define({
   id: MOD_ID,
   name: "Pokechill 特性训练助手",
-  description: "特性训练时自动重试，直到获得目标特性；支持中文名 / ID 模糊搜索锁定目标特性。",
-  image: "img/items/quickClaw.png",
+  description: "在进行特性训练时，自动重复训练直到刷出目标特性，省去手动重复尝试的复杂操作。",
+  image: "img/items/blackBelt.png",
   version: "1.0",
-  author: "CODEBUDDY, Reso",
+  author: "Reso",
   category: "实用工具",
   defaultEnabled: false,
   hooks: {
@@ -696,6 +695,24 @@ function buildFloatingUI(api, state) {
 
   uiRefs = { pkmnLine, abilityLine, comboInput, comboList, combo, statusLabel, toggleBtn: toggleBtn2, clearBtn };
 
+  // 当前信息里的特性：悬停也显示对应特性描述 tooltip（延迟 TOOLTIP_DELAY 毫秒，紧贴该行智能左右贴边）
+  function buildAbilityTipHtml(abilityId) {
+    const cn = getAbilityName(abilityId);
+    const desc = getAbilityDescription(abilityId);
+    return `<b>${cn}</b>` + (desc ? `<br>${desc}` : "");
+  }
+  abilityLine.addEventListener("mouseover", () => {
+    const cur = getCurrentAbility();
+    if (!cur) { cancelTooltip(); return; }
+    scheduleTooltip(abilityLine, buildAbilityTipHtml(cur), abilityLine.getBoundingClientRect(), abilityLine);
+  });
+  abilityLine.addEventListener("mousemove", () => {
+    const cur = getCurrentAbility();
+    if (!cur) return;
+    scheduleTooltip(abilityLine, buildAbilityTipHtml(cur), abilityLine.getBoundingClientRect(), abilityLine);
+  });
+  abilityLine.addEventListener("mouseout", () => cancelTooltip());
+
   // 下拉框事件（搜索过滤 + 选中即确认）
   setupCombo(api, comboInput, comboList, combo);
 
@@ -848,34 +865,15 @@ function setupCombo(api, input, list, combo) {
     close();
   });
   // 悬停选项 -> 延迟显示特性描述 tooltip（默认 TOOLTIP_DELAY 毫秒）
-  function scheduleTooltip(opt) {
-    if (tooltipOptCurrent === opt) return; // 同一选项内移动不重置计时器
-    tooltipOptCurrent = opt;
-    if (tooltipTimer) clearTimeout(tooltipTimer);
-    tooltipTimer = setTimeout(() => {
-      if (tooltipOptCurrent === opt && opt && opt._tipHtml && tooltipPendingRect) {
-        showTooltip(opt._tipHtml, tooltipPendingRect);
-      }
-      tooltipTimer = null;
-    }, TOOLTIP_DELAY);
-  }
-  function cancelTooltip() {
-    if (tooltipTimer) { clearTimeout(tooltipTimer); tooltipTimer = null; }
-    tooltipOptCurrent = null;
-    tooltipPendingRect = null;
-    hideTooltip();
-  }
   list.addEventListener("mouseover", event => {
     const opt = event.target.closest(".pch-combo-option");
     if (!opt || !opt._tipHtml) { cancelTooltip(); return; }
-    tooltipPendingRect = opt.getBoundingClientRect();
-    scheduleTooltip(opt);
+    scheduleTooltip(opt, opt._tipHtml, opt.getBoundingClientRect(), comboListEl);
   });
   list.addEventListener("mousemove", event => {
     const opt = event.target.closest(".pch-combo-option");
     if (!opt || !opt._tipHtml) return;
-    tooltipPendingRect = opt.getBoundingClientRect();
-    scheduleTooltip(opt);
+    scheduleTooltip(opt, opt._tipHtml, opt.getBoundingClientRect(), comboListEl);
   });
   list.addEventListener("mouseout", event => {
     const opt = event.target.closest(".pch-combo-option");
@@ -897,32 +895,32 @@ function getTooltip() {
   }
   return tooltipEl;
 }
-// 显示 tooltip：依据下拉面板（浮窗）位置动态决定显示在左侧或右侧，
-// 确保不遮挡选项列表；垂直方向对齐触发选项并夹到视口内。
-function showTooltip(html, r) {
+// 显示 tooltip：依据锚定元素（下拉面板或当前信息行）在视口中的实际位置，
+// 智能选择显示在左侧或右侧，确保不遮挡；垂直方向对齐触发元素并夹到视口内。
+function showTooltip(html, r, anchorEl) {
   const t = getTooltip();
   t.innerHTML = html;
   t.style.display = "block";
   const tr = t.getBoundingClientRect();
-  const gap = 6; // 紧贴下拉选择框
+  const gap = 6; // 紧贴锚定元素
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
   // 每轮先清除上一次的 right 锚定，统一回到 left 锚定基线
   t.style.right = "auto";
 
-  // 依据下拉选择框在视口中的实际位置，智能选择显示在左侧或右侧。
-  // 显示在左侧时改用 right 锚定：右边缘始终紧贴下拉框左缘（靠右对齐），
+  // 显示在左侧时改用 right 锚定：右边缘始终紧贴锚定元素左缘（靠右对齐），
   // 不再依赖测量宽度，彻底消除"窄 tooltip 右侧留白 = maxWidth - currentWidth"的问题。
   let left = null; // null 表示已用 right 锚定
-  if (comboListEl) {
-    const lr = comboListEl.getBoundingClientRect();
-    const spaceRight = vw - lr.right;   // 面板右侧可用宽度
-    const spaceLeft = lr.left;          // 面板左侧可用宽度
+  const anchor = anchorEl || comboListEl;
+  if (anchor) {
+    const lr = anchor.getBoundingClientRect();
+    const spaceRight = vw - lr.right;   // 锚定元素右侧可用宽度
+    const spaceLeft = lr.left;          // 锚定元素左侧可用宽度
     if (spaceRight >= tr.width + gap) {
-      left = lr.right + gap;            // 右侧充足 -> 左缘紧贴面板右侧
+      left = lr.right + gap;            // 右侧充足 -> 左缘紧贴锚定元素右侧
     } else if (spaceLeft >= tr.width + gap) {
-      t.style.right = (vw - lr.left + gap) + "px"; // 右侧边缘紧贴面板左缘（靠右对齐）
+      t.style.right = (vw - lr.left + gap) + "px"; // 右侧边缘紧贴锚定元素左缘（靠右对齐）
       t.style.left = "auto";
     } else {
       // 两侧都不够：放在空间更大的一侧
@@ -943,8 +941,8 @@ function showTooltip(html, r) {
     if (left < 8) left = 8;
     t.style.left = left + "px";
   } else {
-    // 右侧锚定场景：实际左缘 = 面板左缘 - gap - 自身宽度；越出视口左缘则回退为 left 锚定贴左缘
-    const leftEdge = comboListEl.getBoundingClientRect().left - gap - tr.width;
+    // 右侧锚定场景：实际左缘 = 锚定元素左缘 - gap - 自身宽度；越出视口左缘则回退为 left 锚定贴左缘
+    const leftEdge = anchor.getBoundingClientRect().left - gap - tr.width;
     if (leftEdge < 8) {
       t.style.right = "auto";
       t.style.left = "8px";
@@ -959,6 +957,27 @@ function showTooltip(html, r) {
 }
 function hideTooltip() {
   if (tooltipEl) tooltipEl.style.display = "none";
+}
+
+// 延迟显示 tooltip：停留达到 TOOLTIP_DELAY 毫秒后才弹出；同一 target 内移动不重置计时器，
+// 切换/离开 target 则 cancelTooltip 清计时器并隐藏。target 用于去重（区分不同选项/元素）。
+function scheduleTooltip(target, html, rect, anchorEl) {
+  if (tooltipPending && tooltipPending.target === target) return;
+  tooltipPending = { target, html, rect, anchorEl };
+  if (tooltipTimer) clearTimeout(tooltipTimer);
+  tooltipTimer = setTimeout(() => {
+    if (tooltipPending && tooltipPending.target === target) {
+      showTooltip(tooltipPending.html, tooltipPending.rect, tooltipPending.anchorEl);
+    }
+    tooltipTimer = null;
+    tooltipPending = null;
+  }, TOOLTIP_DELAY);
+}
+
+function cancelTooltip() {
+  if (tooltipTimer) { clearTimeout(tooltipTimer); tooltipTimer = null; }
+  tooltipPending = null;
+  hideTooltip();
 }
 
 // 刷新"当前信息"模块，并在训练宝可梦变化时重建下拉候选
@@ -1048,8 +1067,7 @@ function removeFloatingUI() {
     comboOutsideClick = null;
   }
   if (tooltipTimer) { clearTimeout(tooltipTimer); tooltipTimer = null; }
-  tooltipOptCurrent = null;
-  tooltipPendingRect = null;
+  tooltipPending = null;
   comboListEl = null;
   if (tooltipEl && tooltipEl.parentNode) tooltipEl.parentNode.removeChild(tooltipEl);
   tooltipEl = null;
