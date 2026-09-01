@@ -28,9 +28,9 @@ let apiRef = null;
 UltraMods.define({
   id: MOD_ID,
   name: "Pokechill 助手",
-  description: "非全局战斗加速（回合推进）+ 倍速滑动条/输入框(1-50x) + 跳过时间(原版 Date 劫持) + 自动重开。独立浮窗 UI。",
-  image: "img/items/quickClaw.png",
-  version: "1.0",
+  description: "集成战斗加速、时间跳过与自动重开三大功能，可快速推进战斗进程，省去等待时间，轻松护肝。",
+  image: "img/pkmn/sprite/rotom.png",
+  version: "3.8.1",
   author: "黄黄",
   category: "实用工具",
   defaultEnabled: false,
@@ -339,11 +339,6 @@ function installStyles() {
       font-weight: bold;
     }
 
-    .pch-reset-btn {
-      padding: 0.15rem 0.55rem;
-      font-size: 0.85rem;
-    }
-
     .pch-speed-row {
       display: flex;
       align-items: center;
@@ -397,7 +392,14 @@ function installStyles() {
       color: white;
     }
 
-    .pch-skip-row { display: flex; gap: 0.4rem; }
+    .pch-skip-row {
+      display: flex; 
+      gap: 0.4rem; 
+      border-top: 2px solid rgba(54, 52, 47, 0.3);
+      border-bottom: 2px solid rgba(54, 52, 47, 0.3);
+      padding: 0.8rem 0.1rem;
+      margin: 0.5rem 0;
+    }
     .pch-skip-row .pch-btn { flex: 1; }
 
     .pch-rejoin-row {
@@ -455,7 +457,7 @@ function buildFloatingUI(api, state) {
   const content = document.createElement("div");
   content.className = "pch-content";
 
-  // 倍速标题行：标题文字 + 当前倍速(nx) + 重置按钮（要求5、4）
+  // 倍速标题行：标题文字 + 当前倍速(nx)
   const speedHeader = document.createElement("div");
   speedHeader.className = "pch-speed-header";
   const speedTitle = document.createElement("div");
@@ -466,9 +468,7 @@ function buildFloatingUI(api, state) {
   const current = document.createElement("span");
   current.className = "pch-current";
   speedTitle.append(label, current);
-  const resetBtn = makeButton("重置", () => { setSpeed(api, getState(api), 1); flash(resetBtn); });
-  resetBtn.classList.add("pch-reset-btn");
-  speedHeader.append(speedTitle, resetBtn);
+  speedHeader.append(speedTitle);
 
   // 倍速行：滑动条 + 输入框
   const speedRow = document.createElement("div");
@@ -507,9 +507,9 @@ function buildFloatingUI(api, state) {
   // 跳过时间行：沿用原脚本的 60 分钟 / 12 小时（要求2）
   const skipRow = document.createElement("div");
   skipRow.className = "pch-skip-row";
-  const skip60 = makeButton("🕙 60分钟", () => { skipTime(1); flash(skip60); });
+  const skip1 = makeButton("🕙 60分钟", () => { skipTime(1); flash(skip1); });
   const skip12 = makeButton("🌙 12小时", () => { skipTime(12); flash(skip12); });
-  skipRow.append(skip60, skip12);
+  skipRow.append(skip1, skip12);
 
   // 自动重开行：按钮内含 ON/OFF 与(次数)，右侧对齐（要求7）
   const rejoinRow = document.createElement("div");
