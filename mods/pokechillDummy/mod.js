@@ -4,6 +4,33 @@ const DUMMY_AREA_ID = "custom_dummy_area";
 const DUMMY_AREA_NAME = "木桩测试 (可配置)";
 const DUMMY_SPRITE_URL = "mods/customDummyIcon.png";
 
+// 面板样式表 id（沿用 abilityTrainer 的「独立 style + id 守卫」做法）
+const PANEL_STYLE_ID = "dummy-panel-style";
+
+// 属性选项（顺序与游戏 typeDictionary 一致）
+const DUMMY_TYPE_LIST = [
+  ["normal", "一般"], ["fire", "火"], ["water", "水"], ["electric", "电"],
+  ["grass", "草"], ["ice", "冰"], ["fighting", "格斗"], ["poison", "毒"],
+  ["ground", "地面"], ["flying", "飞行"], ["psychic", "超能力"], ["bug", "虫"],
+  ["rock", "岩石"], ["ghost", "幽灵"], ["dragon", "龙"], ["dark", "恶"],
+  ["steel", "钢"], ["fairy", "妖精"]
+];
+
+// 种族值项
+const DUMMY_BST_LIST = [
+  ["hp", "HP"], ["atk", "攻击"], ["def", "防御"],
+  ["satk", "特攻"], ["sdef", "特防"], ["spe", "速度"]
+];
+
+// 属性配色：优先复用游戏 returnTypeColor()，不可用时回退到同色表
+const TYPE_FALLBACK_COLOR = {
+  bug: "#92BD2D", dark: "#595761", dragon: "#0C6AC8", electric: "#F2D94E",
+  fairy: "#EF90E6", fighting: "#D3425F", fire: "#FBA64C", flying: "#A1BBEC",
+  ghost: "#5F6DBC", grass: "#60BE58", ground: "#DA7C4D", ice: "#76D1C1",
+  normal: "#A0A29F", poison: "#B763CF", psychic: "#FA8582", rock: "#C9BC8A",
+  steel: "#5795A3", water: "#539DDF"
+};
+
 let activeApi = null;
 let imgErrorHandler = null;
 let originalUpdateVS = null;
@@ -16,7 +43,7 @@ UltraMods.define({
   name: "Pokechill 自定义木桩",
   description: "基于 UltraMods API 构建自定义木桩训练区：可配置属性/等级/技能的木桩，支持锁血，用于测试配队与伤害。由 mod 管理器独立启用或禁用。",
   image: "mods/customDummyIcon.png",
-  version: "2.0.4",
+  version: "2.1.0",
   author: "人民当家做主",
   category: "实用工具",
   defaultEnabled: false,
@@ -67,7 +94,7 @@ function install(api, state) {
   registerDummyArea(api);      // 通过 UltraMods api.areas 注册木桩区域（type:"vs" 确保再战/战后返回 VS 菜单正常；原生占位卡由 injectDummyVsCard 移除并替换为注入卡片）
   patchUpdateVS(api);          // 带标记 + 可还原：在原生 updateVS 重渲染后重新注入木桩卡片（游戏无对应钩子）
   setupImageErrorHandler(api);
-  addMobileStyles();
+  installPanelStyles();       // 面板样式（游戏风格，独立 style）
   ensureConfigPanel(api);
   setupEditorCloseWatcher(api);  // 监听 pkmn 编辑器关闭，关闭后（由「配置技能」打开时）自动重弹配置面板
 
@@ -83,7 +110,7 @@ function uninstall(api) {
   pendingReopenConfig = false;
   document.getElementById("dummy-config-panel")?.remove();
   document.getElementById("dummy-vs-card")?.remove();
-  document.getElementById("dummy-mobile-style")?.remove();
+  document.getElementById(PANEL_STYLE_ID)?.remove();
   api.refreshGame();
 }
 
@@ -272,43 +299,207 @@ function removeImageErrorHandler() {
   }
 }
 
-// ---------- 移动端适配样式 ----------
+// ---------- 面板样式（沿用 abilityTrainer / 原版游戏视觉风格） ----------
 
-function addMobileStyles() {
-  if (document.getElementById("dummy-mobile-style")) return;
+function installPanelStyles() {
+  if (document.getElementById(PANEL_STYLE_ID)) return;
   const style = document.createElement("style");
-  style.id = "dummy-mobile-style";
+  style.id = PANEL_STYLE_ID;
   style.textContent = `
+    #dummy-config-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      max-width: 92vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 0.5rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      z-index: 1200;
+      user-select: none;
+      box-sizing: border-box;
+    }
+
+    .dummy-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--light1);
+      color: var(--light2);
+      padding: 0.45rem 0.6rem;
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+    .dummy-panel-title { font-weight: bold; font-size: 1.05rem; }
+    .dummy-panel-close {
+      background: transparent;
+      border: 0;
+      color: var(--light2);
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0 0.2rem;
+    }
+    .dummy-panel-close:hover { transform: scale(1.15); }
+
+    .dummy-panel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      background: var(--light2);
+      color: var(--dark2);
+      padding: 0.6rem 0.7rem;
+      border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    .dummy-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--dark2);
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .dummy-divider {
+      height: 0;
+      margin: 0.2rem 0;
+      border-top: 2px solid rgba(54, 52, 47, 0.3);
+    }
+
+    .dummy-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .dummy-row > label {
+      color: var(--dark2);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .dummy-select,
+    .dummy-input {
+      flex: 1;
+      min-width: 0;
+      box-sizing: border-box;
+      background: var(--dark2);
+      color: var(--light2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.3rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.4rem;
+    }
+    .dummy-input { flex: 0 0 5.5rem; text-align: center; }
+    .dummy-select:focus,
+    .dummy-input:focus { outline: 1px solid var(--light1); }
+
+    /* 属性徽章预览：配色沿用游戏 returnTypeColor() */
+    .dummy-type-preview {
+      display: flex;
+      gap: 0.35rem;
+      justify-content: center;
+      min-height: 1.4rem;
+      align-items: center;
+    }
+    .dummy-type-badge {
+      padding: 0.1rem 0.55rem;
+      border-radius: 0.3rem;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(0, 0, 0, 0.25);
+    }
+
+    /* 种族值星级 */
+    .dummy-bst-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem 0.6rem;
+    }
+    .dummy-bst-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .dummy-bst-cell > label {
+      color: var(--dark2);
+      font-weight: 600;
+      min-width: 2.1rem;
+      font-size: 0.82rem;
+    }
+    .dummy-bst-cell .dummy-select {
+      flex: 1;
+      padding: 0.18rem 0.25rem;
+      font-size: 0.78rem;
+    }
+
+    .dummy-check-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+    }
+    .dummy-check-row input { accent-color: var(--dark2); cursor: pointer; }
+    .dummy-check-row label {
+      color: var(--dark2);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .dummy-btn-row { display: flex; gap: 0.4rem; }
+
+    .dummy-btn {
+      flex: 1;
+      background: var(--light1);
+      color: var(--light2);
+      border: 0;
+      border-radius: 0.4rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      padding: 0.4rem 0.5rem;
+      cursor: pointer;
+      transition: filter 0.1s, background 0.1s, transform 0.05s;
+    }
+    .dummy-btn:hover { background: #685F4B; }
+    .dummy-btn:active { transform: translateY(1px); }
+    .dummy-btn.primary { background: rgb(90, 133, 113); }
+    .dummy-btn.primary:hover { background: rgb(74, 114, 96); }
+
+    .dummy-foot {
+      margin-top: 0.2rem;
+      font-size: 0.68rem;
+      font-weight: bold;
+      opacity: 0.7;
+      text-align: center;
+      pointer-events: none;
+    }
+
     @media (max-width: 768px) {
       #dummy-config-panel {
-        width: 95vw !important;
-        min-width: unset !important;
-        padding: 1rem !important;
-        font-size: 14px !important;
+        width: 92vw !important;
+        font-size: 15px !important;
       }
-      #dummy-config-panel select,
-      #dummy-config-panel input[type="number"] {
+      .dummy-select,
+      .dummy-input {
         font-size: 16px !important;
-        padding: 0.5rem !important;
+        padding: 0.45rem !important;
       }
-      #dummy-config-panel button {
-        padding: 0.8rem 1rem !important;
-        font-size: 16px !important;
+      .dummy-btn {
+        padding: 0.6rem 0.5rem !important;
+        font-size: 15px !important;
       }
-      #dummy-config-panel .vs-card {
-        max-width: 100% !important;
-      }
-      #dummy-config-panel [style*="grid-template-columns: repeat(2, 1fr)"] {
-        gap: 0.8rem !important;
-      }
-      #dummy-config-panel > div > div[style*="justify-content:space-between"] {
-        flex-direction: column;
-        align-items: stretch !important;
-        gap: 0.8rem;
-      }
-      #dummy-config-panel > div > div[style*="justify-content:space-between"] button {
-        width: 100%;
-      }
+      .dummy-bst-grid { grid-template-columns: 1fr; }
     }
   `;
   document.head.appendChild(style);
@@ -330,12 +521,47 @@ function setupEditorCloseWatcher(api) {
   editorCloseObserver.observe(editor, { attributes: true, attributeFilter: ["style"] });
 }
 
-function generateStarOptions(selected) {
-  let options = "";
-  for (let i = 0; i <= 6; i++) {
-    options += `<option value="${i}" ${selected == i ? "selected" : ""}>${i}星</option>`;
+// 生成属性下拉选项；withNone=true 时首项追加「无」（用于第二属性）
+function typeOptionsHTML(withNone) {
+  let html = withNone ? `<option value="">无</option>` : "";
+  for (const [id, label] of DUMMY_TYPE_LIST) {
+    html += `<option value="${id}">${label}</option>`;
   }
-  return options;
+  return html;
+}
+
+// 生成 0-6 星下拉选项（沿用游戏「★」星级表述）
+function starOptionsHTML(selected) {
+  let html = "";
+  for (let i = 0; i <= 6; i++) {
+    html += `<option value="${i}" ${selected == i ? "selected" : ""}>${i}★</option>`;
+  }
+  return html;
+}
+
+// 属性配色：优先复用游戏 returnTypeColor()，不可用时回退到同色表
+function typeColor(type) {
+  if (typeof returnTypeColor === "function") {
+    try { return returnTypeColor(type); } catch (e) { /* ignore */ }
+  }
+  return TYPE_FALLBACK_COLOR[type] || "#000000";
+}
+
+function typeLabel(id) {
+  const found = DUMMY_TYPE_LIST.find(([key]) => key === id);
+  return found ? found[1] : id;
+}
+
+// 渲染属性徽章预览（配色与样式对齐原版 returnPkmnTypes 的徽章）
+function updateTypePreview() {
+  const box = document.getElementById("dummy-type-preview");
+  if (!box) return;
+  const t1 = document.getElementById("dummy-type1")?.value;
+  const t2 = document.getElementById("dummy-type2")?.value;
+  const types = [t1, t2].filter(Boolean);
+  box.innerHTML = types
+    .map(t => `<span class="dummy-type-badge" style="background:${typeColor(t)}">${typeLabel(t)}</span>`)
+    .join("");
 }
 
 function ensureConfigPanel(api) {
@@ -343,108 +569,63 @@ function ensureConfigPanel(api) {
 
   const panel = document.createElement("div");
   panel.id = "dummy-config-panel";
-  panel.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--light2, #ECDEB7);
-    border: 2px solid var(--light1, #94886B);
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-    z-index: 10000;
-    display: none;
-    flex-direction: column;
-    gap: 1rem;
-    min-width: 350px;
-    max-width: 90vw;
-    max-height: 90vh;
-    overflow-y: auto;
-    color: var(--dark1, #36342F);
-    font-family: 'Courier New', monospace;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  `;
+  // 视觉样式统一由 installPanelStyles() 注入的样式表提供，此处仅控制显隐
+  panel.style.display = "none";
 
   const dummy = api.pkmn[DUMMY_PKMN_ID];
   const bst = dummy ? dummy.bst : { hp: 6, atk: 4, def: 2, satk: 4, sdef: 2, spe: 4 };
 
   panel.innerHTML = `
-    <h3 style="margin:0; text-align:center;">配置木桩</h3>
-    <div style="display:flex; flex-direction:column; gap:0.8rem;">
-      <div>
-        <label>第一属性:</label>
-        <select id="dummy-type1" style="width:100%; padding:0.3rem;">
-          <option value="normal">一般</option>
-          <option value="fire">火</option>
-          <option value="water">水</option>
-          <option value="electric">电</option>
-          <option value="grass">草</option>
-          <option value="ice">冰</option>
-          <option value="fighting">格斗</option>
-          <option value="poison">毒</option>
-          <option value="ground">地面</option>
-          <option value="flying">飞行</option>
-          <option value="psychic">超能力</option>
-          <option value="bug">虫</option>
-          <option value="rock">岩石</option>
-          <option value="ghost">幽灵</option>
-          <option value="dragon">龙</option>
-          <option value="dark">恶</option>
-          <option value="steel">钢</option>
-          <option value="fairy">妖精</option>
-        </select>
-      </div>
-      <div>
-        <label>第二属性 (可选):</label>
-        <select id="dummy-type2" style="width:100%; padding:0.3rem;">
-          <option value="">无</option>
-          <option value="normal">一般</option>
-          <option value="fire">火</option>
-          <option value="water">水</option>
-          <option value="electric">电</option>
-          <option value="grass">草</option>
-          <option value="ice">冰</option>
-          <option value="fighting">格斗</option>
-          <option value="poison">毒</option>
-          <option value="ground">地面</option>
-          <option value="flying">飞行</option>
-          <option value="psychic">超能力</option>
-          <option value="bug">虫</option>
-          <option value="rock">岩石</option>
-          <option value="ghost">幽灵</option>
-          <option value="dragon">龙</option>
-          <option value="dark">恶</option>
-          <option value="steel">钢</option>
-          <option value="fairy">妖精</option>
-        </select>
-      </div>
-      <div style="margin-top:0.5rem;">
-        <label style="font-weight:bold;">种族值星级 (0-6星):</label>
-        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; margin-top:0.3rem;">
-          <div><label>HP:</label> <select id="dummy-bst-hp" style="width:100%;">${generateStarOptions(bst.hp)}</select></div>
-          <div><label>攻击:</label> <select id="dummy-bst-atk" style="width:100%;">${generateStarOptions(bst.atk)}</select></div>
-          <div><label>防御:</label> <select id="dummy-bst-def" style="width:100%;">${generateStarOptions(bst.def)}</select></div>
-          <div><label>特攻:</label> <select id="dummy-bst-satk" style="width:100%;">${generateStarOptions(bst.satk)}</select></div>
-          <div><label>特防:</label> <select id="dummy-bst-sdef" style="width:100%;">${generateStarOptions(bst.sdef)}</select></div>
-          <div><label>速度:</label> <select id="dummy-bst-spe" style="width:100%;">${generateStarOptions(bst.spe)}</select></div>
-        </div>
-      </div>
-      <div>
-        <label>等级 (1-100):</label>
-        <input type="number" id="dummy-level" min="1" max="100" value="100" style="width:100%; padding:0.3rem;">
-      </div>
-      <div style="display:flex; align-items:center; gap:0.5rem; justify-content:space-between;">
-        <div>
-          <input type="checkbox" id="dummy-lockhp" checked>
-          <label>锁血 (每回合回满)</label>
-        </div>
-        <button id="dummy-config-skills" style="background:#4CAF50; color:white; border:none; padding:0.5rem 1rem; border-radius:0.3rem; cursor:pointer;">⚙️ 配置技能</button>
-      </div>
+    <div class="dummy-panel-header">
+      <span class="dummy-panel-title">🎯 测试木桩配置</span>
+      <button type="button" id="dummy-panel-close" class="dummy-panel-close" title="关闭">✕</button>
     </div>
-    <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-      <button id="dummy-config-reset" style="background:var(--light1, #94886B); color:white; border:none; padding:0.5rem 1rem; border-radius:0.3rem; cursor:pointer; flex:1;">重置</button>
-      <button id="dummy-config-ok" style="background:#4CAF50; color:white; border:none; padding:0.5rem 1rem; border-radius:0.3rem; cursor:pointer; flex:1;">确定</button>
-      <button id="dummy-config-cancel" style="background:#f44336; color:white; border:none; padding:0.5rem 1rem; border-radius:0.3rem; cursor:pointer; flex:1;">取消</button>
+    <div class="dummy-panel-content">
+      <div class="dummy-section-title">🎨 木桩属性</div>
+      <div class="dummy-row">
+        <label for="dummy-type1">第一属性</label>
+        <select id="dummy-type1" class="dummy-select">${typeOptionsHTML(false)}</select>
+      </div>
+      <div class="dummy-row">
+        <label for="dummy-type2">第二属性</label>
+        <select id="dummy-type2" class="dummy-select">${typeOptionsHTML(true)}</select>
+      </div>
+      <div class="dummy-type-preview" id="dummy-type-preview"></div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-section-title">⭐ 种族值星级</div>
+      <div class="dummy-bst-grid">
+        ${DUMMY_BST_LIST.map(([key, label]) => `
+        <div class="dummy-bst-cell">
+          <label for="dummy-bst-${key}">${label}</label>
+          <select id="dummy-bst-${key}" class="dummy-select">${starOptionsHTML(bst[key])}</select>
+        </div>`).join("")}
+      </div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-section-title">📊 基础参数</div>
+      <div class="dummy-row">
+        <label for="dummy-level">等级</label>
+        <input type="number" id="dummy-level" class="dummy-input" min="1" max="100" value="100">
+      </div>
+      <div class="dummy-check-row">
+        <input type="checkbox" id="dummy-lockhp" checked>
+        <label for="dummy-lockhp">锁血（每回合回满）</label>
+      </div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-btn-row">
+        <button type="button" id="dummy-config-ok" class="dummy-btn primary">✔ 确定</button>
+        <button type="button" id="dummy-config-skills" class="dummy-btn">⚙ 配置技能</button>
+      </div>
+      <div class="dummy-btn-row">
+        <button type="button" id="dummy-config-reset" class="dummy-btn">↺ 重置</button>
+        <button type="button" id="dummy-config-cancel" class="dummy-btn">✕ 取消</button>
+      </div>
+      <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
     </div>
   `;
 
@@ -479,6 +660,7 @@ function ensureConfigPanel(api) {
     const type2 = document.getElementById("dummy-type2").value;
     const d = getDummy();
     if (d) d.type = type2 ? [type1, type2] : [type1];
+    updateTypePreview();
   };
   document.getElementById("dummy-type1").addEventListener("change", updateType);
   document.getElementById("dummy-type2").addEventListener("change", updateType);
@@ -520,6 +702,7 @@ function ensureConfigPanel(api) {
       d.moves = { slot1: undefined, slot2: undefined, slot3: undefined, slot4: undefined };
     }
     setBstToUI();
+    updateTypePreview();
     refreshDummyMovepool(api);
   });
 
@@ -552,6 +735,11 @@ function ensureConfigPanel(api) {
   document.getElementById("dummy-config-cancel").addEventListener("click", () => {
     panel.style.display = "none";
   });
+
+  // 标题栏 ×：等同取消（仅收起面板）
+  document.getElementById("dummy-panel-close").addEventListener("click", () => {
+    panel.style.display = "none";
+  });
 }
 
 function openConfigPanel(api) {
@@ -571,5 +759,6 @@ function openConfigPanel(api) {
     document.getElementById("dummy-bst-sdef").value = d.bst.sdef;
     document.getElementById("dummy-bst-spe").value = d.bst.spe;
   }
+  updateTypePreview();
   panel.style.display = "flex";
 }

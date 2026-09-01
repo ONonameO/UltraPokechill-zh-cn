@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>测试木桩配置界面 — UI 预览</title>
+<style>
+  /* 取自游戏 styles.css 的根变量，用于还原真实配色 */
+  :root {
+    --dark1: #36342F;
+    --dark2: #444138;
+    --light1: #94886B;
+    --light2: #ECDEB7;
+  }
+  body {
+    margin: 0;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+    box-sizing: border-box;
+    background: var(--dark1);
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .preview-note {
+    color: var(--light2);
+    opacity: 0.75;
+    font-size: 0.85rem;
+    text-align: center;
+    max-width: 520px;
+    line-height: 1.6;
+  }
+  .stage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  /* ===== 以下为 mod.js 中 installPanelStyles() 注入的样式（完全一致） ===== */
+  #dummy-config-panel,
+  .dummy-config-panel {
+    position: static;
+    transform: none;
+    width: 320px;
+    max-width: 92vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 0.5rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 1200;
+    user-select: none;
+    box-sizing: border-box;
+  }
+
+  .dummy-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--light1);
+    color: var(--light2);
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+  .dummy-panel-title { font-weight: bold; font-size: 1.05rem; }
+  .dummy-panel-close {
+    background: transparent;
+    border: 0;
+    color: var(--light2);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 0.2rem;
+  }
+  .dummy-panel-close:hover { transform: scale(1.15); }
+
+  .dummy-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--light2);
+    color: var(--dark2);
+    padding: 0.6rem 0.7rem;
+    border-radius: 0 0 0.5rem 0.5rem;
+  }
+
+  .dummy-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--dark2);
+    font-weight: bold;
+    font-size: 0.95rem;
+  }
+
+  .dummy-divider {
+    height: 0;
+    margin: 0.2rem 0;
+    border-top: 2px solid rgba(54, 52, 47, 0.3);
+  }
+
+  .dummy-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .dummy-row > label {
+    color: var(--dark2);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .dummy-select,
+  .dummy-input {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    background: var(--dark2);
+    color: var(--light2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.3rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.4rem;
+  }
+  .dummy-input { flex: 0 0 5.5rem; text-align: center; }
+  .dummy-select:focus,
+  .dummy-input:focus { outline: 1px solid var(--light1); }
+
+  /* 属性徽章预览：配色沿用游戏 returnTypeColor() */
+  .dummy-type-preview {
+    display: flex;
+    gap: 0.35rem;
+    justify-content: center;
+    min-height: 1.4rem;
+    align-items: center;
+  }
+  .dummy-type-badge {
+    padding: 0.1rem 0.55rem;
+    border-radius: 0.3rem;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.25);
+  }
+
+  /* 种族值星级 */
+  .dummy-bst-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 0.6rem;
+  }
+  .dummy-bst-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .dummy-bst-cell > label {
+    color: var(--dark2);
+    font-weight: 600;
+    min-width: 2.1rem;
+    font-size: 0.82rem;
+  }
+  .dummy-bst-cell .dummy-select {
+    flex: 1;
+    padding: 0.18rem 0.25rem;
+    font-size: 0.78rem;
+  }
+
+  .dummy-check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+  }
+  .dummy-check-row input { accent-color: var(--dark2); cursor: pointer; }
+  .dummy-check-row label {
+    color: var(--dark2);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .dummy-btn-row { display: flex; gap: 0.4rem; }
+
+  .dummy-btn {
+    flex: 1;
+    background: var(--light1);
+    color: var(--light2);
+    border: 0;
+    border-radius: 0.4rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    padding: 0.4rem 0.5rem;
+    cursor: pointer;
+    transition: filter 0.1s, background 0.1s, transform 0.05s;
+  }
+  .dummy-btn:hover { background: #685F4B; }
+  .dummy-btn:active { transform: translateY(1px); }
+  .dummy-btn.primary { background: rgb(90, 133, 113); }
+  .dummy-btn.primary:hover { background: rgb(74, 114, 96); }
+
+  .dummy-foot {
+    margin-top: 0.2rem;
+    font-size: 0.68rem;
+    font-weight: bold;
+    opacity: 0.7;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  @media (max-width: 768px) {
+    #dummy-config-panel,
+    .dummy-config-panel {
+      width: 92vw !important;
+      font-size: 15px !important;
+    }
+    .dummy-select,
+    .dummy-input {
+      font-size: 16px !important;
+      padding: 0.45rem !important;
+    }
+    .dummy-btn {
+      padding: 0.6rem 0.5rem !important;
+      font-size: 15px !important;
+    }
+    .dummy-bst-grid { grid-template-columns: 1fr; }
+  }
+  /* ===== 注入样式结束 ===== */
+</style>
+</head>
+<body>
+
+<p class="preview-note">
+  以下为重构后的「测试木桩配置」界面预览，样式与 mod.js 中 <code>installPanelStyles()</code> 注入的 CSS 完全一致，
+  配色取自游戏根变量（--dark1 / --dark2 / --light1 / --light2），属性徽章配色取自游戏 <code>returnTypeColor()</code>。
+  左：默认状态（单属性）；右：双属性 + 自定义星级。
+</p>
+
+<div class="stage">
+
+  <!-- 示例一：默认状态 -->
+  <div class="dummy-config-panel">
+    <div class="dummy-panel-header">
+      <span class="dummy-panel-title">🎯 测试木桩配置</span>
+      <button type="button" class="dummy-panel-close" title="关闭">✕</button>
+    </div>
+    <div class="dummy-panel-content">
+      <div class="dummy-section-title">🎨 木桩属性</div>
+      <div class="dummy-row">
+        <label>第一属性</label>
+        <select class="dummy-select">
+          <option selected>一般</option><option>火</option><option>水</option><option>电</option>
+        </select>
+      </div>
+      <div class="dummy-row">
+        <label>第二属性</label>
+        <select class="dummy-select">
+          <option selected>无</option><option>一般</option><option>火</option><option>水</option>
+        </select>
+      </div>
+      <div class="dummy-type-preview">
+        <span class="dummy-type-badge" style="background:#A0A29F">一般</span>
+      </div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-section-title">⭐ 种族值星级</div>
+      <div class="dummy-bst-grid">
+        <div class="dummy-bst-cell"><label>HP</label><select class="dummy-select"><option selected>6★</option></select></div>
+        <div class="dummy-bst-cell"><label>攻击</label><select class="dummy-select"><option selected>4★</option></select></div>
+        <div class="dummy-bst-cell"><label>防御</label><select class="dummy-select"><option selected>2★</option></select></div>
+        <div class="dummy-bst-cell"><label>特攻</label><select class="dummy-select"><option selected>4★</option></select></div>
+        <div class="dummy-bst-cell"><label>特防</label><select class="dummy-select"><option selected>2★</option></select></div>
+        <div class="dummy-bst-cell"><label>速度</label><select class="dummy-select"><option selected>4★</option></select></div>
+      </div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-section-title">📊 基础参数</div>
+      <div class="dummy-row">
+        <label>等级</label>
+        <input type="number" class="dummy-input" min="1" max="100" value="100">
+      </div>
+      <div class="dummy-check-row">
+        <input type="checkbox" checked>
+        <label>锁血（每回合回满）</label>
+      </div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-btn-row">
+        <button type="button" class="dummy-btn primary">✔ 确定</button>
+        <button type="button" class="dummy-btn">⚙ 配置技能</button>
+      </div>
+      <div class="dummy-btn-row">
+        <button type="button" class="dummy-btn">↺ 重置</button>
+        <button type="button" class="dummy-btn">✕ 取消</button>
+      </div>
+      <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
+    </div>
+  </div>
+
+  <!-- 示例二：双属性 + 自定义星级 -->
+  <div class="dummy-config-panel">
+    <div class="dummy-panel-header">
+      <span class="dummy-panel-title">🎯 测试木桩配置</span>
+      <button type="button" class="dummy-panel-close" title="关闭">✕</button>
+    </div>
+    <div class="dummy-panel-content">
+      <div class="dummy-section-title">🎨 木桩属性</div>
+      <div class="dummy-row">
+        <label>第一属性</label>
+        <select class="dummy-select">
+          <option>一般</option><option selected>火</option><option>水</option><option>电</option>
+        </select>
+      </div>
+      <div class="dummy-row">
+        <label>第二属性</label>
+        <select class="dummy-select">
+          <option>无</option><option>一般</option><option>火</option><option selected>飞行</option>
+        </select>
+      </div>
+      <div class="dummy-type-preview">
+        <span class="dummy-type-badge" style="background:#FBA64C">火</span>
+        <span class="dummy-type-badge" style="background:#A1BBEC">飞行</span>
+      </div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-section-title">⭐ 种族值星级</div>
+      <div class="dummy-bst-grid">
+        <div class="dummy-bst-cell"><label>HP</label><select class="dummy-select"><option selected>6★</option></select></div>
+        <div class="dummy-bst-cell"><label>攻击</label><select class="dummy-select"><option selected>6★</option></select></div>
+        <div class="dummy-bst-cell"><label>防御</label><select class="dummy-select"><option selected>0★</option></select></div>
+        <div class="dummy-bst-cell"><label>特攻</label><select class="dummy-select"><option selected>3★</option></select></div>
+        <div class="dummy-bst-cell"><label>特防</label><select class="dummy-select"><option selected>1★</option></select></div>
+        <div class="dummy-bst-cell"><label>速度</label><select class="dummy-select"><option selected>5★</option></select></div>
+      </div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-section-title">📊 基础参数</div>
+      <div class="dummy-row">
+        <label>等级</label>
+        <input type="number" class="dummy-input" min="1" max="100" value="50">
+      </div>
+      <div class="dummy-check-row">
+        <input type="checkbox" checked>
+        <label>锁血（每回合回满）</label>
+      </div>
+
+      <div class="dummy-divider"></div>
+
+      <div class="dummy-btn-row">
+        <button type="button" class="dummy-btn primary">✔ 确定</button>
+        <button type="button" class="dummy-btn">⚙ 配置技能</button>
+      </div>
+      <div class="dummy-btn-row">
+        <button type="button" class="dummy-btn">↺ 重置</button>
+        <button type="button" class="dummy-btn">✕ 取消</button>
+      </div>
+      <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
