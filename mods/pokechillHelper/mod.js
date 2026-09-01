@@ -302,7 +302,7 @@ function installStyles() {
     }
     .pch-title {
       font-weight: bold;
-      font-size: 1rem;
+      font-size: 1.15rem;
       pointer-events: none;
     }
     .pch-toggle-btn {
@@ -337,6 +337,7 @@ function installStyles() {
       gap: 0.4rem;
       color: var(--light1);
       font-weight: bold;
+      font-size: 1rem;
     }
 
     .pch-speed-row {
@@ -480,11 +481,11 @@ function buildFloatingUI(api, state) {
   slider.max = String(MAX_SPEED);
   slider.step = "1";
   const input = document.createElement("input");
-  input.type = "number";
+  input.type = "text";
   input.className = "pch-input";
-  input.min = String(MIN_SPEED);
-  input.max = String(MAX_SPEED);
-  input.step = "1";
+  input.inputMode = "numeric";
+  input.placeholder = String(MIN_SPEED);
+  input.title = `输入 ${MIN_SPEED}-${MAX_SPEED} 的整数`;
   speedRow.append(slider, input);
 
   // 倍速按钮：6 个，2 行 × 3 列
@@ -550,9 +551,14 @@ function buildFloatingUI(api, state) {
     event.stopPropagation();
     setSpeed(api, getState(api), Number(slider.value));
   });
+  input.addEventListener("input", event => {
+    event.stopPropagation();
+    const cleaned = input.value.replace(/[^0-9]/g, "");
+    if (cleaned !== input.value) input.value = cleaned;
+  });
   input.addEventListener("change", event => {
     event.stopPropagation();
-    const v = clampSpeed(Number(input.value));
+    const v = clampSpeed(Number(input.value || MIN_SPEED));
     setSpeed(api, getState(api), v);
     input.value = String(v);
   });
