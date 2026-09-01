@@ -1851,6 +1851,8 @@ for (const i in team) {
 
     if (team[i].pkmn === undefined) continue
 
+    if (!document.getElementById(`explore-${i}-exp`)) continue
+
     const percent = ((pkmn[ team[i].pkmn.id ].exp + 1) / 100 ) * 100;
     
     document.getElementById(`explore-${i}-exp`).style.width = percent + "%"; 
