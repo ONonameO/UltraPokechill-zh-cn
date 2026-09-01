@@ -1,0 +1,10 @@
+{
+  "id": "pokechillGmax",
+  "name": "Pokechill 超极巨化空间",
+  "description": "将「超极巨化空间」独立为 mod：定时刷新超极巨化 Boss 挑战区，收集碎片进行抽奖获取超极巨化宝可梦。由 mod 管理器独立启用或禁用。",
+  "image": "img/items/rareCandy.png",
+  "version": "1.0.0",
+  "author": "人民当家做主",
+  "category": "实用工具",
+  "defaultEnabled": false
+}

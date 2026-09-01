@@ -7,6 +7,10 @@
     "speedBattles.mod",
     "movePresets.mod",
     "pokechillHelper/mod.js",
-    "abilityTrainer/mod.js"
+    "abilityTrainer/mod.js",
+    "pokechillSuperChallenge/mod.js",
+    "pokechillGmax/mod.js",
+    "pokechillDummy/mod.js",
+    "pokechillSilverExchange/mod.js"
   ]
 }

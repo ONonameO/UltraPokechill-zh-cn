@@ -9373,7 +9373,7 @@ for (const item of indexedTeam){
     document.getElementById("battle-summary-flex").appendChild(div);
     const percent = (team[i].damageDealt / totalDamageDealt) * 100;
     document.getElementById(`battle-summary-bar-${i}`).style.width = percent+"%"
-    document.getElementById(`battle-summary-bar-${i}`).innerHTML = `<text>${Math.round(team[i].damageDealt).toLocaleString('es-ES')} (${percent.toFixed(0)}%)</text>`
+    document.getElementById(`battle-summary-bar-${i}`).innerHTML = `<text>${Math.round(team[i].damageDealt).toLocaleString('zh-CN')} (${percent.toFixed(0)}%)</text>`
 }
     if (window.UltraMods) {
         UltraMods.runHook("afterBattleSummaryRender", {

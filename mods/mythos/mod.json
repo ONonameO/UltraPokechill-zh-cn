@@ -1,0 +1,9 @@
+{
+  "id": "mythos",
+  "name": "神话",
+  "description": "新增传说级故事剧情。天气三神（固拉多、盖欧卡、烈空坐）的传奇章节现已加入，敌人拥有高个体值（IV）。",
+  "image": "icon.png",
+  "version": "1.8",
+  "author": "UltraPokechill",
+  "category": "任务"
+}
