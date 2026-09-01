@@ -1,7 +1,7 @@
 {
   "id": "pokechillHelper",
   "name": "Pokechill 助手",
-  "description": "集成战斗加速、时间跳过与自动重开三大功能，可快速推进战斗进程，省去等待时间，轻松护肝。",
+  "description": "集成全局加速、时间跳过与自动重开三大功能，可将全局游戏运行提速，减少等待时间，轻松护肝。",
   "image": "img/pkmn/sprite/rotom.png",
   "version": "3.8.1",
   "author": "黄黄",
