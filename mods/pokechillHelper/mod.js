@@ -24,6 +24,7 @@ let rejoinObserver = null;
 let rejoinObserverStarted = false;
 let hotkeysInstalled = false;
 let apiRef = null;
+let resizeHandler = null;       // 窗口 resize 时约束浮窗位置的监听
 
 UltraMods.define({
   id: MOD_ID,
@@ -505,10 +506,10 @@ function buildFloatingUI(api, state) {
   skipTitle.className = "pch-section-title";
   skipTitle.textContent = "⏰ 跳过时间";
 
-  // 跳过时间行：沿用原脚本的 60 分钟 / 12 小时（要求2）
+  // 跳过时间行：沿用原脚本的 1小时 / 12 小时（要求2）
   const skipRow = document.createElement("div");
   skipRow.className = "pch-skip-row";
-  const skip1 = makeButton("🕙 60分钟", () => { skipTime(1); flash(skip1); });
+  const skip1 = makeButton("🕙 1小时", () => { skipTime(1); flash(skip1); });
   const skip12 = makeButton("🌙 12小时", () => { skipTime(12); flash(skip12); });
   skipRow.append(skip1, skip12);
 
@@ -605,11 +606,21 @@ function ensureFloatingUI(api, state) {
 
   uiEl.style.left = state.uiState.left;
   uiEl.style.top = state.uiState.top;
+  clampFloatingPosition(uiEl);   // 初始位置也需约束在可视区内（窗口可能已变小）
   if (state.uiState.isCollapsed) collapseUI(true);
   updateFloatingUI(api, state);
+
+  if (!resizeHandler) {
+    resizeHandler = () => onWindowResize();
+    window.addEventListener("resize", resizeHandler);
+  }
 }
 
 function removeFloatingUI() {
+  if (resizeHandler) {
+    window.removeEventListener("resize", resizeHandler);
+    resizeHandler = null;
+  }
   if (uiEl && uiEl.parentNode) uiEl.parentNode.removeChild(uiEl);
   uiEl = null;
 }
@@ -655,6 +666,37 @@ function collapseUI(collapsed) {
   }
 }
 
+// 将浮窗整体约束在浏览器可视区域内部，确保不被移出窗口
+function clampFloatingPosition(ui) {
+  if (!ui) return;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const rect = ui.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  if (w <= 0 || h <= 0) return;
+  const maxLeft = Math.max(0, vw - w);
+  const maxTop = Math.max(0, vh - h);
+  let left = rect.left;
+  let top = rect.top;
+  if (left > maxLeft) left = maxLeft;
+  if (left < 0) left = 0;
+  if (top > maxTop) top = maxTop;
+  if (top < 0) top = 0;
+  ui.style.left = left + "px";
+  ui.style.top = top + "px";
+}
+
+// 窗口尺寸变化时重新计算并夹紧浮窗位置，并持久化
+function onWindowResize() {
+  if (!uiEl || !apiRef) return;
+  clampFloatingPosition(uiEl);
+  const s = getState(apiRef);
+  s.uiState.left = uiEl.style.left;
+  s.uiState.top = uiEl.style.top;
+  apiRef.save();
+}
+
 function setupDrag(ui, handle, api) {
   let dragging = false;
   let startX = 0, startY = 0, originLeft = 0, originTop = 0;
@@ -674,8 +716,20 @@ function setupDrag(ui, handle, api) {
 
   function onMove(event) {
     if (!dragging) return;
-    ui.style.left = (originLeft + (event.clientX - startX)) + "px";
-    ui.style.top = (originTop + (event.clientY - startY)) + "px";
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const rect = ui.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    let left = originLeft + (event.clientX - startX);
+    let top = originTop + (event.clientY - startY);
+    // 实时约束：浮窗整体必须完全位于可视区内
+    const maxLeft = Math.max(0, vw - w);
+    const maxTop = Math.max(0, vh - h);
+    left = Math.min(Math.max(0, left), maxLeft);
+    top = Math.min(Math.max(0, top), maxTop);
+    ui.style.left = left + "px";
+    ui.style.top = top + "px";
   }
 
   function onUp() {
