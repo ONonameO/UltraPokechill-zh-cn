@@ -1,9 +1,9 @@
 {
   "id": "pokechillDummy",
   "name": "Pokechill 自定义木桩",
-  "description": "将「自定义木桩」独立为 mod：创建可配置属性/等级/技能的木桩训练区，用于测试配队与伤害。由 mod 管理器独立启用或禁用。",
-  "image": "img/items/tmDummy.png",
-  "version": "1.0.0",
+  "description": "基于 UltraMods API 构建自定义木桩训练区：可配置属性/等级/技能的木桩，支持锁血，用于测试配队与伤害。由 mod 管理器独立启用或禁用。",
+  "image": "mods/customDummyIcon.png",
+  "version": "2.0.0",
   "author": "人民当家做主",
   "category": "实用工具",
   "defaultEnabled": false
