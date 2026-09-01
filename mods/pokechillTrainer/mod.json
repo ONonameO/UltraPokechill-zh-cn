@@ -1,0 +1,10 @@
+{
+  "id": "pokechillTrainer",
+  "name": "Pokechill 特性训练助手",
+  "description": "特性训练时自动重试，直到获得目标特性；支持中文名 / ID 模糊搜索锁定目标特性。",
+  "image": "img/items/quickClaw.png",
+  "version": "1.0",
+  "author": "CODEBUDDY, Reso",
+  "category": "实用工具",
+  "defaultEnabled": false
+}

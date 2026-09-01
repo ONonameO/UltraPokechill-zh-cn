@@ -1,9 +1,9 @@
-// Pokechill 助手 — 非全局战斗加速 + 倍速滑动条/输入框 + 跳过时间(原版 Date 劫持) + 自动重开
+// Pokechill 助手 — 战斗加速 + 倍速滑动条/输入框 + 跳过时间(原版 Date 劫持) + 自动重开
 // 改写自原 pokechill助手 userscript：
 //  - 战斗加速改用 speedBattles 的回合推进式（非全局）机制；
 //  - 跳过时间沿用原脚本对 window.Date 的劫持方式（仅做时钟偏移，1x，不加速全局时间）；
 //  - UI 为独立浮窗（可拖拽/折叠），美术与交互沿用原版游戏 mod 卡片风格；
-//  - 删除静音功能。
+
 
 const MOD_ID = "pokechillHelper";
 const STYLE_ID = "pokechill-helper-style";
