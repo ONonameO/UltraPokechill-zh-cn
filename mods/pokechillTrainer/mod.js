@@ -222,6 +222,7 @@ let currentTargetId = ""; // 已锁定的目标特性 ID
 let uiRefs = null;         // 浮窗内关键 DOM 引用
 let lastTrainingPokemon = null; // 上次渲染下拉框时的训练宝可梦 ID
 let comboOutsideClick = null;   // 下拉框外部点击关闭监听
+let tooltipEl = null;           // 特性描述 tooltip 元素
 
 UltraMods.define({
   id: MOD_ID,
@@ -294,6 +295,14 @@ function getSaved() {
 }
 
 // ===================== 特性读取（移植自原脚本） =====================
+
+// 特性详细描述（取自游戏 ability[id].info()）
+function getAbilityDescription(id) {
+  if (typeof ability !== "undefined" && ability[id] && typeof ability[id].info === "function") {
+    try { return ability[id].info(); } catch (e) { /* ignore */ }
+  }
+  return "";
+}
 
 function getCurrentAbility() {
   const saved = getSaved();
@@ -423,7 +432,6 @@ function installStyles() {
       z-index: 1100;
       user-select: none;
       box-sizing: border-box;
-      overflow: hidden;
     }
 
     .pch-header {
@@ -433,6 +441,7 @@ function installStyles() {
       background: var(--light1);
       color: var(--light2);
       padding: 0.45rem 0.6rem;
+      border-radius: 0.5rem 0.5rem 0 0;
       cursor: grab;
     }
     .pch-title {
@@ -458,6 +467,7 @@ function installStyles() {
       background: var(--light2);
       color: var(--dark2);
       padding: 0.55rem 0.6rem;
+      border-radius: 0 0 0.5rem 0.5rem;
     }
 
     .pch-section-title {
@@ -489,24 +499,25 @@ function installStyles() {
     .pch-combo-list {
       display: none;
       flex-direction: column;
-      margin-top: 0.25rem;
-      max-height: 200px;
+      position: fixed;
+      z-index: 1300;
+      max-height: 240px;
       overflow-y: auto;
       background: var(--dark2);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 0.3rem;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
     .pch-combo-list.open { display: flex; }
     .pch-combo-option {
-      padding: 0.35rem 0.45rem;
+      padding: 0.5rem 0.55rem;
       color: var(--light2);
       cursor: pointer;
       font-size: 0.9rem;
+      line-height: 1.4;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      word-break: break-word;
     }
     .pch-combo-option:last-child { border-bottom: 0; }
     .pch-combo-option:hover, .pch-combo-option.active {
@@ -517,6 +528,29 @@ function installStyles() {
       padding: 0.4rem 0.45rem;
       color: rgba(236, 222, 183, 0.6);
       font-size: 0.85rem;
+    }
+
+    .pch-tooltip {
+      position: fixed;
+      display: none;
+      max-width: 260px;
+      background: rgba(54, 52, 47, 0.97);
+      color: var(--light2);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 0.35rem;
+      padding: 0.5rem 0.6rem;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      z-index: 1400;
+      pointer-events: none;
+    }
+    .pch-tooltip b { color: var(--light2); }
+
+    .pch-divider {
+      height: 0;
+      margin: 0.05rem 0;
+      border-top: 1px solid rgba(54, 52, 47, 0.3);
     }
 
     .pch-info {
@@ -617,10 +651,20 @@ function buildFloatingUI(api, state) {
   foot.className = "pch-foot";
   foot.textContent = "自动重试直到获得目标特性";
 
+  const divider1 = document.createElement("div");
+  divider1.className = "pch-divider";
+  const divider2 = document.createElement("div");
+  divider2.className = "pch-divider";
+  const divider3 = document.createElement("div");
+  divider3.className = "pch-divider";
+
   content.append(
     infoTitle, pkmnLine, abilityLine,
+    divider1,
     targetTitle, combo,
+    divider2,
     statusTitle, statusLabel,
+    divider3,
     toggleBtn2, clearBtn,
     foot
   );
@@ -692,6 +736,9 @@ function renderComboOptions(api, filterText) {
     opt.className = "pch-combo-option";
     opt.dataset.id = id;
     opt.textContent = getAbilityName(id);
+    const cn = ABILITY_CN_DICT[id] ? ABILITY_CN_DICT[id] : id;
+    const desc = getAbilityDescription(id);
+    opt._tipHtml = `<b>${cn} (${id})</b>` + (desc ? `<br>${desc}` : "");
     if (id === currentTargetId) opt.classList.add("active");
     list.appendChild(opt);
   }
@@ -731,16 +778,31 @@ function confirmTarget(api, abilityId, input) {
 
 // 下拉框交互：打开 / 过滤 / 选中 / 外部点击关闭
 function setupCombo(api, input, list, combo) {
+  function positionList() {
+    if (!uiEl) return;
+    const uiRect = uiEl.getBoundingClientRect();
+    list.style.width = uiRect.width + "px";
+    const listRect = list.getBoundingClientRect();
+    let top = uiRect.top - listRect.height - 6;
+    let left = uiRect.left;
+    if (top < 8) top = uiRect.bottom + 6; // 顶部空间不足时改在卡片下方
+    if (left + uiRect.width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - uiRect.width - 8);
+    if (left < 8) left = 8;
+    list.style.left = left + "px";
+    list.style.top = top + "px";
+  }
   function open() {
     renderComboOptions(api, "");
     list.classList.add("open");
+    positionList();
   }
   function close() {
     list.classList.remove("open");
+    hideTooltip();
   }
   input.addEventListener("focus", open);
   input.addEventListener("click", event => { event.stopPropagation(); open(); });
-  input.addEventListener("input", () => { renderComboOptions(api, input.value); list.classList.add("open"); });
+  input.addEventListener("input", () => { renderComboOptions(api, input.value); list.classList.add("open"); positionList(); });
   input.addEventListener("keydown", event => {
     if (event.key === "Enter") {
       const exact = findExactAbility(input.value);
@@ -756,11 +818,55 @@ function setupCombo(api, input, list, combo) {
     confirmTarget(api, opt.dataset.id, input);
     close();
   });
+  // 悬停选项 -> 显示特性描述 tooltip
+  list.addEventListener("mouseover", event => {
+    const opt = event.target.closest(".pch-combo-option");
+    if (!opt || !opt._tipHtml) return;
+    const r = opt.getBoundingClientRect();
+    showTooltip(opt._tipHtml, r.right, r.top);
+  });
+  list.addEventListener("mousemove", event => {
+    const opt = event.target.closest(".pch-combo-option");
+    if (!opt || !opt._tipHtml) return;
+    const r = opt.getBoundingClientRect();
+    showTooltip(opt._tipHtml, r.right, r.top);
+  });
+  list.addEventListener("mouseout", event => {
+    const opt = event.target.closest(".pch-combo-option");
+    if (opt) hideTooltip();
+  });
   // 点击浮窗外部关闭列表
   comboOutsideClick = event => {
     if (list.classList.contains("open") && !combo.contains(event.target) && event.target !== input) close();
   };
   document.addEventListener("mousedown", comboOutsideClick);
+}
+
+// 特性描述 tooltip
+function getTooltip() {
+  if (!tooltipEl) {
+    tooltipEl = document.createElement("div");
+    tooltipEl.className = "pch-tooltip";
+    document.body.appendChild(tooltipEl);
+  }
+  return tooltipEl;
+}
+function showTooltip(html, x, y) {
+  const t = getTooltip();
+  t.innerHTML = html;
+  t.style.display = "block";
+  const r = t.getBoundingClientRect();
+  let left = x + 12;
+  let top = y + 12;
+  if (left + r.width > window.innerWidth - 8) left = x - r.width - 12;
+  if (left < 8) left = 8;
+  if (top + r.height > window.innerHeight - 8) top = window.innerHeight - r.height - 8;
+  if (top < 8) top = 8;
+  t.style.left = left + "px";
+  t.style.top = top + "px";
+}
+function hideTooltip() {
+  if (tooltipEl) tooltipEl.style.display = "none";
 }
 
 // 刷新"当前信息"模块，并在训练宝可梦变化时重建下拉候选
@@ -849,6 +955,8 @@ function removeFloatingUI() {
     document.removeEventListener("mousedown", comboOutsideClick);
     comboOutsideClick = null;
   }
+  if (tooltipEl && tooltipEl.parentNode) tooltipEl.parentNode.removeChild(tooltipEl);
+  tooltipEl = null;
   if (uiEl && uiEl.parentNode) uiEl.parentNode.removeChild(uiEl);
   uiEl = null;
   uiRefs = null;
