@@ -335,7 +335,7 @@ function installStyles() {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      color: var(--light1);
+      color: var(--dark2);
       font-weight: bold;
       font-size: 1rem;
     }

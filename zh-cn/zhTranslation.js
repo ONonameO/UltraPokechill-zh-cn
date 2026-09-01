@@ -890,9 +890,9 @@
         [/^Halves damage received from Fire and Ice-type moves/i,
         '受到的火、冰属性招式伤害减半'], //厚脂肪
         [/^Increases Same-Type-Attack-Bonus by \+([\d\.]+)/i,
-        '本系加成(STAB) +$1'],
+        '本系加成 +$1'],
         [/^Increases Cross-Power by \+([\d\.]+)/i,
-        '"交叉之力"加成 +$1'],
+        '“交叉之力” 加成 +$1'],
         [/^Moves always hit regardless of the type/i,
         '招式必定命中'],
         [/^Damage received is halved when over (\d+)% HP/i,

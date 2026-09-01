@@ -371,7 +371,7 @@ function checkAutoTraining() {
       // 匹配成功，停止自动训练
       state.autoTraining = false;
       if (uiRefs) {
-        uiRefs.statusLabel.textContent = "状态: 已获得目标特性 🎉";
+        uiRefs.statusLabel.textContent = "已获得目标特性 🎉";
         uiRefs.toggleBtn.textContent = "▶️ 开启自动训练";
         uiRefs.toggleBtn.classList.remove("active");
       }
@@ -381,7 +381,7 @@ function checkAutoTraining() {
 
     // 未匹配，点击重试
     clickedThisCycle = true;
-    if (uiRefs) uiRefs.statusLabel.textContent = `状态: 不匹配 (${name})，重试中...`;
+    if (uiRefs) uiRefs.statusLabel.textContent = `不匹配 (${name})，重试中...`;
     setTimeout(() => {
       const btn = document.getElementById("area-rejoin");
       if (btn) btn.click();
@@ -392,7 +392,7 @@ function checkAutoTraining() {
 
   // 不在重试阶段时，持续刷新状态
   if (state.autoTraining && !visible && uiRefs) {
-    uiRefs.statusLabel.textContent = "状态: 训练中...";
+    uiRefs.statusLabel.textContent = "训练中...";
   }
 }
 
@@ -577,6 +577,7 @@ function installStyles() {
     .pch-info {
       font-size: 0.9rem;
       font-weight: 600;
+      white-space: pre-wrap;
       color: var(--light1);
     }
 
@@ -587,6 +588,7 @@ function installStyles() {
       border-radius: 0.4rem;
       font-family: inherit;
       font-size: 0.9rem;
+      white-space: pre-wrap;
       padding: 0.35rem 0.45rem;
       cursor: pointer;
       transition: filter 0.1s, background 0.1s, transform 0.05s;
@@ -619,7 +621,7 @@ function buildFloatingUI(api, state) {
   header.className = "pch-header";
   const title = document.createElement("span");
   title.className = "pch-title";
-  title.textContent = "⚡ 特性训练助手";
+  title.textContent = "💊 特性训练助手";
   const toggleBtn = document.createElement("button");
   toggleBtn.type = "button";
   toggleBtn.className = "pch-toggle-btn";
@@ -636,10 +638,10 @@ function buildFloatingUI(api, state) {
   infoTitle.textContent = "📋 当前信息";
   const pkmnLine = document.createElement("div");
   pkmnLine.className = "pch-info";
-  pkmnLine.textContent = "宝可梦: 未选择";
+  pkmnLine.textContent = "宝可梦：未选择";
   const abilityLine = document.createElement("div");
   abilityLine.className = "pch-info";
-  abilityLine.textContent = "特性: 未知";
+  abilityLine.textContent = "特　性：未知";
 
   // ===== 目标特性（需求2：可搜索下拉选择框）=====
   const targetTitle = document.createElement("div");
@@ -663,11 +665,11 @@ function buildFloatingUI(api, state) {
   statusTitle.textContent = "📊 状态";
   const statusLabel = document.createElement("div");
   statusLabel.className = "pch-info";
-  statusLabel.textContent = "状态: 未开始";
+  statusLabel.textContent = "未开始";
 
   // 操作按钮
   const toggleBtn2 = makeButton("▶️ 开启自动训练", () => onToggleTraining(api));
-  const clearBtn = makeButton("清除目标", () => onClearTarget(api));
+  const clearBtn = makeButton("🔄 　重　　置　", () => onClearTarget(api));
 
   const foot = document.createElement("div");
   foot.className = "pch-foot";
@@ -791,7 +793,7 @@ function confirmTarget(api, abilityId, input) {
   clickedThisCycle = false;
   lastVisible = false;
   if (uiRefs) {
-    uiRefs.statusLabel.textContent = `状态: 已锁定目标 ${cn}，可开启自动训练`;
+    uiRefs.statusLabel.textContent = `已锁定目标特性【${cn}】`;
     uiRefs.toggleBtn.textContent = "▶️ 开启自动训练";
     uiRefs.toggleBtn.classList.remove("active");
   }
@@ -906,31 +908,53 @@ function showTooltip(html, r) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  // 依据下拉选择框在视口中的实际位置，智能选择显示在左侧或右侧
-  let left;
+  // 每轮先清除上一次的 right 锚定，统一回到 left 锚定基线
+  t.style.right = "auto";
+
+  // 依据下拉选择框在视口中的实际位置，智能选择显示在左侧或右侧。
+  // 显示在左侧时改用 right 锚定：右边缘始终紧贴下拉框左缘（靠右对齐），
+  // 不再依赖测量宽度，彻底消除"窄 tooltip 右侧留白 = maxWidth - currentWidth"的问题。
+  let left = null; // null 表示已用 right 锚定
   if (comboListEl) {
     const lr = comboListEl.getBoundingClientRect();
     const spaceRight = vw - lr.right;   // 面板右侧可用宽度
     const spaceLeft = lr.left;          // 面板左侧可用宽度
     if (spaceRight >= tr.width + gap) {
-      left = lr.right + gap;            // 右侧充足 -> 紧贴显示在面板右侧
+      left = lr.right + gap;            // 右侧充足 -> 左缘紧贴面板右侧
     } else if (spaceLeft >= tr.width + gap) {
-      left = lr.left - tr.width - gap;  // 否则左侧充足 -> 紧贴显示在面板左侧
+      t.style.right = (vw - lr.left + gap) + "px"; // 右侧边缘紧贴面板左缘（靠右对齐）
+      t.style.left = "auto";
     } else {
-      // 两侧都不够：放在空间更大的一侧，随后夹到视口内
-      left = spaceRight >= spaceLeft ? lr.right + gap : lr.left - tr.width - gap;
+      // 两侧都不够：放在空间更大的一侧
+      if (spaceRight >= spaceLeft) {
+        left = lr.right + gap;
+      } else {
+        t.style.right = (vw - lr.left + gap) + "px";
+        t.style.left = "auto";
+      }
     }
   } else {
     left = r.right + gap;
   }
-  if (left + tr.width > vw - 8) left = vw - tr.width - 8;
-  if (left < 8) left = 8;
+
+  if (left !== null) {
+    // 左侧锚定场景：水平夹到视口内
+    if (left + tr.width > vw - 8) left = vw - tr.width - 8;
+    if (left < 8) left = 8;
+    t.style.left = left + "px";
+  } else {
+    // 右侧锚定场景：实际左缘 = 面板左缘 - gap - 自身宽度；越出视口左缘则回退为 left 锚定贴左缘
+    const leftEdge = comboListEl.getBoundingClientRect().left - gap - tr.width;
+    if (leftEdge < 8) {
+      t.style.right = "auto";
+      t.style.left = "8px";
+    }
+  }
 
   let top = r.top;
   if (top + tr.height > vh - 8) top = vh - tr.height - 8;
   if (top < 8) top = 8;
 
-  t.style.left = left + "px";
   t.style.top = top + "px";
 }
 function hideTooltip() {
@@ -941,9 +965,9 @@ function hideTooltip() {
 function refreshCurrentInfo(api) {
   if (!uiRefs) return;
   const pkmnId = getCurrentTrainingPkmnId();
-  uiRefs.pkmnLine.textContent = `宝可梦: ${pkmnId ? format(pkmnId) : "未选择训练宝可梦"}`;
+  uiRefs.pkmnLine.textContent = `宝可梦：${pkmnId ? format(pkmnId) : "未选择训练宝可梦"}`;
   const cur = getCurrentAbility();
-  uiRefs.abilityLine.textContent = `特性: ${cur ? getAbilityName(cur) : "未知"}`;
+  uiRefs.abilityLine.textContent = `特　性：${cur ? getAbilityName(cur) : "未知"}`;
   if (pkmnId !== lastTrainingPokemon) {
     lastTrainingPokemon = pkmnId;
     if (uiRefs.comboList) renderComboOptions(api, uiRefs.comboInput.value);
@@ -974,16 +998,16 @@ function flash(btn) {
 function onToggleTraining(api) {
   const state = getState(api);
   if (!currentTargetId) {
-    if (uiRefs) uiRefs.statusLabel.textContent = "状态: 请先选择目标特性";
+    if (uiRefs) uiRefs.statusLabel.textContent = "请先选择目标特性";
     return;
   }
   state.autoTraining = !state.autoTraining;
   clickedThisCycle = false;
   lastVisible = false;
   if (state.autoTraining) {
-    if (uiRefs) uiRefs.statusLabel.textContent = "状态: 等待训练结束...";
+    if (uiRefs) uiRefs.statusLabel.textContent = "等待训练结束...";
   } else {
-    if (uiRefs) uiRefs.statusLabel.textContent = "状态: 已停止";
+    if (uiRefs) uiRefs.statusLabel.textContent = "已停止";
   }
   api.save();
   updateFloatingUI(api, state);
@@ -998,7 +1022,7 @@ function onClearTarget(api) {
   lastVisible = false;
   if (uiRefs) {
     uiRefs.comboInput.value = "";
-    uiRefs.statusLabel.textContent = "状态: 未开始";
+    uiRefs.statusLabel.textContent = "未开始";
     renderComboOptions(api, "");
   }
   api.save();
