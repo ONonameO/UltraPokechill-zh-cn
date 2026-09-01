@@ -220,6 +220,8 @@ let clickedThisCycle = false;
 let lastVisible = false;
 let currentTargetId = ""; // 已锁定的目标特性 ID
 let uiRefs = null;         // 浮窗内关键 DOM 引用
+let lastTrainingPokemon = null; // 上次渲染下拉框时的训练宝可梦 ID
+let comboOutsideClick = null;   // 下拉框外部点击关闭监听
 
 UltraMods.define({
   id: MOD_ID,
@@ -291,30 +293,7 @@ function getSaved() {
   return null;
 }
 
-// ===================== 特性搜索 / 读取（移植自原脚本） =====================
-
-function searchAbility(searchText) {
-  const text = searchText.trim().toLowerCase();
-  if (!text) return null;
-
-  // 1. 完全匹配中文名
-  if (CN_TO_ABILITY_DICT[searchText.trim()]) {
-    return CN_TO_ABILITY_DICT[searchText.trim()];
-  }
-  // 2. 完全匹配 ID
-  if (ABILITY_CN_DICT[text]) {
-    return text;
-  }
-  // 3. 模糊匹配中文名 / ID
-  const fuzzyMatches = [];
-  for (const [id, cn] of Object.entries(ABILITY_CN_DICT)) {
-    if (cn.toLowerCase().includes(text)) fuzzyMatches.push({ id, cn, match: cn });
-    if (id.toLowerCase().includes(text)) fuzzyMatches.push({ id, cn, match: id });
-  }
-  if (fuzzyMatches.length === 1) return fuzzyMatches[0].id;
-  // 多个匹配或零匹配都返回 null
-  return null;
-}
+// ===================== 特性读取（移植自原脚本） =====================
 
 function getCurrentAbility() {
   const saved = getSaved();
@@ -351,6 +330,7 @@ function isActuallyVisible(el) {
 function checkAutoTraining() {
   if (!apiRef || !apiRef.isEnabled(MOD_ID)) return;
   const state = getState(apiRef);
+  refreshCurrentInfo(apiRef);
   if (!state.autoTraining || !currentTargetId) return;
 
   const rejoinBtn = document.getElementById("area-rejoin");
@@ -371,7 +351,6 @@ function checkAutoTraining() {
       return;
     }
     const name = getAbilityName(current);
-    if (uiRefs) uiRefs.currentLabel.textContent = `当前特性: ${name}`;
 
     if (current === currentTargetId) {
       // 匹配成功，停止自动训练
@@ -396,13 +375,9 @@ function checkAutoTraining() {
 
   lastVisible = visible;
 
-  // 不在重试阶段时，持续刷新当前特性显示
-  if (state.autoTraining && !visible) {
-    const current = getCurrentAbility();
-    if (current && uiRefs) {
-      uiRefs.currentLabel.textContent = `当前特性: ${getAbilityName(current)}`;
-      uiRefs.statusLabel.textContent = "状态: 训练中...";
-    }
+  // 不在重试阶段时，持续刷新状态
+  if (state.autoTraining && !visible && uiRefs) {
+    uiRefs.statusLabel.textContent = "状态: 训练中...";
   }
 }
 
@@ -494,7 +469,11 @@ function installStyles() {
       font-size: 1rem;
     }
 
-    .pch-search {
+    .pch-combo {
+      position: relative;
+      width: 100%;
+    }
+    .pch-combo-input {
       width: 100%;
       box-sizing: border-box;
       background: var(--dark2);
@@ -505,15 +484,40 @@ function installStyles() {
       font-size: 0.9rem;
       padding: 0.35rem 0.45rem;
     }
-    .pch-search::placeholder { color: rgba(236, 222, 183, 0.6); }
+    .pch-combo-input::placeholder { color: rgba(236, 222, 183, 0.6); }
 
-    .pch-search-result {
-      font-size: 0.8rem;
-      min-height: 1.1em;
-      color: var(--dark2);
+    .pch-combo-list {
+      display: none;
+      flex-direction: column;
+      margin-top: 0.25rem;
+      max-height: 200px;
+      overflow-y: auto;
+      background: var(--dark2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.3rem;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
     }
-    .pch-search-result.ok { color: rgb(60, 110, 90); font-weight: bold; }
-    .pch-search-result.err { color: #b3453b; font-weight: bold; }
+    .pch-combo-list.open { display: flex; }
+    .pch-combo-option {
+      padding: 0.35rem 0.45rem;
+      color: var(--light2);
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pch-combo-option:last-child { border-bottom: 0; }
+    .pch-combo-option:hover, .pch-combo-option.active {
+      background: rgb(90, 133, 113);
+      color: white;
+    }
+    .pch-combo-empty {
+      padding: 0.4rem 0.45rem;
+      color: rgba(236, 222, 183, 0.6);
+      font-size: 0.85rem;
+    }
 
     .pch-info {
       font-size: 0.9rem;
@@ -570,27 +574,32 @@ function buildFloatingUI(api, state) {
   const content = document.createElement("div");
   content.className = "pch-content";
 
-  // 目标特性
+  // ===== 当前信息（需求1：置于目标特性上方）=====
+  const infoTitle = document.createElement("div");
+  infoTitle.className = "pch-section-title";
+  infoTitle.textContent = "📋 当前信息";
+  const pkmnLine = document.createElement("div");
+  pkmnLine.className = "pch-info";
+  pkmnLine.textContent = "宝可梦: 未选择";
+  const abilityLine = document.createElement("div");
+  abilityLine.className = "pch-info";
+  abilityLine.textContent = "特性: 未知";
+
+  // ===== 目标特性（需求2：可搜索下拉选择框）=====
   const targetTitle = document.createElement("div");
   targetTitle.className = "pch-section-title";
   targetTitle.textContent = "🎯 目标特性";
 
-  const searchInput = document.createElement("input");
-  searchInput.type = "text";
-  searchInput.className = "pch-search";
-  searchInput.placeholder = "搜索特性（中文 / ID）";
-
-  const searchResult = document.createElement("div");
-  searchResult.className = "pch-search-result";
-  searchResult.textContent = "";
-
-  // 当前特性
-  const currentTitle = document.createElement("div");
-  currentTitle.className = "pch-section-title";
-  currentTitle.textContent = "🔍 当前特性";
-  const currentLabel = document.createElement("div");
-  currentLabel.className = "pch-info";
-  currentLabel.textContent = "当前特性: 未知";
+  const combo = document.createElement("div");
+  combo.className = "pch-combo";
+  const comboInput = document.createElement("input");
+  comboInput.type = "text";
+  comboInput.className = "pch-combo-input";
+  comboInput.placeholder = "选择 / 搜索特性…";
+  comboInput.setAttribute("autocomplete", "off");
+  const comboList = document.createElement("div");
+  comboList.className = "pch-combo-list";
+  combo.append(comboInput, comboList);
 
   // 状态
   const statusTitle = document.createElement("div");
@@ -609,39 +618,18 @@ function buildFloatingUI(api, state) {
   foot.textContent = "自动重试直到获得目标特性";
 
   content.append(
-    targetTitle, searchInput, searchResult,
-    currentTitle, currentLabel,
+    infoTitle, pkmnLine, abilityLine,
+    targetTitle, combo,
     statusTitle, statusLabel,
     toggleBtn2, clearBtn,
     foot
   );
   ui.append(header, content);
 
-  // 事件绑定
-  let searchTimeout;
-  searchInput.addEventListener("input", () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      const text = searchInput.value.trim();
-      if (!text) {
-        searchResult.textContent = "";
-        searchResult.className = "pch-search-result";
-        currentTargetId = "";
-        return;
-      }
-      const matched = searchAbility(text);
-      if (matched) {
-        const cn = ABILITY_CN_DICT[matched] || matched;
-        searchResult.textContent = `✓ ${cn} (${matched})`;
-        searchResult.className = "pch-search-result ok";
-        currentTargetId = matched;
-      } else {
-        searchResult.textContent = "✗ 未找到匹配的特性（或多个匹配）";
-        searchResult.className = "pch-search-result err";
-        currentTargetId = "";
-      }
-    }, 300);
-  });
+  uiRefs = { pkmnLine, abilityLine, comboInput, comboList, combo, statusLabel, toggleBtn: toggleBtn2, clearBtn };
+
+  // 下拉框事件（搜索过滤 + 选中即确认）
+  setupCombo(api, comboInput, comboList, combo);
 
   toggleBtn.addEventListener("click", event => {
     event.stopPropagation();
@@ -649,8 +637,143 @@ function buildFloatingUI(api, state) {
   });
 
   setupDrag(ui, header, api);
-  uiRefs = { searchInput, searchResult, currentLabel, statusLabel, toggleBtn: toggleBtn2, clearBtn };
   return ui;
+}
+
+// 当前正在训练的宝可梦 ID
+function getCurrentTrainingPkmnId() {
+  const saved = getSaved();
+  if (!saved) return null;
+  return saved.trainingPokemon || null;
+}
+
+// 该宝可梦"能够学会"的特性 ID 列表：类型匹配（含 "all"），排除隐藏特性与当前已拥有特性
+function getLearnableAbilities(pkmnId) {
+  const saved = getSaved();
+  if (!pkmnId || typeof pkmn === "undefined" || !pkmn[pkmnId]) return [];
+  const poke = pkmn[pkmnId];
+  const types = poke.type || [];
+  const hiddenId = poke.hiddenAbility ? poke.hiddenAbility.id : null;
+  const currentId = poke.ability;
+  const result = [];
+  for (const [id, ab] of Object.entries(typeof ability !== "undefined" ? ability : {})) {
+    if (!ab || !Array.isArray(ab.type)) continue;
+    const matched = ab.type.includes("all") || ab.type.some(t => types.includes(t));
+    if (!matched) continue;
+    if (id === hiddenId) continue;   // 隐藏特性无法通过训练获得
+    if (id === currentId) continue;  // 当前已拥有，无需作为目标
+    result.push(id);
+  }
+  return result;
+}
+
+// 渲染下拉候选（按输入过滤）
+function renderComboOptions(api, filterText) {
+  if (!uiRefs || !uiRefs.comboList) return;
+  const list = uiRefs.comboList;
+  list.innerHTML = "";
+  const pkmnId = getCurrentTrainingPkmnId();
+  const candidates = getLearnableAbilities(pkmnId);
+  const filter = (filterText || "").trim().toLowerCase();
+  const matches = candidates.filter(id => {
+    if (!filter) return true;
+    const cn = getAbilityName(id).toLowerCase();
+    return cn.includes(filter) || id.toLowerCase().includes(filter);
+  });
+  if (matches.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "pch-combo-empty";
+    empty.textContent = pkmnId ? "无匹配特性" : "请先选择训练宝可梦";
+    list.appendChild(empty);
+    return;
+  }
+  for (const id of matches) {
+    const opt = document.createElement("div");
+    opt.className = "pch-combo-option";
+    opt.dataset.id = id;
+    opt.textContent = getAbilityName(id);
+    if (id === currentTargetId) opt.classList.add("active");
+    list.appendChild(opt);
+  }
+}
+
+// 将输入文本解析为特性 ID（中文名 / ID 精确匹配）
+function findExactAbility(text) {
+  const t = (text || "").trim();
+  if (!t) return null;
+  if (CN_TO_ABILITY_DICT[t]) return CN_TO_ABILITY_DICT[t];
+  const lower = t.toLowerCase();
+  if (ABILITY_CN_DICT[lower]) return lower;
+  for (const id of getLearnableAbilities(getCurrentTrainingPkmnId())) {
+    if (id.toLowerCase() === lower) return id;
+    if ((ABILITY_CN_DICT[id] || "").toLowerCase() === lower) return id;
+  }
+  return null;
+}
+
+// 确认目标特性（选中即确认）
+function confirmTarget(api, abilityId, input) {
+  currentTargetId = abilityId;
+  const cn = getAbilityName(abilityId);
+  if (input) input.value = cn;
+  const state = getState(api);
+  state.autoTraining = false;
+  clickedThisCycle = false;
+  lastVisible = false;
+  if (uiRefs) {
+    uiRefs.statusLabel.textContent = `状态: 已锁定目标 ${cn}，可开启自动训练`;
+    uiRefs.toggleBtn.textContent = "▶️ 开启自动训练";
+    uiRefs.toggleBtn.classList.remove("active");
+  }
+  api.save();
+  updateFloatingUI(api, state);
+}
+
+// 下拉框交互：打开 / 过滤 / 选中 / 外部点击关闭
+function setupCombo(api, input, list, combo) {
+  function open() {
+    renderComboOptions(api, "");
+    list.classList.add("open");
+  }
+  function close() {
+    list.classList.remove("open");
+  }
+  input.addEventListener("focus", open);
+  input.addEventListener("click", event => { event.stopPropagation(); open(); });
+  input.addEventListener("input", () => { renderComboOptions(api, input.value); list.classList.add("open"); });
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      const exact = findExactAbility(input.value);
+      if (exact) { confirmTarget(api, exact, input); close(); }
+    } else if (event.key === "Escape") {
+      close();
+    }
+  });
+  list.addEventListener("click", event => {
+    const opt = event.target.closest(".pch-combo-option");
+    if (!opt) return;
+    event.stopPropagation();
+    confirmTarget(api, opt.dataset.id, input);
+    close();
+  });
+  // 点击浮窗外部关闭列表
+  comboOutsideClick = event => {
+    if (list.classList.contains("open") && !combo.contains(event.target) && event.target !== input) close();
+  };
+  document.addEventListener("mousedown", comboOutsideClick);
+}
+
+// 刷新"当前信息"模块，并在训练宝可梦变化时重建下拉候选
+function refreshCurrentInfo(api) {
+  if (!uiRefs) return;
+  const pkmnId = getCurrentTrainingPkmnId();
+  uiRefs.pkmnLine.textContent = `宝可梦: ${pkmnId ? format(pkmnId) : "未选择训练宝可梦"}`;
+  const cur = getCurrentAbility();
+  uiRefs.abilityLine.textContent = `特性: ${cur ? getAbilityName(cur) : "未知"}`;
+  if (pkmnId !== lastTrainingPokemon) {
+    lastTrainingPokemon = pkmnId;
+    if (uiRefs.comboList) renderComboOptions(api, uiRefs.comboInput.value);
+  }
 }
 
 function makeButton(text, onClick) {
@@ -677,7 +800,7 @@ function flash(btn) {
 function onToggleTraining(api) {
   const state = getState(api);
   if (!currentTargetId) {
-    if (uiRefs) uiRefs.statusLabel.textContent = "状态: 请先搜索并锁定目标特性";
+    if (uiRefs) uiRefs.statusLabel.textContent = "状态: 请先选择目标特性";
     return;
   }
   state.autoTraining = !state.autoTraining;
@@ -700,10 +823,9 @@ function onClearTarget(api) {
   clickedThisCycle = false;
   lastVisible = false;
   if (uiRefs) {
-    uiRefs.searchInput.value = "";
-    uiRefs.searchResult.textContent = "";
-    uiRefs.searchResult.className = "pch-search-result";
+    uiRefs.comboInput.value = "";
     uiRefs.statusLabel.textContent = "状态: 未开始";
+    renderComboOptions(api, "");
   }
   api.save();
   updateFloatingUI(api, state);
@@ -723,25 +845,28 @@ function ensureFloatingUI(api, state) {
 }
 
 function removeFloatingUI() {
+  if (comboOutsideClick) {
+    document.removeEventListener("mousedown", comboOutsideClick);
+    comboOutsideClick = null;
+  }
   if (uiEl && uiEl.parentNode) uiEl.parentNode.removeChild(uiEl);
   uiEl = null;
   uiRefs = null;
+  lastTrainingPokemon = null;
 }
 
 function updateFloatingUI(api, state) {
   if (!uiEl || !uiRefs) return;
 
-  const cur = getCurrentAbility();
-  uiRefs.currentLabel.textContent = `当前特性: ${cur ? getAbilityName(cur) : "未知"}`;
+  refreshCurrentInfo(api);
+
+  // 已锁定目标时回填输入框
+  if (currentTargetId && uiRefs.comboInput.value.trim() === "") {
+    uiRefs.comboInput.value = getAbilityName(currentTargetId);
+  }
 
   uiRefs.toggleBtn.textContent = state.autoTraining ? "⏸️ 停止训练" : "▶️ 开启自动训练";
   uiRefs.toggleBtn.classList.toggle("active", state.autoTraining);
-
-  if (!state.autoTraining) {
-    uiRefs.statusLabel.textContent = "状态: 已停止";
-  } else if (!lastVisible) {
-    uiRefs.statusLabel.textContent = "状态: 等待训练结束...";
-  }
 }
 
 function toggleCollapse(api, state) {
