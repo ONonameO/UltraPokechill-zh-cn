@@ -6,6 +6,6 @@
     "allStarters.mod",
     "speedBattles.mod",
     "movePresets.mod",
-    "pokechillHelper.mod"
+    "pokechillHelper/mod.js"
   ]
 }
