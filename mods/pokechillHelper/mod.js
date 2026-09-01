@@ -279,25 +279,26 @@ function installStyles() {
       position: fixed;
       top: 10px;
       left: 10px;
-      width: 220px;
-      background: var(--light1);
-      color: var(--light2);
+      width: 300px;
       border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 0.5rem;
-      padding: 0.5rem 0.6rem;
       font-family: inherit;
       font-size: 0.95rem;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
       z-index: 1100;
       user-select: none;
       box-sizing: border-box;
+      overflow: hidden;
     }
 
     .pch-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.5rem;
+      background: var(--light1);
+      color: var(--light2);
+      padding: 0.45rem 0.6rem;
+      cursor: grab;
     }
     .pch-title {
       font-weight: bold;
@@ -319,6 +320,28 @@ function installStyles() {
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
+      background: var(--light2);
+      color: var(--dark2);
+      padding: 0.55rem 0.6rem;
+    }
+
+    .pch-speed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+    }
+    .pch-speed-title {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--light1);
+      font-weight: bold;
+    }
+
+    .pch-reset-btn {
+      padding: 0.15rem 0.55rem;
+      font-size: 0.85rem;
     }
 
     .pch-speed-row {
@@ -326,12 +349,6 @@ function installStyles() {
       align-items: center;
       gap: 0.4rem;
       flex-wrap: wrap;
-    }
-    .pch-label { color: white; }
-    .pch-current {
-      font-family: monospace;
-      min-width: 2.6rem;
-      text-align: right;
     }
 
     .pch-slider {
@@ -363,7 +380,7 @@ function installStyles() {
     }
 
     .pch-btn {
-      background: var(--dark1);
+      background: var(--light1);
       color: var(--light2);
       border: 0;
       border-radius: 0.4rem;
@@ -373,15 +390,11 @@ function installStyles() {
       cursor: pointer;
       transition: filter 0.1s, background 0.1s, transform 0.05s;
     }
-    .pch-btn:hover { filter: brightness(1.15); }
+    .pch-btn:hover { background: #685F4B; }
     .pch-btn:active { transform: translateY(1px); }
     .pch-btn.active {
       background: rgb(90, 133, 113);
       color: white;
-    }
-    .pch-btn.flash {
-      background: rgb(90, 133, 113) !important;
-      color: white !important;
     }
 
     .pch-skip-row { display: flex; gap: 0.4rem; }
@@ -392,11 +405,22 @@ function installStyles() {
       align-items: center;
       gap: 0.4rem;
     }
-    .pch-autorejoin { flex: 1; text-align: left; }
+    .pch-autorejoin {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+    }
+    .pch-rejoin-status {
+      margin-left: auto;
+    }
 
     .pch-foot {
       margin-top: 0.35rem;
       font-size: 0.7rem;
+      font-weight: bold;
       opacity: 0.7;
       text-align: center;
       pointer-events: none;
@@ -424,19 +448,31 @@ function buildFloatingUI(api, state) {
   const toggleBtn = document.createElement("button");
   toggleBtn.type = "button";
   toggleBtn.className = "pch-toggle-btn";
-  toggleBtn.title = "折叠/展开";
+  toggleBtn.title = "折叠 / 展开";
   toggleBtn.textContent = "➖";
   header.append(title, toggleBtn);
 
   const content = document.createElement("div");
   content.className = "pch-content";
 
-  // 倍速行：标签 + 滑动条 + 输入框 + 当前值
-  const speedRow = document.createElement("div");
-  speedRow.className = "pch-speed-row";
+  // 倍速标题行：标题文字 + 当前倍速(nx) + 重置按钮（要求5、4）
+  const speedHeader = document.createElement("div");
+  speedHeader.className = "pch-speed-header";
+  const speedTitle = document.createElement("div");
+  speedTitle.className = "pch-speed-title";
   const label = document.createElement("span");
   label.className = "pch-label";
-  label.textContent = "战斗速度";
+  label.textContent = "⏳ 战斗速度: ";
+  const current = document.createElement("span");
+  current.className = "pch-current";
+  speedTitle.append(label, current);
+  const resetBtn = makeButton("重置", () => { setSpeed(api, getState(api), 1); flash(resetBtn); });
+  resetBtn.classList.add("pch-reset-btn");
+  speedHeader.append(speedTitle, resetBtn);
+
+  // 倍速行：滑动条 + 输入框
+  const speedRow = document.createElement("div");
+  speedRow.className = "pch-speed-row";
   const slider = document.createElement("input");
   slider.type = "range";
   slider.className = "pch-slider";
@@ -449,9 +485,7 @@ function buildFloatingUI(api, state) {
   input.min = String(MIN_SPEED);
   input.max = String(MAX_SPEED);
   input.step = "1";
-  const current = document.createElement("span");
-  current.className = "pch-current";
-  speedRow.append(label, slider, input, current);
+  speedRow.append(slider, input);
 
   // 倍速按钮：6 个，2 行 × 3 列
   const grid = document.createElement("div");
@@ -470,19 +504,25 @@ function buildFloatingUI(api, state) {
     grid.appendChild(button);
   }
 
-  // 跳过时间行：沿用原脚本的 90 分钟 / 12 小时
+  // 跳过时间行：沿用原脚本的 60 分钟 / 12 小时（要求2）
   const skipRow = document.createElement("div");
   skipRow.className = "pch-skip-row";
-  const skip90 = makeButton("⏱ 跳过90分钟", () => { skipTime(1.5); flash(skip90); });
-  const skip12 = makeButton("🌙 跳过12小时", () => { skipTime(12); flash(skip12); });
-  skipRow.append(skip90, skip12);
+  const skip60 = makeButton("🕙 60分钟", () => { skipTime(1); flash(skip60); });
+  const skip12 = makeButton("🌙 12小时", () => { skipTime(12); flash(skip12); });
+  skipRow.append(skip60, skip12);
 
-  // 自动重开行：开关 + 计数
+  // 自动重开行：按钮内含 ON/OFF 与(次数)，右侧对齐（要求7）
   const rejoinRow = document.createElement("div");
   rejoinRow.className = "pch-rejoin-row";
   const rejoinBtn = document.createElement("button");
   rejoinBtn.type = "button";
   rejoinBtn.className = "pch-btn pch-autorejoin";
+  const rejoinLabel = document.createElement("span");
+  rejoinLabel.className = "pch-rejoin-label";
+  rejoinLabel.textContent = "🔄 自动重开";
+  const rejoinStatus = document.createElement("span");
+  rejoinStatus.className = "pch-rejoin-status";
+  rejoinBtn.append(rejoinLabel, rejoinStatus);
   rejoinBtn.addEventListener("click", event => {
     event.preventDefault();
     event.stopPropagation();
@@ -496,15 +536,13 @@ function buildFloatingUI(api, state) {
     api.save();
     updateFloatingUI(api, s);
   });
-  const countSpan = document.createElement("span");
-  countSpan.className = "pch-current pch-count";
-  rejoinRow.append(rejoinBtn, countSpan);
+  rejoinRow.append(rejoinBtn);
 
   const foot = document.createElement("div");
   foot.className = "pch-foot";
-  foot.textContent = "By 黄黄 | Ctrl+Shift+方向键";
+  foot.textContent = "Ctrl+Shift+↑/↓ 调整战斗速度";
 
-  content.append(speedRow, grid, skipRow, rejoinRow, foot);
+  content.append(speedHeader, speedRow, grid, skipRow, rejoinRow, foot);
   ui.append(header, content);
 
   // 事件
@@ -586,10 +624,9 @@ function updateFloatingUI(api, state) {
   const rejoinBtn = uiEl.querySelector(".pch-autorejoin");
   if (rejoinBtn) {
     rejoinBtn.classList.toggle("active", ar.enabled);
-    rejoinBtn.textContent = ar.enabled ? "🔄 自动重开: ON" : "🔄 自动重开: OFF";
+    const status = rejoinBtn.querySelector(".pch-rejoin-status");
+    if (status) status.textContent = ar.enabled ? `ON (${ar.count})` : "OFF";
   }
-  const countSpan = uiEl.querySelector(".pch-count");
-  if (countSpan) countSpan.textContent = `次数: ${ar.count}`;
 }
 
 function toggleCollapse(api, state) {
@@ -655,12 +692,10 @@ function onHotkey(event) {
 
   const state = getState(apiRef);
   const key = event.key.toLowerCase();
-  if (["arrowup", "arrowdown", "r", "h"].includes(key)) event.preventDefault();
+  if (["arrowup", "arrowdown"].includes(key)) event.preventDefault();
 
   if (event.key === "ArrowUp") setSpeed(apiRef, state, clampSpeed(state.speed + 1));
   if (event.key === "ArrowDown") setSpeed(apiRef, state, clampSpeed(state.speed - 1));
-  if (key === "r") setSpeed(apiRef, state, 1);
-  if (key === "h" && uiEl) uiEl.style.display = uiEl.style.display === "none" ? "block" : "none";
 }
 
 function installHotkeys(api) {
