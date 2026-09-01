@@ -43,7 +43,7 @@ UltraMods.define({
   name: "Pokechill 自定义木桩",
   description: "基于 UltraMods API 构建自定义木桩训练区：可配置属性/等级/技能的木桩，支持锁血，用于测试配队与伤害。由 mod 管理器独立启用或禁用。",
   image: "mods/customDummyIcon.png",
-  version: "2.1.0",
+  version: "2.2.0",
   author: "人民当家做主",
   category: "实用工具",
   defaultEnabled: false,
@@ -337,16 +337,6 @@ function installPanelStyles() {
       border-radius: 0.5rem 0.5rem 0 0;
     }
     .dummy-panel-title { font-weight: bold; font-size: 1.05rem; }
-    .dummy-panel-close {
-      background: transparent;
-      border: 0;
-      color: var(--light2);
-      cursor: pointer;
-      font-size: 1.1rem;
-      line-height: 1;
-      padding: 0 0.2rem;
-    }
-    .dummy-panel-close:hover { transform: scale(1.15); }
 
     .dummy-panel-content {
       display: flex;
@@ -398,26 +388,49 @@ function installPanelStyles() {
       font-size: 0.85rem;
       padding: 0.3rem 0.4rem;
     }
-    .dummy-input { flex: 0 0 5.5rem; text-align: center; }
+    .dummy-input { flex: 0 0 4rem; text-align: center; }
     .dummy-select:focus,
     .dummy-input:focus { outline: 1px solid var(--light1); }
 
-    /* 属性徽章预览：配色沿用游戏 returnTypeColor() */
-    .dummy-type-preview {
-      display: flex;
-      gap: 0.35rem;
-      justify-content: center;
-      min-height: 1.4rem;
-      align-items: center;
+    /* 下拉框文字水平居中 */
+    .dummy-select { text-align: center; text-align-last: center; }
+
+    /* 下拉选项：基础 / hover / 选中态，配色对齐 abilityTrainer 的 ability-trainer-combo-option */
+    .dummy-select option {
+      background: var(--dark2);
+      color: var(--light2);
+      padding: 0.35rem 0.4rem;
+      text-align: center;
     }
-    .dummy-type-badge {
-      padding: 0.1rem 0.55rem;
-      border-radius: 0.3rem;
+    .dummy-select option:hover,
+    .dummy-select option:focus {
+      background: var(--light1);
       color: #fff;
-      font-size: 0.8rem;
+    }
+    .dummy-select option:checked,
+    .dummy-select option:selected {
+      background: rgb(90, 133, 113);
+      color: #fff;
+    }
+
+    /* 属性下拉：闭合态背景 = 对应属性色、文字白色（配色取自游戏 returnTypeColor()） */
+    .dummy-select.dummy-select-type {
       font-weight: bold;
-      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(0, 0, 0, 0.25);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+    .dummy-select.dummy-select-type option {
+      background: var(--dark2);
+      color: var(--light2);
+      font-weight: normal;
+      text-shadow: none;
+    }
+
+    /* 等级滑动条：对齐 pokechillHelper 的 pokechill-helper-slider */
+    .dummy-slider {
+      flex: 1;
+      min-width: 90px;
+      accent-color: rgb(90, 133, 113);
+      cursor: pointer;
     }
 
     /* 种族值星级 */
@@ -443,18 +456,15 @@ function installPanelStyles() {
       font-size: 0.78rem;
     }
 
-    .dummy-check-row {
+    /* 锁血开关按钮：对齐 pokechillHelper 的 pokechill-helper-autorejoin（左标签 + 右状态） */
+    .dummy-lockhp-btn {
+      width: 100%;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      cursor: pointer;
+      justify-content: space-between;
+      text-align: left;
     }
-    .dummy-check-row input { accent-color: var(--dark2); cursor: pointer; }
-    .dummy-check-row label {
-      color: var(--dark2);
-      font-weight: 600;
-      cursor: pointer;
-    }
+    .dummy-lockhp-status { margin-left: auto; }
 
     .dummy-btn-row { display: flex; gap: 0.4rem; }
 
@@ -475,6 +485,12 @@ function installPanelStyles() {
     .dummy-btn:active { transform: translateY(1px); }
     .dummy-btn.primary { background: rgb(90, 133, 113); }
     .dummy-btn.primary:hover { background: rgb(74, 114, 96); }
+    /* 开关态：与 pokechillHelper 的 .pokechill-helper-btn.active 一致 */
+    .dummy-btn.active {
+      background: rgb(90, 133, 113);
+      color: #fff;
+    }
+    .dummy-btn.active:hover { background: rgb(74, 114, 96); }
 
     .dummy-foot {
       margin-top: 0.2rem;
@@ -547,21 +563,40 @@ function typeColor(type) {
   return TYPE_FALLBACK_COLOR[type] || "#000000";
 }
 
-function typeLabel(id) {
-  const found = DUMMY_TYPE_LIST.find(([key]) => key === id);
-  return found ? found[1] : id;
+// 属性下拉框背景 = 该属性色、文字白色；属性为「无」时回退到样式表默认底色
+function updateTypeSelectColor() {
+  const ids = ["dummy-type1", "dummy-type2"];
+  for (const id of ids) {
+    const sel = document.getElementById(id);
+    if (!sel) continue;
+    if (!sel.value) {
+      sel.style.backgroundColor = "";
+      sel.style.color = "";
+    } else {
+      sel.style.backgroundColor = typeColor(sel.value);
+      sel.style.color = "#fff";
+    }
+  }
 }
 
-// 渲染属性徽章预览（配色与样式对齐原版 returnPkmnTypes 的徽章）
-function updateTypePreview() {
-  const box = document.getElementById("dummy-type-preview");
-  if (!box) return;
-  const t1 = document.getElementById("dummy-type1")?.value;
-  const t2 = document.getElementById("dummy-type2")?.value;
-  const types = [t1, t2].filter(Boolean);
-  box.innerHTML = types
-    .map(t => `<span class="dummy-type-badge" style="background:${typeColor(t)}">${typeLabel(t)}</span>`)
-    .join("");
+// 锁血开关按钮（对齐 pokechillHelper「自动重开」按钮：左标签 + 右 ON/OFF 状态）
+function setLockHp(on) {
+  const btn = document.getElementById("dummy-lockhp");
+  if (!btn) return;
+  btn.dataset.on = on ? "1" : "0";
+  btn.classList.toggle("active", !!on);
+  const status = btn.querySelector(".dummy-lockhp-status");
+  if (status) status.textContent = on ? "ON" : "OFF";
+}
+
+function getLockHp() {
+  const btn = document.getElementById("dummy-lockhp");
+  return btn ? btn.dataset.on === "1" : false;
+}
+
+// 等级取值钳制到 1-100
+function clampLevel(v) {
+  return Math.min(100, Math.max(1, Math.round(Number(v) || 1)));
 }
 
 function ensureConfigPanel(api) {
@@ -584,13 +619,12 @@ function ensureConfigPanel(api) {
       <div class="dummy-section-title">🎨 木桩属性</div>
       <div class="dummy-row">
         <label for="dummy-type1">第一属性</label>
-        <select id="dummy-type1" class="dummy-select">${typeOptionsHTML(false)}</select>
+        <select id="dummy-type1" class="dummy-select dummy-select-type">${typeOptionsHTML(false)}</select>
       </div>
       <div class="dummy-row">
         <label for="dummy-type2">第二属性</label>
-        <select id="dummy-type2" class="dummy-select">${typeOptionsHTML(true)}</select>
+        <select id="dummy-type2" class="dummy-select dummy-select-type">${typeOptionsHTML(true)}</select>
       </div>
-      <div class="dummy-type-preview" id="dummy-type-preview"></div>
 
       <div class="dummy-divider"></div>
 
@@ -608,21 +642,25 @@ function ensureConfigPanel(api) {
       <div class="dummy-section-title">📊 基础参数</div>
       <div class="dummy-row">
         <label for="dummy-level">等级</label>
+        <input type="range" id="dummy-level-slider" class="dummy-slider" min="1" max="100" step="1" value="100">
         <input type="number" id="dummy-level" class="dummy-input" min="1" max="100" value="100">
       </div>
-      <div class="dummy-check-row">
-        <input type="checkbox" id="dummy-lockhp" checked>
-        <label for="dummy-lockhp">锁血（每回合回满）</label>
+      <div class="dummy-btn-row">
+        <button type="button" id="dummy-lockhp" class="dummy-btn dummy-lockhp-btn">
+          <span>🔒 锁血</span><span class="dummy-lockhp-status">OFF</span>
+        </button>
+      </div>
+      <div class="dummy-btn-row">
+        <button type="button" id="dummy-config-skills" class="dummy-btn">⚙️ 配置技能</button>
       </div>
 
       <div class="dummy-divider"></div>
 
       <div class="dummy-btn-row">
-        <button type="button" id="dummy-config-ok" class="dummy-btn primary">✔ 确定</button>
-        <button type="button" id="dummy-config-skills" class="dummy-btn">⚙ 配置技能</button>
+        <button type="button" id="dummy-config-reset" class="dummy-btn">🔄 重　置</button>
       </div>
       <div class="dummy-btn-row">
-        <button type="button" id="dummy-config-reset" class="dummy-btn">↺ 重置</button>
+        <button type="button" id="dummy-config-ok" class="dummy-btn primary">✔ 确定</button>
         <button type="button" id="dummy-config-cancel" class="dummy-btn">✕ 取消</button>
       </div>
       <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
@@ -660,10 +698,30 @@ function ensureConfigPanel(api) {
     const type2 = document.getElementById("dummy-type2").value;
     const d = getDummy();
     if (d) d.type = type2 ? [type1, type2] : [type1];
-    updateTypePreview();
+    updateTypeSelectColor();
   };
   document.getElementById("dummy-type1").addEventListener("change", updateType);
   document.getElementById("dummy-type2").addEventListener("change", updateType);
+
+  // 等级：滑动条与数字输入框双向同步（步进 1）
+  const levelInput = document.getElementById("dummy-level");
+  const levelSlider = document.getElementById("dummy-level-slider");
+  levelSlider.addEventListener("input", () => {
+    levelInput.value = clampLevel(levelSlider.value);
+  });
+  levelInput.addEventListener("input", () => {
+    levelSlider.value = clampLevel(levelInput.value);
+  });
+  levelInput.addEventListener("change", () => {
+    const v = clampLevel(levelInput.value);
+    levelInput.value = v;
+    levelSlider.value = v;
+  });
+
+  // 锁血开关按钮：点击切换 ON/OFF
+  document.getElementById("dummy-lockhp").addEventListener("click", () => {
+    setLockHp(!getLockHp());
+  });
 
   document.getElementById("dummy-config-skills").addEventListener("click", () => {
     ensureNoneAbility(api);
@@ -672,7 +730,7 @@ function ensureConfigPanel(api) {
     const d = getDummy();
     if (!d) return;
     d.level = Math.min(100, Math.max(1, level));
-    d.lockHp = document.getElementById("dummy-lockhp").checked;
+    d.lockHp = getLockHp();
     updateBstFromUI();
     refreshDummyMovepool(api);
     panel.style.display = "none";
@@ -691,7 +749,9 @@ function ensureConfigPanel(api) {
     document.getElementById("dummy-type1").value = "normal";
     document.getElementById("dummy-type2").value = "";
     document.getElementById("dummy-level").value = 100;
-    document.getElementById("dummy-lockhp").checked = true;
+    document.getElementById("dummy-level-slider").value = 100;
+    setLockHp(true);
+    updateTypeSelectColor();
 
     const d = getDummy();
     if (d) {
@@ -702,7 +762,6 @@ function ensureConfigPanel(api) {
       d.moves = { slot1: undefined, slot2: undefined, slot3: undefined, slot4: undefined };
     }
     setBstToUI();
-    updateTypePreview();
     refreshDummyMovepool(api);
   });
 
@@ -710,7 +769,7 @@ function ensureConfigPanel(api) {
     const type1 = document.getElementById("dummy-type1").value;
     const type2 = document.getElementById("dummy-type2").value;
     const level = parseInt(document.getElementById("dummy-level").value, 10);
-    const lockHp = document.getElementById("dummy-lockhp").checked;
+    const lockHp = getLockHp();
 
     const d = getDummy();
     if (!d) return;
@@ -751,7 +810,9 @@ function openConfigPanel(api) {
     document.getElementById("dummy-type1").value = d.type[0] || "normal";
     document.getElementById("dummy-type2").value = d.type[1] || "";
     document.getElementById("dummy-level").value = d.level;
-    document.getElementById("dummy-lockhp").checked = !!d.lockHp;
+    const lvSlider = document.getElementById("dummy-level-slider");
+    if (lvSlider) lvSlider.value = clampLevel(d.level);
+    setLockHp(!!d.lockHp);
     document.getElementById("dummy-bst-hp").value = d.bst.hp;
     document.getElementById("dummy-bst-atk").value = d.bst.atk;
     document.getElementById("dummy-bst-def").value = d.bst.def;
@@ -759,6 +820,6 @@ function openConfigPanel(api) {
     document.getElementById("dummy-bst-sdef").value = d.bst.sdef;
     document.getElementById("dummy-bst-spe").value = d.bst.spe;
   }
-  updateTypePreview();
+  updateTypeSelectColor();
   panel.style.display = "flex";
 }

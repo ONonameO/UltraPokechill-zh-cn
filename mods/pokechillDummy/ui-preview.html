@@ -29,8 +29,8 @@
     opacity: 0.75;
     font-size: 0.85rem;
     text-align: center;
-    max-width: 520px;
-    line-height: 1.6;
+    max-width: 620px;
+    line-height: 1.7;
   }
   .stage {
     display: flex;
@@ -132,26 +132,49 @@
     font-size: 0.85rem;
     padding: 0.3rem 0.4rem;
   }
-  .dummy-input { flex: 0 0 5.5rem; text-align: center; }
+  .dummy-input { flex: 0 0 4rem; text-align: center; }
   .dummy-select:focus,
   .dummy-input:focus { outline: 1px solid var(--light1); }
 
-  /* 属性徽章预览：配色沿用游戏 returnTypeColor() */
-  .dummy-type-preview {
-    display: flex;
-    gap: 0.35rem;
-    justify-content: center;
-    min-height: 1.4rem;
-    align-items: center;
+  /* 下拉框文字水平居中 */
+  .dummy-select { text-align: center; text-align-last: center; }
+
+  /* 下拉选项：基础 / hover / 选中态，配色对齐 abilityTrainer 的 ability-trainer-combo-option */
+  .dummy-select option {
+    background: var(--dark2);
+    color: var(--light2);
+    padding: 0.35rem 0.4rem;
+    text-align: center;
   }
-  .dummy-type-badge {
-    padding: 0.1rem 0.55rem;
-    border-radius: 0.3rem;
+  .dummy-select option:hover,
+  .dummy-select option:focus {
+    background: var(--light1);
     color: #fff;
-    font-size: 0.8rem;
+  }
+  .dummy-select option:checked,
+  .dummy-select option:selected {
+    background: rgb(90, 133, 113);
+    color: #fff;
+  }
+
+  /* 属性下拉：闭合态背景 = 对应属性色、文字白色（配色取自游戏 returnTypeColor()） */
+  .dummy-select.dummy-select-type {
     font-weight: bold;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(0, 0, 0, 0.25);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+  .dummy-select.dummy-select-type option {
+    background: var(--dark2);
+    color: var(--light2);
+    font-weight: normal;
+    text-shadow: none;
+  }
+
+  /* 等级滑动条：对齐 pokechillHelper 的 pokechill-helper-slider */
+  .dummy-slider {
+    flex: 1;
+    min-width: 90px;
+    accent-color: rgb(90, 133, 113);
+    cursor: pointer;
   }
 
   /* 种族值星级 */
@@ -177,19 +200,6 @@
     font-size: 0.78rem;
   }
 
-  .dummy-check-row {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    cursor: pointer;
-  }
-  .dummy-check-row input { accent-color: var(--dark2); cursor: pointer; }
-  .dummy-check-row label {
-    color: var(--dark2);
-    font-weight: 600;
-    cursor: pointer;
-  }
-
   .dummy-btn-row { display: flex; gap: 0.4rem; }
 
   .dummy-btn {
@@ -209,6 +219,22 @@
   .dummy-btn:active { transform: translateY(1px); }
   .dummy-btn.primary { background: rgb(90, 133, 113); }
   .dummy-btn.primary:hover { background: rgb(74, 114, 96); }
+  /* 开关态：与 pokechillHelper 的 .pokechill-helper-btn.active 一致 */
+  .dummy-btn.active {
+    background: rgb(90, 133, 113);
+    color: #fff;
+  }
+  .dummy-btn.active:hover { background: rgb(74, 114, 96); }
+
+  /* 锁血开关按钮：对齐 pokechillHelper 的 pokechill-helper-autorejoin（左标签 + 右状态） */
+  .dummy-lockhp-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+  }
+  .dummy-lockhp-status { margin-left: auto; }
 
   .dummy-foot {
     margin-top: 0.2rem;
@@ -242,14 +268,14 @@
 <body>
 
 <p class="preview-note">
-  以下为重构后的「测试木桩配置」界面预览，样式与 mod.js 中 <code>installPanelStyles()</code> 注入的 CSS 完全一致，
-  配色取自游戏根变量（--dark1 / --dark2 / --light1 / --light2），属性徽章配色取自游戏 <code>returnTypeColor()</code>。
-  左：默认状态（单属性）；右：双属性 + 自定义星级。
+  以下为调整后的「测试木桩配置」界面预览，样式与 mod.js 中 <code>installPanelStyles()</code> 注入的 CSS 完全一致。<br>
+  左：单属性 + 锁血 OFF；右：双属性（下拉框着对应属性色）+ 锁血 ON。<br>
+  下拉选项的 hover / 选中态配色取自 abilityTrainer 的 <code>ability-trainer-combo-option</code>；滑动条与开关按钮取自 pokechillHelper 的 <code>pokechill-helper-slider</code> / <code>pokechill-helper-autorejoin</code>。
 </p>
 
 <div class="stage">
 
-  <!-- 示例一：默认状态 -->
+  <!-- 示例一：单属性，锁血 OFF -->
   <div class="dummy-config-panel">
     <div class="dummy-panel-header">
       <span class="dummy-panel-title">🎯 测试木桩配置</span>
@@ -259,18 +285,15 @@
       <div class="dummy-section-title">🎨 木桩属性</div>
       <div class="dummy-row">
         <label>第一属性</label>
-        <select class="dummy-select">
+        <select class="dummy-select dummy-select-type" style="background:#A0A29F; color:#fff">
           <option selected>一般</option><option>火</option><option>水</option><option>电</option>
         </select>
       </div>
       <div class="dummy-row">
         <label>第二属性</label>
-        <select class="dummy-select">
+        <select class="dummy-select dummy-select-type">
           <option selected>无</option><option>一般</option><option>火</option><option>水</option>
         </select>
-      </div>
-      <div class="dummy-type-preview">
-        <span class="dummy-type-badge" style="background:#A0A29F">一般</span>
       </div>
 
       <div class="dummy-divider"></div>
@@ -290,28 +313,32 @@
       <div class="dummy-section-title">📊 基础参数</div>
       <div class="dummy-row">
         <label>等级</label>
+        <input type="range" class="dummy-slider" min="1" max="100" step="1" value="100">
         <input type="number" class="dummy-input" min="1" max="100" value="100">
       </div>
-      <div class="dummy-check-row">
-        <input type="checkbox" checked>
-        <label>锁血（每回合回满）</label>
+      <div class="dummy-btn-row">
+        <button type="button" class="dummy-btn dummy-lockhp-btn">
+          <span>🔒 锁血（每回合回满）</span><span class="dummy-lockhp-status">OFF</span>
+        </button>
+      </div>
+      <div class="dummy-btn-row">
+        <button type="button" class="dummy-btn">⚙ 配置技能</button>
       </div>
 
       <div class="dummy-divider"></div>
 
       <div class="dummy-btn-row">
-        <button type="button" class="dummy-btn primary">✔ 确定</button>
-        <button type="button" class="dummy-btn">⚙ 配置技能</button>
+        <button type="button" class="dummy-btn">↺ 重置</button>
       </div>
       <div class="dummy-btn-row">
-        <button type="button" class="dummy-btn">↺ 重置</button>
+        <button type="button" class="dummy-btn primary">✔ 确定</button>
         <button type="button" class="dummy-btn">✕ 取消</button>
       </div>
       <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
     </div>
   </div>
 
-  <!-- 示例二：双属性 + 自定义星级 -->
+  <!-- 示例二：双属性着属性色，锁血 ON -->
   <div class="dummy-config-panel">
     <div class="dummy-panel-header">
       <span class="dummy-panel-title">🎯 测试木桩配置</span>
@@ -321,19 +348,15 @@
       <div class="dummy-section-title">🎨 木桩属性</div>
       <div class="dummy-row">
         <label>第一属性</label>
-        <select class="dummy-select">
+        <select class="dummy-select dummy-select-type" style="background:#FBA64C; color:#fff">
           <option>一般</option><option selected>火</option><option>水</option><option>电</option>
         </select>
       </div>
       <div class="dummy-row">
         <label>第二属性</label>
-        <select class="dummy-select">
+        <select class="dummy-select dummy-select-type" style="background:#A1BBEC; color:#fff">
           <option>无</option><option>一般</option><option>火</option><option selected>飞行</option>
         </select>
-      </div>
-      <div class="dummy-type-preview">
-        <span class="dummy-type-badge" style="background:#FBA64C">火</span>
-        <span class="dummy-type-badge" style="background:#A1BBEC">飞行</span>
       </div>
 
       <div class="dummy-divider"></div>
@@ -353,21 +376,25 @@
       <div class="dummy-section-title">📊 基础参数</div>
       <div class="dummy-row">
         <label>等级</label>
+        <input type="range" class="dummy-slider" min="1" max="100" step="1" value="50">
         <input type="number" class="dummy-input" min="1" max="100" value="50">
       </div>
-      <div class="dummy-check-row">
-        <input type="checkbox" checked>
-        <label>锁血（每回合回满）</label>
+      <div class="dummy-btn-row">
+        <button type="button" class="dummy-btn dummy-lockhp-btn active">
+          <span>🔒 锁血（每回合回满）</span><span class="dummy-lockhp-status">ON</span>
+        </button>
+      </div>
+      <div class="dummy-btn-row">
+        <button type="button" class="dummy-btn">⚙ 配置技能</button>
       </div>
 
       <div class="dummy-divider"></div>
 
       <div class="dummy-btn-row">
-        <button type="button" class="dummy-btn primary">✔ 确定</button>
-        <button type="button" class="dummy-btn">⚙ 配置技能</button>
+        <button type="button" class="dummy-btn">↺ 重置</button>
       </div>
       <div class="dummy-btn-row">
-        <button type="button" class="dummy-btn">↺ 重置</button>
+        <button type="button" class="dummy-btn primary">✔ 确定</button>
         <button type="button" class="dummy-btn">✕ 取消</button>
       </div>
       <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
