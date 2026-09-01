@@ -317,10 +317,11 @@ function getCurrentAbility() {
   return (pkmn[pkmnId] && pkmn[pkmnId].ability) || null;
 }
 
+// 仅返回特性名称（不附带 ID）
 function getAbilityName(abilityId) {
   if (!abilityId) return "未知";
   if (ABILITY_CN_DICT[abilityId]) {
-    return `${ABILITY_CN_DICT[abilityId]} (${abilityId})`;
+    return ABILITY_CN_DICT[abilityId];
   }
   if (typeof ability !== "undefined" && ability[abilityId]) {
     return ability[abilityId].name || abilityId;
@@ -479,7 +480,7 @@ function installStyles() {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      color: var(--light1);
+      color: var(--dark2);
       font-weight: bold;
       font-size: 1rem;
     }
@@ -526,8 +527,12 @@ function installStyles() {
       word-break: break-word;
     }
     .pch-combo-option:last-child { border-bottom: 0; }
-    .pch-combo-option:hover, .pch-combo-option.active {
+    .pch-combo-option:hover {
       background: var(--light1);
+      color: white;
+    }
+    .pch-combo-option.active {
+      background: rgb(90, 133, 113);
       color: white;
     }
     .pch-combo-empty {
@@ -540,18 +545,28 @@ function installStyles() {
       position: fixed;
       display: none;
       max-width: 260px;
-      background: rgba(54, 52, 47, 0.97);
+      background: var(--dark1);
       color: var(--light2);
-      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 0.35rem;
-      padding: 0.5rem 0.6rem;
-      font-size: 0.8rem;
+      padding: 0.8rem;
+      font-size: 0.85rem;
       line-height: 1.45;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       z-index: 1400;
       pointer-events: none;
     }
     .pch-tooltip b { color: var(--light2); }
+    .pch-tooltip::before{
+      content: '';
+      position: absolute;
+      top: 0.3rem;    /* 上缩进*/
+      right: 0.3rem;  /* 右缩进*/
+      bottom: 0.3rem; /* 下缩进*/
+      left: 0.3rem;   /* 左缩进*/
+      border: 1px solid var(--light2);
+      border-radius: 0.35rem;
+      pointer-events: none; /* 让鼠标事件穿透，不阻挡点击 */
+    }
 
     .pch-divider {
       height: 0;
@@ -561,7 +576,8 @@ function installStyles() {
 
     .pch-info {
       font-size: 0.9rem;
-      color: var(--dark2);
+      font-weight: 600;
+      color: var(--light1);
     }
 
     .pch-btn {
@@ -744,7 +760,8 @@ function renderComboOptions(api, filterText) {
     opt.textContent = getAbilityName(id);
     const cn = ABILITY_CN_DICT[id] ? ABILITY_CN_DICT[id] : id;
     const desc = getAbilityDescription(id);
-    opt._tipHtml = `<b>${cn} (${id})</b>` + (desc ? `<br>${desc}` : "");
+    // tooltip 标题仅展示特性名称，不再附带 ID
+    opt._tipHtml = `<b>${cn}</b>` + (desc ? `<br>${desc}` : "");
     if (id === currentTargetId) opt.classList.add("active");
     list.appendChild(opt);
   }
@@ -885,19 +902,20 @@ function showTooltip(html, r) {
   t.innerHTML = html;
   t.style.display = "block";
   const tr = t.getBoundingClientRect();
-  const gap = 12;
+  const gap = 6; // 紧贴下拉选择框
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
+  // 依据下拉选择框在视口中的实际位置，智能选择显示在左侧或右侧
   let left;
   if (comboListEl) {
     const lr = comboListEl.getBoundingClientRect();
     const spaceRight = vw - lr.right;   // 面板右侧可用宽度
     const spaceLeft = lr.left;          // 面板左侧可用宽度
     if (spaceRight >= tr.width + gap) {
-      left = lr.right + gap;            // 右侧充足 -> 显示在面板右侧
+      left = lr.right + gap;            // 右侧充足 -> 紧贴显示在面板右侧
     } else if (spaceLeft >= tr.width + gap) {
-      left = lr.left - tr.width - gap;  // 否则左侧充足 -> 显示在面板左侧
+      left = lr.left - tr.width - gap;  // 否则左侧充足 -> 紧贴显示在面板左侧
     } else {
       // 两侧都不够：放在空间更大的一侧，随后夹到视口内
       left = spaceRight >= spaceLeft ? lr.right + gap : lr.left - tr.width - gap;
