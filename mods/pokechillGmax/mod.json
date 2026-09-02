@@ -3,7 +3,7 @@
   "name": "Pokechill 超极巨化空间",
   "description": "将「超极巨化空间」独立为 mod：Boss 轮换与旷野地带(Wild Area)在同一个 UTC 半天边界刷新，击败 Boss 收集碎片进行抽奖获取超极巨化宝可梦。启用与否交由模组管理器，所有提示走原版 tooltip，左上角菜单沿用原版样式。",
   "image": "img/items/rareCandy.png",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "author": "人民当家做主",
   "category": "实用工具",
   "defaultEnabled": false
