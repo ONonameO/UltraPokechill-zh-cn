@@ -2,7 +2,7 @@ const MOD_ID = "customDummy";
 const DUMMY_PKMN_ID = "customDummy";
 const DUMMY_AREA_ID = "custom_dummy_area";
 const DUMMY_AREA_NAME = "custom_dummy";
-const DUMMY_SPRITE_URL = "img/pkmn/sprite/customDummy.png";
+const DUMMY_SPRITE_URL = "mods/customDummy/icon.png";
 
 // 面板样式表 id（沿用 abilityTrainer 的「独立 style + id 守卫」做法）
 const PANEL_STYLE_ID = "dummy-panel-style";
@@ -42,7 +42,7 @@ UltraMods.define({
   id: MOD_ID,
   name: "自定义木桩",
   description: "在对战界面新增一个自定义木桩，支持配置属性、种族值星级、等级、技能等参数，并可锁定血量，便于玩家测试队伍配置与伤害输出。",
-  image: "img/pkmn/sprite/customDummy.png",
+  image: DUMMY_SPRITE_URL,
   version: "2.2.1",
   author: "人民当家做主 & 我不是西药",
   category: "实用工具",
@@ -715,7 +715,7 @@ function ensureConfigPanel(api) {
   panel.style.display = "none";
 
   const dummy = api.pkmn[DUMMY_PKMN_ID];
-  const bst = dummy ? dummy.bst : { hp: 6, atk: 4, def: 2, satk: 4, sdef: 2, spe: 4 };
+  const bst = dummy ? dummy.bst : { hp: 6, atk: 6, def: 6, satk: 6, sdef: 6, spe: 6 };
 
   panel.innerHTML = `
     <div class="dummy-panel-header">
@@ -911,7 +911,7 @@ function ensureConfigPanel(api) {
       d.type = ["normal"];
       d.level = 100;
       d.lockHp = true;
-      d.bst = { hp: 6, atk: 4, def: 2, satk: 4, sdef: 2, spe: 4 };
+      d.bst = { hp: 6, atk: 6, def: 6, satk: 6, sdef: 6, spe: 6 };
       d.moves = { slot1: undefined, slot2: undefined, slot3: undefined, slot4: undefined };
     }
     setBstToUI();
