@@ -14,7 +14,7 @@ const AREA_PREFIX = "gmaxChallenge_";
 const GACHA_COST = 30;         // 单次抽奖消耗的碎片数
 const BOSS_LEVEL = 150;        // 超极巨化 Boss 等级
 const BOSS_COUNT = 5;          // 每轮显示的 Boss 数
-const DEX_REQUIREMENT = 100;   // 解锁超极巨化空间所需的最小图鉴数
+const DEX_REQUIREMENT = 100;   // 解锁超极巨空间所需的最小图鉴数
 const UNOWNED_CHANCE = 0.5;    // 存在未拥有宝可梦时，抽中未拥有的概率
 const SHINY_CHANCE = 0.1;      // 抽中已拥有宝可梦时，出闪光的概率
 const BOSS_BUFF_VALUE = 99;    // Boss 的五项增益数值
@@ -33,21 +33,21 @@ let activeApi = null;
 let countdownTimer = null;      // 页面开着时的秒表
 let lockTimer = null;           // 锁定图鉴解锁态的低频检查
 let battleBuffed = false;       // 本次战斗是否已注入过 Boss 增益
-let gmaxPageVisible = false;    // 超极巨化空间页面当前是否展开
+let gmaxPageVisible = false;    // 超极巨空间页面当前是否展开
 let lastRenderHalfDay = -1;     // 已渲染 Boss 列表所用的半天编号（跨边界时重绘）
 
-// ---- 被 patch 过的全局函数（用于 Req4：统一把「返回」导向超极巨化空间）----
+// ---- 被 patch 过的全局函数（用于 Req4：统一把「返回」导向超极巨空间）----
 let patchedGlobals = {};
 let menuCloseBound = false;     // 页面级点击观察是否已绑定（用于收起 gmax 页）
 
 UltraMods.define({
   id: MOD_ID,
-  name: "Pokechill 超极巨化空间",
-  description: "将「超极巨化空间」独立为 mod：Boss 轮换与旷野地带(Wild Area)在同一个 UTC 半天边界刷新，击败 Boss 收集碎片进行抽奖获取超极巨化宝可梦。启用与否交由模组管理器，所有提示走原版 tooltip，左上角菜单沿用原版样式。",
-  image: "img/items/rareCandy.png",
+  name: "超极巨空间",
+  description: "将「超极巨空间」独立为 mod：Boss 轮换与旷野地带(Wild Area)在同一个 UTC 半天边界刷新，击败 Boss 收集碎片进行抽奖获取超极巨化宝可梦。启用与否交由模组管理器，所有提示走原版 tooltip，左上角菜单沿用原版样式。",
+  image: "img/items/wormholeResidue.png",
   version: "2.2.3",
-  author: "人民当家做主",
-  category: "实用工具",
+  author: "人民当家做主 & 我不是西药",
+  category: "挑战",
   defaultEnabled: false,
   hooks: {
     onToggle(api, payload) {
@@ -96,7 +96,7 @@ UltraMods.define({
 //
 // 引擎自己已经会调 leaveCombat()，mod 再抢一次既多余又有害，因此整段移除。
 // 我们只 patch 了 exitPkmnTeam / exitCombat 的「返回目标」，让玩家离开队伍准备
-// 或打完结算后回到超极巨化空间页面，而不是 explore-menu（详见 Req4）。
+// 或打完结算后回到超极巨空间页面，而不是 explore-menu（详见 Req4）。
 
 // ---------- 安装 / 卸载 ----------
 
@@ -112,8 +112,8 @@ function install(api) {
   hydrateFragmentFromSave(api);   // 把存档里已攒的碎片读回内存（碎片是玩家货币，随存档保留）
 
   installStyles();
-  installBackPatches();           // Req4：统一「返回」导向超极巨化空间
-  installMenuCloseObserver();     // Req3：点其它主菜单项时收起超极巨化空间页
+  installBackPatches();           // Req4：统一「返回」导向超极巨空间
+  installMenuCloseObserver();     // Req3：点其它主菜单项时收起超极巨空间页
   updateGmaxAreas(api);           // 按当前 UTC 半天边界同步刷新 Boss 挑战区
   addMenuItem(api);
   startLockWatcher(api);
@@ -158,11 +158,11 @@ function ensureFragmentItem(api) {
   if (!item[FRAGMENT_ID]) {
     item[FRAGMENT_ID] = {
       id: FRAGMENT_ID,
-      rename: "超极巨化碎片",
+      rename: "超极巨碎片",
       type: "key",
       got: 0,
       newItem: 0,
-      info: function () { return "击败超极巨化宝可梦获得的稀有碎片。可在此空间用于抽奖，获取超极巨化宝可梦。"; }
+      info: function () { return "击败超极巨化宝可梦获得的稀有碎片。<br>可在超极巨空间处进行抽奖，获取超极巨化宝可梦。"; }
     };
   }
   if (item[FRAGMENT_ID].newItem === undefined) item[FRAGMENT_ID].newItem = 0;
@@ -347,6 +347,7 @@ function installStyles() {
     /* 抽奖按钮：对照原版 .explore-menu-selector div（dark2 底、圆角、居中） */
     .gmax-gacha-btn {
       height: 2.8rem;
+      line-height: 2.4rem;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -368,7 +369,7 @@ function installStyles() {
 
     /* 外层：负责滚动，裁剪溢出（必须） */
     .gmax-dim-content {
-      overflow-y: scroll;      /* 保留滚动条 */
+      overflow-y: auto;      /* 保留滚动条 */
       overflow-x: hidden;      /* 水平方向隐藏 */
       position: relative;
       z-index: 2;
@@ -409,8 +410,8 @@ function installStyles() {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 40rem;
-      height: 40rem;
+      width: 22rem;
+      height: 22rem;
       transform: translate(-50%, -50%);
       border-radius: 50%;
       overflow: hidden;
@@ -657,7 +658,7 @@ function startGmaxChallenge(api, bossId) {
     menuBtn.classList.remove("menu-button-open");
   }
 
-  hideGmaxPage();   // 收起超极巨化空间页，进入队伍准备
+  hideGmaxPage();   // 收起超极巨空间页，进入队伍准备
   resetAfkTimer();
   if (typeof updatePreviewTeam === "function") updatePreviewTeam();
 }
@@ -681,8 +682,8 @@ function resetAfkTimer() {
 //
 // 由于超极巨化挑战从独立的 portal 页发起，而非 explore-menu，
 // 若直接沿用原版，玩家点返回/战斗结束都会被带到 explore-menu（旅行页），
-// 这与「超极巨化空间」入口割裂。这里参照 mythos 对 combat 函数的 patch 方式，
-// 统一在这些「离场即返回」的函数里，把目标改为超极巨化空间页。
+// 这与「超极巨空间」入口割裂。这里参照 mythos 对 combat 函数的 patch 方式，
+// 统一在这些「离场即返回」的函数里，把目标改为超极巨空间页。
 // patch 均为「包一层 + 记录原函数 + 卸载还原」，不动其它 mod / 原版行为。
 
 function patchGlobal(name, wrapper) {
@@ -703,18 +704,18 @@ function isGmaxEntry(api) {
 function installBackPatches() {
   if (Object.keys(patchedGlobals).length > 0) return;
 
-  // 1) 队伍准备「返回」：若源自超极巨化空间，回到超极巨化空间页
+  // 1) 队伍准备「返回」：若源自超极巨空间，回到超极巨空间页
   patchGlobal("exitPkmnTeam", original => function gmaxExitPkmnTeam(...args) {
     const ret = original.apply(this, args);   // 先走原版（它会显示 explore-menu 等）
     const api = activeApi;
     if (!api || !isGmaxEntry(api)) return ret;
-    // 收掉原版顺带显示的 explore-menu，改开超极巨化空间
+    // 收掉原版顺带显示的 explore-menu，改开超极巨空间
     showGmaxPage(api, true);
     return ret;
   });
 
   // 2) 战斗真正结束后玩家点「Save and exit」（area-end 上的 exitCombat()），
-  //    若本次打的是超极巨化 Boss，回到超极巨化空间。
+  //    若本次打的是超极巨化 Boss，回到超极巨空间。
   //    注：leaveCombat() 会在战斗结算早期自动触发（显示 area-end 结算层），此刻若抢先
   //    展示超极巨化页会与结算层冲突，故只接管玩家主动离开的 exitCombat()。
   patchGlobal("exitCombat", original => function gmaxExitCombat(...args) {
@@ -740,16 +741,16 @@ function installBackPatches() {
         if (midEl) midEl.style.display = "none";
         if (titleEl) {
           titleEl.style.display = "inline";
-          titleEl.innerHTML = "超极巨化空间";
+          titleEl.innerHTML = "超极巨空间";
         }
         if (bottomEl) {
           bottomEl.style.display = "inline";
-          bottomEl.innerHTML =
-            "聚集全宇宙最强的超极巨化宝可梦！这里每隔 12 小时（与旷野地带同一时刻，UTC " +
-            "00:00 / 12:00）刷新一批超极巨化 Boss。<br><br>" +
-            `击败 Boss 可获得「次元残片」。消耗 ${GACHA_COST} 片残片即可抽奖，有概率抽到未拥有` +
-            "的超极巨化宝可梦（已拥有时有概率出现闪光个体）。<br><br>" +
-            `图鉴达到 ${DEX_REQUIREMENT} 只后即可挑战。Boss 自带强化增益，请组建最强队伍迎战。`;
+          bottomEl.innerHTML = `
+            这里聚集了全宇宙最强的超极巨化宝可梦！每隔 12 小时 刷新一批超极巨化 Boss。<br><br>
+            击败 Boss 可获得「超极巨碎片」，消耗 ${GACHA_COST} 个碎片即可进行抽奖。<br>
+            (有50%概率抽到未拥有的超极巨化宝可梦，已拥有时10%概率获得闪光)<br><br>
+            Boss 自带强化增益，请组建最强队伍迎战！
+          `;
         }
         if (typeof openTooltip === "function") openTooltip();
       } catch (e) { /* tooltip DOM 未就绪时静默 */ }
@@ -782,23 +783,23 @@ function createGmaxPage(api) {
       <div style="display:flex; gap:0.5rem">
         <span>
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21.22 6.894a3.7 3.7 0 0 0-1.4-1.37l-6-3.31a3.83 3.83 0 0 0-3.63 0l-6 3.31a3.7 3.7 0 0 0-1.4 1.37a3.74 3.74 0 0 0-.52 1.9v6.41a3.79 3.79 0 0 0 1.92 3.27l6 3.3a3.74 3.74 0 0 0 3.63 0l6-3.31a3.72 3.72 0 0 0 1.91-3.26v-6.36a3.64 3.64 0 0 0-.51-1.95m-1 8.31a2.2 2.2 0 0 1-1.14 1.95l-6 3.31q-.158.089-.33.14v-8.18l7.3-4.39c.092.242.136.5.13.76z"></path></svg>
-          <strong>超极巨化空间</strong>
+          <strong>超极巨空间</strong>
         </span>
         <span class="header-help" data-help="${HELP_KEY}"><svg style="opacity:0.8; pointer-events:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><g fill="currentColor"><g opacity="0.2"><path d="M12.739 17.213a2 2 0 1 1-4 0a2 2 0 0 1 4 0"/><path fill-rule="evenodd" d="M10.71 5.765c-.67 0-1.245.2-1.65.486c-.39.276-.583.597-.639.874a1.45 1.45 0 0 1-2.842-.574c.227-1.126.925-2.045 1.809-2.67c.92-.65 2.086-1.016 3.322-1.016c2.557 0 5.208 1.71 5.208 4.456c0 1.59-.945 2.876-2.169 3.626a1.45 1.45 0 1 1-1.514-2.474c.57-.349.783-.794.783-1.152c0-.574-.715-1.556-2.308-1.556" clip-rule="evenodd"/><path fill-rule="evenodd" d="M10.71 9.63c.8 0 1.45.648 1.45 1.45v1.502a1.45 1.45 0 1 1-2.9 0V11.08c0-.8.649-1.45 1.45-1.45" clip-rule="evenodd"/><path fill-rule="evenodd" d="M14.239 8.966a1.45 1.45 0 0 1-.5 1.99l-2.284 1.367a1.45 1.45 0 0 1-1.49-2.488l2.285-1.368a1.45 1.45 0 0 1 1.989.5" clip-rule="evenodd"/></g><path d="M11 16.25a1.25 1.25 0 1 1-2.5 0a1.25 1.25 0 0 1 2.5 0"/><path fill-rule="evenodd" d="M9.71 4.065c-.807 0-1.524.24-2.053.614c-.51.36-.825.826-.922 1.308a.75.75 0 1 1-1.47-.297c.186-.922.762-1.696 1.526-2.236c.796-.562 1.82-.89 2.919-.89c2.325 0 4.508 1.535 4.508 3.757c0 1.292-.768 2.376-1.834 3.029a.75.75 0 0 1-.784-1.28c.729-.446 1.118-1.093 1.118-1.749c0-1.099-1.182-2.256-3.008-2.256m0 5.265a.75.75 0 0 1 .75.75v1.502a.75.75 0 1 1-1.5 0V10.08a.75.75 0 0 1 .75-.75" clip-rule="evenodd"/><path fill-rule="evenodd" d="M12.638 8.326a.75.75 0 0 1-.258 1.029l-2.285 1.368a.75.75 0 1 1-.77-1.287l2.285-1.368a.75.75 0 0 1 1.028.258" clip-rule="evenodd"/></g></svg></span>
       </div>
       <div class="rotation-timer">
         <strong><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M6.94 2c.416 0 .753.324.753.724v1.46c.668-.012 1.417-.012 2.26-.012h4.015c.842 0 1.591 0 2.259.013v-1.46c0-.4.337-.725.753-.725s.753.324.753.724V4.25c1.445.111 2.394.384 3.09 1.055c.698.67.982 1.582 1.097 2.972L22 9H2v-.724c.116-1.39.4-2.302 1.097-2.972s1.645-.944 3.09-1.055V2.724c0-.4.337-.724.753-.724"/><path fill="currentColor" d="M22 14v-2c0-.839-.004-2.335-.017-3H2.01c-.013.665-.01 2.161-.01 3v2c0 3.771 0 5.657 1.172 6.828S6.228 22 10 22h4c3.77 0 5.656 0 6.828-1.172S22 17.772 22 14" opacity="0.5"/><path fill="currentColor" d="M18 17a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0"/></svg>
-        超极巨化刷新</strong>
+        BOSS 刷新</strong>
         <div id="gmax-timer" class="time-counter-daily">--:--:--</div>
       </div>
     </div>
 
     <div class="gmax-gacha">
         <span class="gmax-fragment">
-          <img src="img/items/wormholeResidue.png" style="height:2rem; width:2rem; filter: drop-shadow(0 0 3px white) drop-shadow(0 0 3px white) drop-shadow(0 0 3px white);">
+          <img src="img/items/${FRAGMENT_ID}.png" style="height:2rem; width:2rem;">
           <span id="gmax-fragment-count">超极巨碎片：0</span>
         </span>
-        <button type="button" id="gmax-gacha-btn" class="gmax-gacha-btn">🔄 抽奖   ( <img src="img/items/wormholeResidue.png" style="height:2rem; width:2rem; filter: drop-shadow(0 0 3px white) drop-shadow(0 0 3px white) drop-shadow(0 0 3px white);"> x30 )</button>
+        <button type="button" id="gmax-gacha-btn" class="gmax-gacha-btn">🔄 抽奖   (<img src="img/items/${FRAGMENT_ID}.png" style="height:2rem; width:2rem;">x30 )</button>
     </div>
 
 
@@ -859,7 +860,7 @@ function getDexCount(api) {
   return count;
 }
 
-// 打开超极巨化空间页；若跨了半天边界会先重建 Boss 挑战区与卡片再展示。
+// 打开超极巨空间页；若跨了半天边界会先重建 Boss 挑战区与卡片再展示。
 function showGmaxPage(api, fromReturn = false) {
   if (!isGmaxUnlocked(api)) {
     // 未解锁时给原版 tooltip 提示，不进入
@@ -918,9 +919,9 @@ function hideGmaxPage() {
   gmaxPageVisible = false;
 }
 
-// Req3：超极巨化空间页 z-index(40) < 左上角菜单球(z100)，故点其它主菜单项进入别的页面时，
+// Req3：超极巨空间页 z-index(40) < 左上角菜单球(z100)，故点其它主菜单项进入别的页面时，
 // 本页会残留在下方并盖住它。这里在捕获阶段监听：只要点击的是「非本 mod」的 .menu-item
-// （即玩家要从主菜单跳去 travel/vs/dex…），就先收起超极巨化空间页。参照 mythos installObservers。
+// （即玩家要从主菜单跳去 travel/vs/dex…），就先收起超极巨空间页。参照 mythos installObservers。
 function installMenuCloseObserver() {
   if (menuCloseBound) return;
   document.addEventListener("click", onMenuCloseClick, true);
@@ -1015,7 +1016,7 @@ function addMenuItem(api, attempt = 0) {
   menuItem.className = "menu-item";
   menuItem.innerHTML = `
     <img src="img/items/wormholeResidue.png" style="image-rendering:pixelated;">
-    <span>超极巨化空间</span>
+    <span>超极巨空间</span>
   `;
   menuItem.addEventListener("click", () => {
     if (!isGmaxUnlocked(api)) {
@@ -1064,7 +1065,7 @@ function removeMenuItem() {
 function performGacha(api) {
   const fragments = getFragmentCount(api);
   if (fragments < GACHA_COST) {
-    gmaxTooltip("碎片不足", `需要 ${GACHA_COST} 个碎片。`);
+    gmaxTooltip("碎片不足", `需要 ${GACHA_COST} 个碎片才能抽奖，当前只有 ${fragments} 个`);
     return;
   }
 
@@ -1079,7 +1080,7 @@ function performGacha(api) {
   // 修复：原实现先扣费再校验，奖池为空时 30 个碎片被扣掉且不退还。
   // 这里改为先确认奖池非空，再走 API 扣费。
   if (unowned.length === 0 && owned.length === 0) {
-    gmaxTooltip("无法抽奖", "还没有任何宝可梦，无法抽奖！");
+    gmaxTooltip("无法抽奖", "奖池为空，没有可抽取的宝可梦");
     return;
   }
 
@@ -1100,7 +1101,7 @@ function performGacha(api) {
     }
   }
 
-  const text = `恭喜获得：<strong>${api.formatName(resultId)}</strong>${isShiny ? " ✦ 闪光！ ✦" : ""}`;
+  const text = `恭喜获得：<strong>${api.formatName(resultId)}</strong>${isShiny ? " (✦ 闪光! ✦ )" : ""}`;
   gmaxTooltip("抽奖结果", text, resultId);
 
   updateFragmentDisplay(api);
