@@ -186,9 +186,9 @@
       ],
       team: [
         { pkmn: "volcarona", moves: ["quiverDance", "bugBuzz", "heatWave"] },
-        { pkmn: "claydol", moves: ["earthPower", "psychic", "ancientPower"] },
+        { pkmn: "claydol", moves: ["earthPower", "movePsychic", "ancientPower"] },
         { pkmn: "chandelure", moves: ["shadowBall", "fireBlast", "willOWisp"] },
-        { pkmn: "alakazam", moves: ["calmMind", "psychic", "shadowBall"] },
+        { pkmn: "alakazam", moves: ["calmMind", "movePsychic", "shadowBall"] },
         { pkmn: "tyranitar", moves: ["stoneEdge", "earthquake", "crunch"] }
       ],
       rewardItems: [{ id: "bottleCap", amount: 2 }]
@@ -337,7 +337,7 @@
         { pkmn: "kingdra", moves: ["dragonPulse", "surf", "rainDance"] },
         { pkmn: "gyarados", moves: ["waterfall", "iceFang", "dragonDance"] },
         { pkmn: "walrein", moves: ["iceBeam", "surf", "hail"] },
-        { pkmn: "starmie", moves: ["psychic", "surf", "thunderbolt", "iceBeam"] }
+        { pkmn: "starmie", moves: ["movePsychic", "surf", "thunderbolt", "iceBeam"] }
       ],
       rewardItems: [{ id: "bottleCap", amount: 1 }]
     },
@@ -366,7 +366,7 @@
       team: [
         { pkmn: "milotic", moves: ["calmMind", "surf", "iceBeam"] },
         { pkmn: "lapras", moves: ["nastyPlot", "surf", "iceBeam"] },
-        { pkmn: "slowking", moves: ["calmMind", "psychic", "surf"] },
+        { pkmn: "slowking", moves: ["calmMind", "movePsychic", "surf"] },
         { pkmn: "rotomWash", moves: ["hydroPump", "thunderbolt", "willOWisp"] },
         { pkmn: "empoleon", moves: ["flashCannon", "surf", "iceBeam"] }
       ],
@@ -642,11 +642,11 @@
         "Sun, Ocean, and Sky merge into one green light."
       ],
       team: [
-        { pkmn: "claydol", moves: ["earthPower", "psychic", "ancientPower"] },
-        { pkmn: "sigilyph", moves: ["psychic", "airShlash", "calmMind"] },
-        { pkmn: "xatu", moves: ["psychic", "airShlash", "futureSight"] },
+        { pkmn: "claydol", moves: ["earthPower", "movePsychic", "ancientPower"] },
+        { pkmn: "sigilyph", moves: ["movePsychic", "airShlash", "calmMind"] },
+        { pkmn: "xatu", moves: ["movePsychic", "airShlash", "futureSight"] },
         { pkmn: "altaria", moves: ["dragonPulse", "moonblast", "hurricane"] },
-        { pkmn: "bronzong", moves: ["ironHead", "psychic", "reflect"] }
+        { pkmn: "bronzong", moves: ["ironHead", "movePsychic", "reflect"] }
       ],
       rewardItems: [{ id: "bottleCap", amount: 3 }]
     },
