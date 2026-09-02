@@ -243,9 +243,9 @@ function installStyles() {
       display: none;
       flex-direction: column;
       align-items: center;
-      overflow-y: scroll;
+      overflow-y: hidden;
       overflow-x: hidden;
-      padding-bottom: 3rem;
+      padding: 0;
       background-image: url('img/bg/dimension-1.jpg');
       background-size: 400px;
     }
@@ -265,6 +265,29 @@ function installStyles() {
     }
 
     /* 页头：完全对齐原版 #explore-menu-header（背景横幅 + 左碎片/抽奖 + 右标题/帮助/倒计时） */
+    .gmax-menu-header {
+      position: relative;
+      z-index: 3;
+      height: 8rem;
+      width: 100%;
+      background-image: url('img/bg/space.png');
+      background-size: cover;
+      background-position: 20%;
+      image-rendering: pixelated;
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.4rem 2%;
+      flex-shrink: 0;
+      border-radius: 0 0 0.5rem 0.5rem;
+      box-shadow: rgba(0, 0, 0, 0.3) 0 4px 4px 0;
+      flex-direction: column;
+      justify-content: start;
+      align-items: end;
+      text-align: end;
+      margin-bottom: 1rem;
+
+    }
+
     .gmax-menu-header span {
       height: 2rem;
       width: auto;
@@ -295,56 +318,38 @@ function installStyles() {
         font-weight: bolder;
     }
 
-    // .gmax-menu-header {
-    //   position: relative;
-    //   z-index: 3;
-    //   width: 100%;
-    //   background-image: url('img/bg/dimension-2.jpg');
-    //   background-size: cover;
-    //   background-position: 20%;
-    //   image-rendering: pixelated;
-    //   display: flex;
-    //   flex-direction: row;
-    //   justify-content: space-between;
-    //   align-items: flex-start;
-    //   gap: 0.5rem;
-    //   padding: 0.4rem 2%;
-    //   flex-shrink: 0;
-    //   border-radius: 0 0 0.5rem 0.5rem;
-    //   box-shadow: rgba(0, 0, 0, 0.3) 0 4px 4px 0;
-    // }
-
-    /* 左区：碎片数量 + 抽奖按钮（原版 header span / selector 视觉） */
-    .gmax-menu-header-left {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.4rem;
+    .gmax-gacha {
+      height: 4rem;
+      width: 95%;
+      display: flex;                 /* 开启弹性布局 */
+      justify-content: space-between; /* 左右两端对齐 */
+      align-items: center;           /* 垂直方向居中，防止高度不一致 */
+      // background-color: var(--dark2);
+      border: 2px solid var(--light2);
+      position: relative;
       flex-shrink: 0;
+      border-radius: 0.5rem;
+      padding: 0.3rem 1rem;
+      z-index: 4;
     }
 
     /* 碎片数量：对照 #explore-menu-header span（rgba(0,0,0,.5) 底、白边、白字） */
     .gmax-fragment {
+      position: relative;
       height: 2rem;
       display: flex;
       justify-content: center;
       align-items: center;
       text-align: center;
-      background: var(--dark1);
-      color: white;
-      border: rgba(255, 255, 255, 0.7) 1px solid;
-      border-radius: 0.5rem;
+      color: var(--light2);
       font-size: 1.4rem;
       background: rgba(0, 0, 0, 0.5);
-      padding: 1.3rem 1rem;
-      font-weight: 100;
       flex-shrink: 0;
-      z-index: 2;
     }
-    .gmax-fragment img {
-      height: 1.5rem;
-      margin-right: 0.4rem;
-      filter: drop-shadow(0 0 4px rgba(255,215,0,0.8));
+
+    #gmax-fragment-count {
+      margin-left: 0.5rem;
+      font-weight: 500;
     }
 
     /* 抽奖按钮：对照原版 .explore-menu-selector div（dark2 底、圆角、居中） */
@@ -357,31 +362,17 @@ function installStyles() {
       color: var(--light2);
       border: none;
       border-radius: 0.3rem;
-      padding: 0.3rem 1rem;
+      padding: 0.3rem 1.5rem;
       font-family: inherit;
       font-weight: 600;
-      font-size: 1rem;
+      font-size: 1.2rem;
       cursor: pointer;
-      white-space: nowrap;
+      white-space: pre-wrap;;
       flex-shrink: 0;
       box-shadow: rgba(0, 0, 0, 0.2) 0 2px 2px 0;
     }
     .gmax-gacha-btn:hover { background-color: #685F4B; }
 
-    /* 右区：标题/帮助/倒计时，结构与视觉对齐原版 explore-menu-header（右对齐列） */
-    .gmax-menu-header-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      text-align: end;
-      gap: 0.5rem;
-      flex-shrink: 0;
-    }
-    .gmax-title-row {
-      display: flex;
-      align-items: center;
-      gap: 0.2rem;
-    }
     /* 标题胶囊：对照 #explore-menu-header span */
     .gmax-title {
       height: 2rem;
@@ -411,44 +402,41 @@ function installStyles() {
       align-items: center;
     }
 
-    /* 中部内容 */
+    /* 外层：负责滚动，裁剪溢出（必须） */
     .gmax-dim-content {
+      overflow-y: scroll;      /* 保留滚动条 */
+      overflow-x: hidden;      /* 水平方向隐藏 */
       position: relative;
       z-index: 2;
       width: 100%;
       display: flex;
       flex-direction: column;
+      justify-content: start;  /* 垂直居中 */
       align-items: center;
-      padding: 0.5rem 2%;
+      padding: 0;
     }
-    .gmax-dim-lock {
-      color: rgba(255,255,255,0.9);
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.5);
-      border-radius: 0.5rem;
-      padding: 0.4rem 1rem;
-      font-size: clamp(0.85rem, 3vw, 1rem);
-      margin-bottom: 0.5rem;
-    }
+
+    /* 网格布局，正常显示 */
     .gmax-card-grid {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: clamp(0.6rem, 2.5vw, 1.4rem);
-      padding-top: 0.6rem;
+      margin: 5rem 0;
+      /* 不需要 padding-top，已由外层提供 */
     }
 
-    /* 卡片：完全复用原版 .dimension-pokemon 卡座（12rem 居中 flex、精灵 scale:2、
-       20rem 黑洞溢出卡面，构成 dimension portal 视觉）。本 mod 只做三点微调：
-       1) 让卡片在窄屏可收缩（覆盖固定 12rem）；2) 只保留反向黑洞的 overlay 说明；
-       3) 未给卡片加 overflow:hidden，保持与原版一致的“溢出”观感。 */
+    /* 卡片样式 */
     .gmax-card {
       margin: 0 auto;
+      /* 如果卡片本身需要溢出，在这里处理 */
     }
+
     .gmax-bhole-reverse {
       animation-direction: reverse;
       scale: 1.3;
     }
+      
     /* 星级胶囊：仿原版 #dimension-indicator（黑底 0.6 透明、圆角 100px、金字星），定位到图片正下方 */
     .gmax-card-stars {
       position: absolute;
@@ -800,30 +788,31 @@ function createGmaxPage(api) {
 
   page.innerHTML = `
     <div class="gmax-dim-bg"></div>
-
     <div class="gmax-menu-header">
-      <div class="gmax-menu-header-left">
-        <span class="gmax-fragment"><img src="img/items/wormholeResidue.png"><span id="gmax-fragment-count">0</span></span>
-        <button type="button" id="gmax-gacha-btn" class="gmax-gacha-btn">碎片抽奖 (${GACHA_COST})</button>
+      <div style="display:flex; gap:0.5rem">
+        <span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21.22 6.894a3.7 3.7 0 0 0-1.4-1.37l-6-3.31a3.83 3.83 0 0 0-3.63 0l-6 3.31a3.7 3.7 0 0 0-1.4 1.37a3.74 3.74 0 0 0-.52 1.9v6.41a3.79 3.79 0 0 0 1.92 3.27l6 3.3a3.74 3.74 0 0 0 3.63 0l6-3.31a3.72 3.72 0 0 0 1.91-3.26v-6.36a3.64 3.64 0 0 0-.51-1.95m-1 8.31a2.2 2.2 0 0 1-1.14 1.95l-6 3.31q-.158.089-.33.14v-8.18l7.3-4.39c.092.242.136.5.13.76z"></path></svg>
+          <strong>超极巨化空间</strong>
+        </span>
+        <span class="header-help" data-help="${HELP_KEY}"><svg style="opacity:0.8; pointer-events:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><g fill="currentColor"><g opacity="0.2"><path d="M12.739 17.213a2 2 0 1 1-4 0a2 2 0 0 1 4 0"/><path fill-rule="evenodd" d="M10.71 5.765c-.67 0-1.245.2-1.65.486c-.39.276-.583.597-.639.874a1.45 1.45 0 0 1-2.842-.574c.227-1.126.925-2.045 1.809-2.67c.92-.65 2.086-1.016 3.322-1.016c2.557 0 5.208 1.71 5.208 4.456c0 1.59-.945 2.876-2.169 3.626a1.45 1.45 0 1 1-1.514-2.474c.57-.349.783-.794.783-1.152c0-.574-.715-1.556-2.308-1.556" clip-rule="evenodd"/><path fill-rule="evenodd" d="M10.71 9.63c.8 0 1.45.648 1.45 1.45v1.502a1.45 1.45 0 1 1-2.9 0V11.08c0-.8.649-1.45 1.45-1.45" clip-rule="evenodd"/><path fill-rule="evenodd" d="M14.239 8.966a1.45 1.45 0 0 1-.5 1.99l-2.284 1.367a1.45 1.45 0 0 1-1.49-2.488l2.285-1.368a1.45 1.45 0 0 1 1.989.5" clip-rule="evenodd"/></g><path d="M11 16.25a1.25 1.25 0 1 1-2.5 0a1.25 1.25 0 0 1 2.5 0"/><path fill-rule="evenodd" d="M9.71 4.065c-.807 0-1.524.24-2.053.614c-.51.36-.825.826-.922 1.308a.75.75 0 1 1-1.47-.297c.186-.922.762-1.696 1.526-2.236c.796-.562 1.82-.89 2.919-.89c2.325 0 4.508 1.535 4.508 3.757c0 1.292-.768 2.376-1.834 3.029a.75.75 0 0 1-.784-1.28c.729-.446 1.118-1.093 1.118-1.749c0-1.099-1.182-2.256-3.008-2.256m0 5.265a.75.75 0 0 1 .75.75v1.502a.75.75 0 1 1-1.5 0V10.08a.75.75 0 0 1 .75-.75" clip-rule="evenodd"/><path fill-rule="evenodd" d="M12.638 8.326a.75.75 0 0 1-.258 1.029l-2.285 1.368a.75.75 0 1 1-.77-1.287l2.285-1.368a.75.75 0 0 1 1.028.258" clip-rule="evenodd"/></g></svg></span>
       </div>
-      <div class="gmax-menu-header-right">
-        <div class="gmax-title-row">
-          <span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21.22 6.894a3.7 3.7 0 0 0-1.4-1.37l-6-3.31a3.83 3.83 0 0 0-3.63 0l-6 3.31a3.7 3.7 0 0 0-1.4 1.37a3.74 3.74 0 0 0-.52 1.9v6.41a3.79 3.79 0 0 0 1.92 3.27l6 3.3a3.74 3.74 0 0 0 3.63 0l6-3.31a3.72 3.72 0 0 0 1.91-3.26v-6.36a3.64 3.64 0 0 0-.51-1.95m-1 8.31a2.2 2.2 0 0 1-1.14 1.95l-6 3.31q-.158.089-.33.14v-8.18l7.3-4.39c.092.242.136.5.13.76z"></path></svg>
-            <strong>超极巨化空间</strong>
-          </span>
-          <span class="header-help" data-help="${HELP_KEY}"><svg style="opacity:0.8; pointer-events:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><g fill="currentColor"><g opacity="0.2"><path d="M12.739 17.213a2 2 0 1 1-4 0a2 2 0 0 1 4 0"/><path fill-rule="evenodd" d="M10.71 5.765c-.67 0-1.245.2-1.65.486c-.39.276-.583.597-.639.874a1.45 1.45 0 0 1-2.842-.574c.227-1.126.925-2.045 1.809-2.67c.92-.65 2.086-1.016 3.322-1.016c2.557 0 5.208 1.71 5.208 4.456c0 1.59-.945 2.876-2.169 3.626a1.45 1.45 0 1 1-1.514-2.474c.57-.349.783-.794.783-1.152c0-.574-.715-1.556-2.308-1.556" clip-rule="evenodd"/><path fill-rule="evenodd" d="M10.71 9.63c.8 0 1.45.648 1.45 1.45v1.502a1.45 1.45 0 1 1-2.9 0V11.08c0-.8.649-1.45 1.45-1.45" clip-rule="evenodd"/><path fill-rule="evenodd" d="M14.239 8.966a1.45 1.45 0 0 1-.5 1.99l-2.284 1.367a1.45 1.45 0 0 1-1.49-2.488l2.285-1.368a1.45 1.45 0 0 1 1.989.5" clip-rule="evenodd"/></g><path d="M11 16.25a1.25 1.25 0 1 1-2.5 0a1.25 1.25 0 0 1 2.5 0"/><path fill-rule="evenodd" d="M9.71 4.065c-.807 0-1.524.24-2.053.614c-.51.36-.825.826-.922 1.308a.75.75 0 1 1-1.47-.297c.186-.922.762-1.696 1.526-2.236c.796-.562 1.82-.89 2.919-.89c2.325 0 4.508 1.535 4.508 3.757c0 1.292-.768 2.376-1.834 3.029a.75.75 0 0 1-.784-1.28c.729-.446 1.118-1.093 1.118-1.749c0-1.099-1.182-2.256-3.008-2.256m0 5.265a.75.75 0 0 1 .75.75v1.502a.75.75 0 1 1-1.5 0V10.08a.75.75 0 0 1 .75-.75" clip-rule="evenodd"/><path fill-rule="evenodd" d="M12.638 8.326a.75.75 0 0 1-.258 1.029l-2.285 1.368a.75.75 0 1 1-.77-1.287l2.285-1.368a.75.75 0 0 1 1.028.258" clip-rule="evenodd"/></g></svg></span>
-        </div>
-        <div class="rotation-timer">
-          <strong><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M6.94 2c.416 0 .753.324.753.724v1.46c.668-.012 1.417-.012 2.26-.012h4.015c.842 0 1.591 0 2.259.013v-1.46c0-.4.337-.725.753-.725s.753.324.753.724V4.25c1.445.111 2.394.384 3.09 1.055c.698.67.982 1.582 1.097 2.972L22 9H2v-.724c.116-1.39.4-2.302 1.097-2.972s1.645-.944 3.09-1.055V2.724c0-.4.337-.724.753-.724"/><path fill="currentColor" d="M22 14v-2c0-.839-.004-2.335-.017-3H2.01c-.013.665-.01 2.161-.01 3v2c0 3.771 0 5.657 1.172 6.828S6.228 22 10 22h4c3.77 0 5.656 0 6.828-1.172S22 17.772 22 14" opacity="0.5"/><path fill="currentColor" d="M18 17a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0"/></svg>
-          超极巨化刷新</strong>
-          <div id="gmax-timer" class="time-counter-daily">--:--:--</div>
-        </div>
+      <div class="rotation-timer">
+        <strong><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M6.94 2c.416 0 .753.324.753.724v1.46c.668-.012 1.417-.012 2.26-.012h4.015c.842 0 1.591 0 2.259.013v-1.46c0-.4.337-.725.753-.725s.753.324.753.724V4.25c1.445.111 2.394.384 3.09 1.055c.698.67.982 1.582 1.097 2.972L22 9H2v-.724c.116-1.39.4-2.302 1.097-2.972s1.645-.944 3.09-1.055V2.724c0-.4.337-.724.753-.724"/><path fill="currentColor" d="M22 14v-2c0-.839-.004-2.335-.017-3H2.01c-.013.665-.01 2.161-.01 3v2c0 3.771 0 5.657 1.172 6.828S6.228 22 10 22h4c3.77 0 5.656 0 6.828-1.172S22 17.772 22 14" opacity="0.5"/><path fill="currentColor" d="M18 17a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-5 4a1 1 0 1 1-2 0a1 1 0 0 1 2 0m0-4a1 1 0 1 1-2 0a1 1 0 0 1 2 0"/></svg>
+        超极巨化刷新</strong>
+        <div id="gmax-timer" class="time-counter-daily">--:--:--</div>
       </div>
     </div>
 
+    <div class="gmax-gacha">
+        <span class="gmax-fragment">
+          <img src="img/items/wormholeResidue.png" style="height:2rem; width:2rem; filter: drop-shadow(0 0 3px white) drop-shadow(0 0 3px white) drop-shadow(0 0 3px white);">
+          <span id="gmax-fragment-count">超极巨碎片：0</span>
+        </span>
+        <button type="button" id="gmax-gacha-btn" class="gmax-gacha-btn">🔄 抽奖   ( <img src="img/items/wormholeResidue.png" style="height:2rem; width:2rem; filter: drop-shadow(0 0 3px white) drop-shadow(0 0 3px white) drop-shadow(0 0 3px white);"> x30 )</button>
+    </div>
+
+
     <div class="gmax-dim-content">
-      <div class="gmax-dim-lock" id="gmax-lock-bar" style="display:none"></div>
       <div class="gmax-card-grid" id="gmax-card-grid"></div>
     </div>
   `;
@@ -917,7 +906,6 @@ function showGmaxPage(api, fromReturn = false) {
 
   renderBossCards(api);
   updateFragmentDisplay(api);
-  updateLockBar(api);
 
   // 若玩家正从主菜单球点进来的那一刻，展开的下拉是 #menu-button.menu-button-open。
   // 这里把它收起：下拉已无必要（后续可用左上角球再打开），避免与页面重叠。
@@ -964,16 +952,9 @@ function onMenuCloseClick(event) {
 
 function updateFragmentDisplay(api) {
   const fragSpan = document.getElementById("gmax-fragment-count");
-  if (fragSpan) fragSpan.textContent = getFragmentCount(api);
+  if (fragSpan) fragSpan.textContent = '超极巨碎片：' + getFragmentCount(api);
 }
 
-function updateLockBar(api) {
-  const bar = document.getElementById("gmax-lock-bar");
-  if (!bar) return;
-  const unlocked = isGmaxUnlocked(api);
-  bar.style.display = unlocked ? "none" : "block";
-  bar.textContent = `需图鉴 ${DEX_REQUIREMENT} 解锁，当前 ${getDexCount(api)}`;
-}
 
 // 倒计时：指向下一个 UTC 半天边界（与 Wild Area 的 .time-counter-daily 同一时钟）。
 // 边界一到（页面仍开着）自动重建挑战区并重绘卡片 —— 行为与原版 Wild Area 一致。
@@ -997,7 +978,6 @@ function startCountdown(api) {
       updateGmaxAreas(api);
       lastRenderHalfDay = halfDay;
       renderBossCards(api);
-      updateLockBar(api);
     }
 
     // 显示到下一个半天边界的时间（getNextHalfDayBoundary 已自动滚到下一边界）
