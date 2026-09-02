@@ -23,6 +23,10 @@ const BOSS_BUFF_VALUE = 99;    // Boss 的五项增益数值
 // 这里沿用同一把时钟，让 Boss 在边界整点刷新、倒计时也指向同一个边界。
 const HALF_DAY_MS = 12 * 60 * 60 * 1000;
 
+// 右上角 header-help 的 data-help 键（右键弹原版 tooltip 看界面说明）。
+// tooltipData 的 help 分支不认识该键，故在 installBackPatches 里 patch 一个兜底分支。
+const HELP_KEY = "GmaxDimension";
+
 let activeApi = null;
 
 // ---- 运行时状态（仅存内存，刷新即按当前时间重新推导，不写存档）----
@@ -41,7 +45,7 @@ UltraMods.define({
   name: "Pokechill 超极巨化空间",
   description: "将「超极巨化空间」独立为 mod：Boss 轮换与旷野地带(Wild Area)在同一个 UTC 半天边界刷新，击败 Boss 收集碎片进行抽奖获取超极巨化宝可梦。启用与否交由模组管理器，所有提示走原版 tooltip，左上角菜单沿用原版样式。",
   image: "img/items/rareCandy.png",
-  version: "2.2.0",
+  version: "2.2.1",
   author: "人民当家做主",
   category: "实用工具",
   defaultEnabled: false,
@@ -224,11 +228,15 @@ function installStyles() {
     /* 页面外壳完全复刻游戏 dimension-menu（styles.css #dimension-menu）：
        position:fixed、桌面 50% 宽、暗色 portal 背景，z-index 40 —— 低于左上角
        #menu-button-parent(z-index:100)，因此原版左上角菜单球始终浮在页面上方，
-       玩家可用原版菜单球回到主菜单（即“去掉自制的球状返回按钮”）。 */
+       玩家可用原版菜单球回到主菜单（即“去掉自制的球状返回按钮”）。
+
+       【定位修复】刻意不写 top/left/right/bottom 任何偏移，与 #main-content、
+       #dimension-menu 等原版子页面一致：body 是 position:fixed + display:flex +
+       justify-content:center，游戏窗口是居中的 #main-content(width:50%)。
+       不设偏移的 fixed 子元素会停在自身静态位置，正好贴合居中的游戏窗口；
+       一旦写了 left:0 就会贴到浏览器视口左缘（即此前“跑到浏览器窗口左侧”的根因）。 */
     #${PAGE_ID} {
       position: fixed;
-      top: 0;
-      left: 0;
       height: 100%;
       width: 50%;
       z-index: 40;
@@ -314,7 +322,27 @@ function installStyles() {
       margin-right: 0.35rem;
       filter: drop-shadow(0 0 4px rgba(255,215,0,0.8));
     }
-    .gmax-dim-timer { color: #ffd966; text-shadow: 0 0 10px rgba(255,170,0,0.6); font-weight: 700; }
+    /* 倒计时文本：等宽数字 + 固定宽度，归零/进位不会引起容器左右跳动 */
+    .gmax-dim-timer {
+      color: #ffd966;
+      text-shadow: 0 0 10px rgba(255,170,0,0.6);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+      min-width: 4.2em;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    /* 右上角 header-help：沿用原版全局 .header-help（cursor:help、hover 底），
+       本 mod 只需保证它在页头右侧胶囊流中垂直对齐、不额外加胶囊底色。 */
+    .gmax-header-help {
+      height: 2rem;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 0.3rem !important;
+      color: white;
+      opacity: 0.9;
+    }
 
     /* 中部内容 */
     .gmax-dim-content {
@@ -669,6 +697,38 @@ function installBackPatches() {
     showGmaxPage(activeApi, true);
     return ret;
   });
+
+  // 3) 右上角 header-help 的右键说明：tooltipData("help", ...) 的 help 分支只认识原版
+  //    那些键（Wild Areas/Dimension/...），不认识本 mod 的 HELP_KEY。这里包一层：
+  //    命中 HELP_KEY 时直接用原版 tooltip DOM 展示界面说明，否则委托原函数。
+  patchGlobal("tooltipData", original => function gmaxTooltipData(category, ttdata, ...rest) {
+    if (category === "help" && ttdata === HELP_KEY) {
+      try {
+        const top = document.getElementById("tooltipTop");
+        const titleEl = document.getElementById("tooltipTitle");
+        const midEl = document.getElementById("tooltipMid");
+        const bottomEl = document.getElementById("tooltipBottom");
+        if (top) top.style.display = "none";
+        if (midEl) midEl.style.display = "none";
+        if (titleEl) {
+          titleEl.style.display = "inline";
+          titleEl.innerHTML = "超极巨化空间";
+        }
+        if (bottomEl) {
+          bottomEl.style.display = "inline";
+          bottomEl.innerHTML =
+            "聚集全宇宙最强的超极巨化宝可梦！这里每隔 12 小时（与旷野地带同一时刻，UTC " +
+            "00:00 / 12:00）刷新一批超极巨化 Boss。<br><br>" +
+            `击败 Boss 可获得「次元残片」。消耗 ${GACHA_COST} 片残片即可抽奖，有概率抽到未拥有` +
+            "的超极巨化宝可梦（已拥有时有概率出现闪光个体）。<br><br>" +
+            `图鉴达到 ${DEX_REQUIREMENT} 只后即可挑战。Boss 自带强化增益，请组建最强队伍迎战。`;
+        }
+        if (typeof openTooltip === "function") openTooltip();
+      } catch (e) { /* tooltip DOM 未就绪时静默 */ }
+      return;
+    }
+    return original.call(this, category, ttdata, ...rest);
+  });
 }
 
 function uninstallBackPatches() {
@@ -701,7 +761,13 @@ function createGmaxPage(api) {
           <img src="img/items/wormholeResidue.png">
           <span id="gmax-fragment-count">0</span>
         </span>
+        <!-- 倒计时：容器固定宽度（font-variant-numeric: tabular-nums + 固定宽度），
+             避免 HH:MM:SS 数字增减导致容器左右跳动 / 布局偏移 -->
         <span class="gmax-dim-pill gmax-dim-timer" id="gmax-timer">--:--:--</span>
+        <!-- 界面说明：复用原版 Wild Area 顶栏的 .header-help（data-help 右键看说明）。
+             svg 需 pointer-events:none，右键才会命中 span 上的 data-help（tooltip.js 全局
+             contextmenu 监听会据此调 tooltipData("help", <key>)）。 -->
+        <span class="header-help gmax-header-help" data-help="${HELP_KEY}"><svg style="opacity:0.8; pointer-events:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><g fill="currentColor"><g opacity="0.2"><path d="M12.739 17.213a2 2 0 1 1-4 0a2 2 0 0 1 4 0"/><path fill-rule="evenodd" d="M10.71 5.765c-.67 0-1.245.2-1.65.486c-.39.276-.583.597-.639.874a1.45 1.45 0 0 1-2.842-.574c.227-1.126.925-2.045 1.809-2.67c.92-.65 2.086-1.016 3.322-1.016c2.557 0 5.208 1.71 5.208 4.456c0 1.59-.945 2.876-2.169 3.626a1.45 1.45 0 1 1-1.514-2.474c.57-.349.783-.794.783-1.152c0-.574-.715-1.556-2.308-1.556" clip-rule="evenodd"/><path fill-rule="evenodd" d="M10.71 9.63c.8 0 1.45.648 1.45 1.45v1.502a1.45 1.45 0 1 1-2.9 0V11.08c0-.8.649-1.45 1.45-1.45" clip-rule="evenodd"/><path fill-rule="evenodd" d="M14.239 8.966a1.45 1.45 0 0 1-.5 1.99l-2.284 1.367a1.45 1.45 0 0 1-1.49-2.488l2.285-1.368a1.45 1.45 0 0 1 1.989.5" clip-rule="evenodd"/></g><path d="M11 16.25a1.25 1.25 0 1 1-2.5 0a1.25 1.25 0 0 1 2.5 0"/><path fill-rule="evenodd" d="M9.71 4.065c-.807 0-1.524.24-2.053.614c-.51.36-.825.826-.922 1.308a.75.75 0 1 1-1.47-.297c.186-.922.762-1.696 1.526-2.236c.796-.562 1.82-.89 2.919-.89c2.325 0 4.508 1.535 4.508 3.757c0 1.292-.768 2.376-1.834 3.029a.75.75 0 0 1-.784-1.28c.729-.446 1.118-1.093 1.118-1.749c0-1.099-1.182-2.256-3.008-2.256m0 5.265a.75.75 0 0 1 .75.75v1.502a.75.75 0 1 1-1.5 0V10.08a.75.75 0 0 1 .75-.75" clip-rule="evenodd"/><path fill-rule="evenodd" d="M12.638 8.326a.75.75 0 0 1-.258 1.029l-2.285 1.368a.75.75 0 1 1-.77-1.287l2.285-1.368a.75.75 0 0 1 1.028.258" clip-rule="evenodd"/></g></svg></span>
       </div>
     </div>
 
@@ -863,23 +929,31 @@ function updateLockBar(api) {
 
 // 倒计时：指向下一个 UTC 半天边界（与 Wild Area 的 .time-counter-daily 同一时钟）。
 // 边界一到（页面仍开着）自动重建挑战区并重绘卡片 —— 行为与原版 Wild Area 一致。
+//
+// 【实时刷新修复】不能靠“diff<=0”触发：getNextHalfDayBoundary() 永远返回严格位于
+// “当前时刻之后”的下一个边界，所以 diff 在跨过边界的瞬间会从小正数直接跳到 ~12h，
+// 永远不会 <=0（原实现的自动刷新因此形同虚设，只有退出重进才重建）。
+// 正解：每拍比较“当前半天编号”与“已渲染的半天编号 lastRenderHalfDay”，一旦编号前进
+// 就说明刚跨过边界 → 立即重建挑战区与卡片，页面开着也会自己刷新。
 function startCountdown(api) {
   stopCountdown();
   const timerEl = document.getElementById("gmax-timer");
   if (!timerEl) return;
 
-  countdownTimer = setInterval(() => {
-    const boundary = getNextHalfDayBoundary();
-    let diff = boundary - Date.now();
+  const tick = () => {
+    const now = Date.now();
+    const halfDay = getHalfDayNumber(now);
 
-    if (diff <= 0) {
-      // 极端情况下若计时偏差越过边界，直接按新半天重建
+    // 半天编号前进 ⇒ 刚跨过 UTC 半天边界：就地刷新 Boss（无需退出重进）
+    if (halfDay !== lastRenderHalfDay) {
       updateGmaxAreas(api);
-      lastRenderHalfDay = getHalfDayNumber();
+      lastRenderHalfDay = halfDay;
       renderBossCards(api);
-      diff = HALF_DAY_MS;
+      updateLockBar(api);
     }
 
+    // 显示到下一个半天边界的时间（getNextHalfDayBoundary 已自动滚到下一边界）
+    const diff = Math.max(0, getNextHalfDayBoundary(now) - now);
     const hours = Math.floor(diff / 3600000);
     const minutes = Math.floor((diff % 3600000) / 60000);
     const seconds = Math.floor((diff % 60000) / 1000);
@@ -887,7 +961,10 @@ function startCountdown(api) {
       `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
     updateFragmentDisplay(api);
-  }, 1000);
+  };
+
+  tick();   // 打开即先渲染一次
+  countdownTimer = setInterval(tick, 1000);
 }
 
 function stopCountdown() {
