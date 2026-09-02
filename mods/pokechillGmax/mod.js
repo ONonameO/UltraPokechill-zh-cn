@@ -7,48 +7,52 @@ const MENU_ITEM_ID = "gmax-menu-item";
 const FRAGMENT_ID = "gmaxFragment";
 const AREA_PREFIX = "gmaxChallenge_";
 
-// 默认配置。会被写入 UltraMods 的 mod state（saved.mods.state[pokechillGmax].config），
-// 随存档持久化；后续调参无需改代码。
-const DEFAULT_CONFIG = {
-  enableGmaxDimension: true,  // 原实现里是硬编码的 settings.enableGmaxDimension
-  gachaCost: 30,
-  rotationHours: 12,
-  bossLevel: 150,
-  bossCount: 5,
-  dexRequirement: 100,
-  unownedChance: 0.5,   // 存在未拥有宝可梦时，抽中未拥有的概率
-  shinyChance: 0.1,     // 抽中已拥有宝可梦时，出闪光的概率
-  bossBuffValue: 99     // 超极巨化 Boss 的五项增益数值
-};
+// ---- 调参常量（纯代码，刻意不写进存档 / mod state）----
+// 本 mod 的启用/禁用完全交由 mod 管理器（UltraMods isEnabled / onToggle）统一管理，
+// 不提供 enableGmaxDimension 之类的开关，也不在 saved.mods.state 里保存任何配置。
+// Boss 轮换与碎片数量同样不落存档：Boss 由当前 UTC 半天边界确定性推导，刷新即一致。
+const GACHA_COST = 30;         // 单次抽奖消耗的碎片数
+const BOSS_LEVEL = 150;        // 超极巨化 Boss 等级
+const BOSS_COUNT = 5;          // 每轮显示的 Boss 数
+const DEX_REQUIREMENT = 100;   // 解锁超极巨化空间所需的最小图鉴数
+const UNOWNED_CHANCE = 0.5;    // 存在未拥有宝可梦时，抽中未拥有的概率
+const SHINY_CHANCE = 0.1;      // 抽中已拥有宝可梦时，出闪光的概率
+const BOSS_BUFF_VALUE = 99;    // Boss 的五项增益数值
+// 与 Wild Area（旷野地带）的刷新完全同步：Wild Area 每 12 小时在 UTC 整点边界
+// （00:00 / 12:00）切换一次（explore.js getSeed / rotationWildCurrent 依据 halfDayNumber）。
+// 这里沿用同一把时钟，让 Boss 在边界整点刷新、倒计时也指向同一个边界。
+const HALF_DAY_MS = 12 * 60 * 60 * 1000;
 
 let activeApi = null;
-let activeState = null;
-let config = { ...DEFAULT_CONFIG };
 
-// ---- 运行时状态（不持久化到 mod state）----
-let currentBosses = [];
-let lastRotationTime = Date.now();
-let countdownTimer = null;
-let lockTimer = null;
-let battleBuffed = false;   // 本次战斗是否已注入过 Boss 增益
+// ---- 运行时状态（仅存内存，刷新即按当前时间重新推导，不写存档）----
+let countdownTimer = null;      // 页面开着时的秒表
+let lockTimer = null;           // 锁定图鉴解锁态的低频检查
+let battleBuffed = false;       // 本次战斗是否已注入过 Boss 增益
+let gmaxPageVisible = false;    // 超极巨化空间页面当前是否展开
+let lastRenderHalfDay = -1;     // 已渲染 Boss 列表所用的半天编号（跨边界时重绘）
+
+// ---- 被 patch 过的全局函数（用于 Req4：统一把「返回」导向超极巨化空间）----
+let patchedGlobals = {};
+let menuCloseBound = false;     // 页面级点击观察是否已绑定（用于收起 gmax 页）
 
 UltraMods.define({
   id: MOD_ID,
   name: "Pokechill 超极巨化空间",
-  description: "将「超极巨化空间」独立为 mod：定时刷新超极巨化 Boss 挑战区，收集碎片进行抽奖获取超极巨化宝可梦。基于 UltraMods API 实现，碎片数量与 Boss 轮换随存档持久化。由 mod 管理器独立启用或禁用。",
+  description: "将「超极巨化空间」独立为 mod：Boss 轮换与旷野地带(Wild Area)在同一个 UTC 半天边界刷新，击败 Boss 收集碎片进行抽奖获取超极巨化宝可梦。启用与否交由模组管理器，所有提示走原版 tooltip，左上角菜单沿用原版样式。",
   image: "img/items/rareCandy.png",
-  version: "2.0.0",
+  version: "2.2.0",
   author: "人民当家做主",
   category: "实用工具",
   defaultEnabled: false,
   hooks: {
-    onToggle(api, payload, state) {
-      if (payload.enabled) install(api, state);
+    onToggle(api, payload) {
+      if (payload.enabled) install(api);
       else uninstall(api);
     },
-    onRefresh(api, payload, state) {
+    onRefresh(api) {
       if (!api.isEnabled(MOD_ID)) return;
-      install(api, state);
+      install(api);
     },
 
     // 进入战斗：准备注入 Boss 增益。
@@ -60,7 +64,7 @@ UltraMods.define({
     // 所以那次注入永远被抹掉，是无效代码。
     // 这里改用官方 onCombatStart 钩子，并延迟一拍（initialiseArea 是同步函数，
     // setTimeout 回调必然在其整体执行完之后运行）再写入，从而真正生效。
-    onCombatStart(api, payload, state) {
+    onCombatStart(api, payload) {
       if (!isGmaxAreaId(payload?.areaId)) {
         battleBuffed = false;
         return;
@@ -71,7 +75,7 @@ UltraMods.define({
   }
 });
 
-// 【刻意不接管「战斗结束」】
+// 【刻意不接管「战斗结束即离场」】
 //
 // 原实现每 500ms 轮询 window.wildPkmnHp，发现 <= 0 就在 500ms 后强制离场。
 // 但引擎自身的结算顺序是：
@@ -87,29 +91,26 @@ UltraMods.define({
 // 这一场的碎片就直接被吞掉。
 //
 // 引擎自己已经会调 leaveCombat()，mod 再抢一次既多余又有害，因此整段移除。
-// 用户可感知的差异只有「回到菜单晚约 500ms」，其余流程与原来完全一致。
+// 我们只 patch 了 exitPkmnTeam / exitCombat 的「返回目标」，让玩家离开队伍准备
+// 或打完结算后回到超极巨化空间页面，而不是 explore-menu（详见 Req4）。
 
 // ---------- 安装 / 卸载 ----------
 
-function install(api, state) {
+function install(api) {
   // 防御式守卫：游戏核心对象尚未就绪时直接跳过。
   // 正常时序下不会触发 —— UltraMods 的 onRefresh 在 window.load 之后才跑
   // （mods.js:1537-1542），那时 explore.js / pkmnDictionary.js 等已全部同步加载完毕。
-  // 原实现用 setTimeout 每 100ms 轮询 waitForGame() 等就绪，这里不再需要。
   if (!api.item || !api.pkmn || !api.areas || !api.move) return;
 
   activeApi = api;
-  activeState = state || null;
-  config = loadConfig(state);
-  if (!config.enableGmaxDimension) return;
 
   ensureFragmentItem(api);
-  hydrateFragmentFromSave(api);   // 修复：把存档里已攒的碎片读回内存
-  restoreRotation(activeState);
+  hydrateFragmentFromSave(api);   // 把存档里已攒的碎片读回内存（碎片是玩家货币，随存档保留）
 
   installStyles();
-  if (currentBosses.length === 0 || isRotationDue()) rotateBosses(api);
-  updateGmaxAreas(api);
+  installBackPatches();           // Req4：统一「返回」导向超极巨化空间
+  installMenuCloseObserver();     // Req3：点其它主菜单项时收起超极巨化空间页
+  updateGmaxAreas(api);           // 按当前 UTC 半天边界同步刷新 Boss 挑战区
   addMenuItem(api);
   startLockWatcher(api);
 
@@ -119,13 +120,20 @@ function install(api, state) {
 function uninstall(api) {
   stopCountdown();
   stopLockWatcher();
+  // 先还原 patch，确保下面用「原版」函数离场，不会因 patch 重新弹回超极巨化页。
+  uninstallBackPatches();
 
-  // 若玩家正停在超极巨化战斗里，先尝试按原实现的方式离场，避免残留一个已删除的区域
-  if (api.saved && isGmaxAreaId(api.saved.currentArea)) leaveGmaxCombat();
+  // 若玩家正停在超极巨化战斗/队伍准备里，先复位，避免残留一个已删除的区域
+  if (api.saved && isGmaxAreaId(api.saved.currentArea)) {
+    if (typeof leaveCombat === "function") leaveCombat();
+  } else if (api.saved && isGmaxAreaId(api.saved.currentAreaBuffer)) {
+    if (typeof exitPkmnTeam === "function") exitPkmnTeam();
+  }
 
   clearGmaxAreas(api);
   removePage();
   removeMenuItem();
+  uninstallMenuCloseObserver();
   removeStyles();
 
   // 注意：这里刻意不删除 item[FRAGMENT_ID]。
@@ -133,24 +141,9 @@ function uninstall(api) {
   // 一旦道具从 item 里消失，data.gmaxFragment 就不再被写入，玩家已攒的碎片会被永久抹掉。
   // 保留该道具（禁用时它是惰性的）是唯一安全的做法。
   battleBuffed = false;
-  currentBosses = [];
+  gmaxPageVisible = false;
   activeApi = null;
-  activeState = null;
   api.refreshGame();
-}
-
-// ---------- 配置管理（UltraMods mod state）----------
-
-function loadConfig(state) {
-  const stored = state && state.config && typeof state.config === "object" ? state.config : {};
-  const merged = { ...DEFAULT_CONFIG };
-  // 只接受已知的键，避免存档里的脏数据影响运行
-  for (const key of Object.keys(DEFAULT_CONFIG)) {
-    if (stored[key] !== undefined && stored[key] !== null) merged[key] = stored[key];
-  }
-  if (!state) return merged;
-  state.config = merged;
-  return merged;
 }
 
 // ---------- 自定义道具 ----------
@@ -165,7 +158,7 @@ function ensureFragmentItem(api) {
       type: "key",
       got: 0,
       newItem: 0,
-      info: function () { return "击败超极巨化宝可梦获得的稀有碎片..."; }
+      info: function () { return "击败超极巨化宝可梦获得的稀有碎片。可在此空间用于抽奖，获取超极巨化宝可梦。"; }
     };
   }
   if (item[FRAGMENT_ID].newItem === undefined) item[FRAGMENT_ID].newItem = 0;
@@ -197,6 +190,30 @@ function getFragmentCount(api) {
   return Math.max(0, Number(api.item?.[FRAGMENT_ID]?.got) || 0);
 }
 
+// ---------- UTC 半天时钟（与 Wild Area 同步）----------
+
+function getHalfDayNumber(now = Date.now()) {
+  return Math.floor(now / HALF_DAY_MS);
+}
+
+// 下一个 UTC 半天边界的绝对毫秒时间（与 Wild Area 的 .time-counter-daily 指向同一边界）
+function getNextHalfDayBoundary(now = Date.now()) {
+  return (Math.floor(now / HALF_DAY_MS) + 1) * HALF_DAY_MS;
+}
+
+// 用半天编号做种子的确定性随机。同一半天内刷新页面 / 反复打开，Boss 组合始终一致；
+// 半天边界一到，种子自动变化 → Boss 自动换一批，无需任何持久化。
+function seededRandom(seed) {
+  let s = seed >>> 0;
+  return function () {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 // ---------- 样式（沿用 pokechillDummy 的独立 style + id 守卫）----------
 
 function installStyles() {
@@ -204,237 +221,176 @@ function installStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
+    /* 页面外壳完全复刻游戏 dimension-menu（styles.css #dimension-menu）：
+       position:fixed、桌面 50% 宽、暗色 portal 背景，z-index 40 —— 低于左上角
+       #menu-button-parent(z-index:100)，因此原版左上角菜单球始终浮在页面上方，
+       玩家可用原版菜单球回到主菜单（即“去掉自制的球状返回按钮”）。 */
     #${PAGE_ID} {
-      background-image: url('img/bg/dimension-1.jpg');
-      background-size: cover;
-    }
-    #${MENU_ITEM_ID} { cursor: pointer; }
-
-    /* ---- 页面 ---- */
-    .gmax-page {
       position: fixed;
+      top: 0;
+      left: 0;
       height: 100%;
       width: 50%;
-      z-index: 150;
+      z-index: 40;
+      display: none;
+      flex-direction: column;
+      align-items: center;
       overflow-y: scroll;
       overflow-x: hidden;
-      flex-direction: column;
       padding-bottom: 3rem;
-      display: none;
+      background-image: url('img/bg/dimension-1.jpg');
+      background-size: 400px;
     }
-    .gmax-header {
-      height: 5rem;
+    #${PAGE_ID}.open { display: flex; }
+
+    /* 动画背景层（dimension-menu 的 #dimension-bg 同款，dimension-fade 呼吸淡入淡出） */
+    .gmax-dim-bg {
+      position: absolute;
+      inset: 0;
       width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.4rem 2%;
-      margin-bottom: 1rem;
-      z-index: 3;
-    }
-    .gmax-menu-button {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.7);
-      border-radius: 0.5rem;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      color: white;
-      font-size: 1.2rem;
-    }
-    .gmax-page-title {
-      display: flex;
-      align-items: center;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.7);
-      border-radius: 0.5rem;
-      padding: 0.5rem 1rem;
-      color: white;
-      font-size: 1.5rem;
-    }
-    .gmax-page-title svg { margin-right: 0.5rem; }
-    .gmax-content {
-      width: 100%;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      height: 100%;
+      background-image: url('img/bg/dimension-2.jpg');
+      background-size: 400px;
+      animation: dimension-fade 3s infinite ease-in-out;
+      z-index: 0;
+      pointer-events: none;
     }
 
-    /* ---- 顶部状态条 ---- */
-    .gmax-stats {
+    /* 页头：沿用原版子页面头部（dimension-menu-header 右对齐标题胶囊） */
+    .gmax-dim-header {
+      position: relative;
+      z-index: 3;
+      width: 100%;
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      background: rgba(0,0,0,0.6);
-      border-radius: 50px;
-      padding: 15px 20px;
-      border: 1px solid #4ecca3;
-      box-shadow: 0 0 20px rgba(78, 204, 163, 0.5);
-      margin-bottom: 10px;
-      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding: 0.4rem 2%;
     }
-    .gmax-frag {
+    .gmax-dim-header-title {
+      height: 2rem;
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: clamp(1.2rem, 5vw, 1.5rem);
+      text-align: center;
+      background: var(--dark1);
       color: white;
-    }
-    .gmax-frag-icon {
-      width: 32px;
-      height: 32px;
-      filter: drop-shadow(0 0 10px gold);
+      border: rgba(255, 255, 255, 0.7) 1px solid;
+      border-radius: 0.5rem;
+      font-size: clamp(1rem, 3.5vw, 1.5rem);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 0.4rem 1rem;
+      font-weight: 600;
       flex-shrink: 0;
     }
-    .gmax-gacha-wrap {
+    .gmax-dim-header-title img {
+      height: clamp(1.4rem, 4vw, 2rem);
+      margin-right: 0.5rem;
+      filter: drop-shadow(0 0 4px rgba(0,0,0,0.7));
+    }
+    /* 右侧胶囊条：碎片余额 + Boss 刷新倒计时（对齐 Wild Area 的 .rotation-timer 视觉） */
+    .gmax-dim-header-pills {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .gmax-dim-pill {
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: white;
+      background: rgba(0, 0, 0, 0.5);
+      border: rgba(255, 255, 255, 0.7) 1px solid;
+      border-radius: 0.5rem;
+      padding: 0.3rem 0.8rem;
+      font-size: clamp(0.85rem, 3vw, 1.1rem);
+      flex-shrink: 0;
+    }
+    .gmax-dim-pill img {
+      height: clamp(1rem, 3.5vw, 1.4rem);
+      margin-right: 0.35rem;
+      filter: drop-shadow(0 0 4px rgba(255,215,0,0.8));
+    }
+    .gmax-dim-timer { color: #ffd966; text-shadow: 0 0 10px rgba(255,170,0,0.6); font-weight: 700; }
+
+    /* 中部内容 */
+    .gmax-dim-content {
+      position: relative;
+      z-index: 2;
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 5px;
+      padding: 0.5rem 2%;
     }
-    .gmax-gacha-btn {
-      background: linear-gradient(45deg, #ff6b6b, #ff4757);
-      border: none;
-      border-radius: 40px;
-      color: white;
-      font-size: clamp(1.1rem, 4vw, 1.3rem);
-      padding: 8px 20px;
-      cursor: pointer;
-      font-weight: bold;
-      text-shadow: 0 2px 5px rgba(0,0,0,0.5);
-      box-shadow: 0 0 20px #ff6b6b;
-      transition: 0.2s;
-      white-space: nowrap;
+    .gmax-dim-lock {
+      color: rgba(255,255,255,0.9);
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 0.5rem;
+      padding: 0.4rem 1rem;
+      font-size: clamp(0.85rem, 3vw, 1rem);
+      margin-bottom: 0.5rem;
     }
-    .gmax-gacha-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 30px #ff4757;
-    }
-    .gmax-gacha-help {
-      font-size: 0.8rem;
-      color: #aaa;
-      text-align: center;
-      cursor: help;
-    }
-    .gmax-timer {
-      font-size: clamp(1rem, 4vw, 1.3rem);
-      color: #ffd966;
-      text-shadow: 0 0 10px orange;
+    .gmax-card-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: clamp(0.6rem, 2.5vw, 1.4rem);
+      padding-top: 0.6rem;
     }
 
-    /* ---- Boss 卡片 ----
-       直接复用游戏自带的 .dimension-pokemon / .dimension-sprite / .dimension-bhole
-       （styles.css:6738-6764），这里只补尺寸自适应、竖向排布与反向黑洞，
-       避免重复定义、也保证游戏日后调整超空间样式时本 mod 自动跟随。 */
-    .gmax-card-container {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      gap: clamp(10px, 2vw, 20px);
-      flex-wrap: wrap;
-      padding: 20px 0;
+    /* 抽奖按钮胶囊 */
+    .gmax-gacha-wrap { margin-top: 1rem; }
+    #gmax-gacha-btn {
+      background: linear-gradient(45deg, #ff6b6b, #ff4757);
+      border: none;
+      border-radius: 999px;
+      color: #fff;
+      font-family: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 0.5rem 1.6rem;
+      box-shadow: 0 0 14px rgba(255, 71, 87, 0.6);
+      font-size: clamp(1rem, 3.5vw, 1.2rem);
+      white-space: nowrap;
     }
-    .gmax-card-container .dimension-pokemon {
-      height: clamp(10rem, 30vw, 12rem);
-      width: clamp(10rem, 30vw, 12rem);
-      flex-direction: column;
+    #gmax-gacha-btn:hover { transform: scale(1.05); }
+
+    /* 卡片：完全复用原版 .dimension-pokemon 卡座（12rem 居中 flex、精灵 scale:2、
+       20rem 黑洞溢出卡面，构成 dimension portal 视觉）。本 mod 只做三点微调：
+       1) 让卡片在窄屏可收缩（覆盖固定 12rem）；2) 只保留反向黑洞的 overlay 说明；
+       3) 未给卡片加 overflow:hidden，保持与原版一致的“溢出”观感。 */
+    .gmax-card {
       margin: 0 auto;
-    }
-    .gmax-card-container .dimension-bhole {
-      max-width: 200%;
     }
     .gmax-bhole-reverse {
       animation-direction: reverse;
       scale: 1.3;
     }
-    .gmax-card-sprite {
-      z-index: 2;
-      margin-bottom: 0.5rem;
-      max-width: 80%;
-    }
+    /* 星级胶囊：仿原版 #dimension-indicator（红底、圆角 100px、白字星） */
     .gmax-card-stars {
-      font-size: clamp(1rem, 4vw, 1.2rem);
-      color: gold;
-      text-shadow: 0 0 10px gold;
-      background: rgba(0,0,0,0.6);
-      padding: 4px 10px;
-      border-radius: 20px;
+      position: absolute;
+      top: -0.8rem;
       z-index: 3;
+      padding: 0.2rem 0.5rem;
+      background: rgba(194, 60, 60, 0.45);
+      border-radius: 100px;
+      color: white;
+      font-size: clamp(0.8rem, 2.5vw, 1.1rem);
+      line-height: 1;
+      white-space: nowrap;
     }
 
-    /* ---- 通用弹窗 ---- */
-    .gmax-modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(8px);
-      z-index: 30000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      animation: tooltipBoxAppear 0.2s ease;
-      padding: 10px;
-    }
-    .gmax-modal-box {
-      background: #1a1a2e;
-      border: 3px solid #4ecca3;
-      border-radius: 30px;
-      padding: clamp(15px, 5vw, 30px) clamp(20px, 8vw, 50px);
-      box-shadow: 0 0 50px #4ecca3;
-      text-align: center;
-      color: white;
-      font-family: 'Winky Sans', sans-serif;
-      max-width: 500px;
-      width: 90%;
-    }
-    .gmax-modal-title {
-      margin-bottom: 20px;
-      font-size: clamp(1.5rem, 6vw, 2rem);
-      background: linear-gradient(45deg, #4ecca3, #00adb5);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .gmax-modal-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-    }
-    .gmax-modal-img {
-      width: clamp(64px, 20vw, 96px);
-      height: clamp(64px, 20vw, 96px);
-      image-rendering: pixelated;
-      filter: drop-shadow(0 0 10px gold);
-    }
-    .gmax-modal-text {
-      font-size: clamp(1rem, 4vw, 1.3rem);
-      line-height: 1.5;
-      margin: 0;
-    }
-    .gmax-modal-btn {
-      background: linear-gradient(45deg, #ff6b6b, #ff4757);
-      border: none;
-      border-radius: 40px;
-      color: white;
-      font-size: clamp(1.2rem, 5vw, 1.5rem);
-      padding: clamp(8px, 2vw, 10px) clamp(20px, 8vw, 40px);
-      cursor: pointer;
-      font-weight: bold;
-      box-shadow: 0 0 20px #ff6b6b;
-      transition: 0.2s;
-    }
-    .gmax-modal-btn:hover { transform: scale(1.05); }
-
-    @media (max-width: 768px) {
+    @media (max-width: 1000px) {
       #${PAGE_ID} { width: 100% !important; }
-      .gmax-stats { flex-direction: column !important; gap: 10px !important; }
+    }
+    @media (max-width: 640px) {
+      .gmax-card { height: clamp(7.5rem, 22vw, 9rem) !important; width: clamp(7.5rem, 22vw, 9rem) !important; }
+      .gmax-card .dimension-sprite { scale: 1.4; }
     }
   `;
   document.head.appendChild(style);
@@ -444,59 +400,40 @@ function removeStyles() {
   document.getElementById(STYLE_ID)?.remove();
 }
 
-// ---------- 弹窗 ----------
-
-let modalOverlay = null;
-
-function showFormalMessage(title, content, pkmnId) {
-  closeModal();
-
-  modalOverlay = document.createElement("div");
-  modalOverlay.className = "gmax-modal-overlay";
-
-  const box = document.createElement("div");
-  box.className = "gmax-modal-box";
-
-  const titleEl = document.createElement("h2");
-  titleEl.className = "gmax-modal-title";
-  titleEl.textContent = title;
-
-  const contentWrapper = document.createElement("div");
-  contentWrapper.className = "gmax-modal-content";
-
-  if (pkmnId) {
-    const img = document.createElement("img");
-    img.className = "gmax-modal-img";
-    img.src = `img/pkmn/sprite/${pkmnId}.png`;
-    contentWrapper.appendChild(img);
-  }
-
-  const contentEl = document.createElement("p");
-  contentEl.className = "gmax-modal-text";
-  contentEl.textContent = content;
-  contentWrapper.appendChild(contentEl);
-
-  const confirmBtn = document.createElement("button");
-  confirmBtn.type = "button";
-  confirmBtn.className = "gmax-modal-btn";
-  confirmBtn.textContent = "确 定";
-  confirmBtn.addEventListener("click", closeModal);
-
-  box.appendChild(titleEl);
-  box.appendChild(contentWrapper);
-  box.appendChild(confirmBtn);
-  modalOverlay.appendChild(box);
-  document.body.appendChild(modalOverlay);
-}
-
-function closeModal() {
-  if (modalOverlay) {
-    modalOverlay.remove();
-    modalOverlay = null;
+// ---------- 原版 tooltip 提示（Req2）----------
+//
+// 完全复用原版的 tooltip 弹层：直接写 tooltipTop / tooltipTitle / tooltipMid / tooltipBottom
+// 并调用 openTooltip()，不新建任何自定义弹窗。调用方式与 mythos 的 showMessage 一致。
+function gmaxTooltip(title, contentHTML, spriteId) {
+  try {
+    const top = document.getElementById("tooltipTop");
+    const titleEl = document.getElementById("tooltipTitle");
+    const midEl = document.getElementById("tooltipMid");
+    const bottomEl = document.getElementById("tooltipBottom");
+    if (top) top.style.display = "none";
+    if (titleEl) {
+      titleEl.style.display = "block";
+      titleEl.innerHTML = title;
+    }
+    if (midEl) {
+      midEl.style.display = "block";
+      if (spriteId) {
+        midEl.innerHTML =
+          `<div style="text-align:center;padding-bottom:0.5rem;">
+             <img src="img/pkmn/sprite/${spriteId}.png" style="height:5rem;image-rendering:pixelated;filter:drop-shadow(0 0 6px rgba(255,215,0,0.8));">
+           </div>` + (contentHTML || "");
+      } else {
+        midEl.innerHTML = contentHTML || "";
+      }
+    }
+    if (bottomEl) bottomEl.style.display = "none";
+    if (typeof openTooltip === "function") openTooltip();
+  } catch (e) {
+    // tooltip DOM 未就绪时静默失败，不阻断主流程
   }
 }
 
-// ---------- Boss 轮换 ----------
+// ---------- Boss 轮换（与 Wild Area 同步，确定性、不持久化）----------
 
 function isGmaxAreaId(areaId) {
   return typeof areaId === "string" && areaId.startsWith(AREA_PREFIX);
@@ -510,35 +447,18 @@ function getAllGmaxPokemon(api) {
   return list;
 }
 
-function isRotationDue() {
-  return Date.now() - lastRotationTime >= config.rotationHours * 60 * 60 * 1000;
-}
-
-function rotateBosses(api) {
+// 当前半天应显示的 Boss 组合：以 halfDayNumber 为种子做确定性洗牌再截取。
+// 同一半天内打开页面 / 刷新均得到同一批；半天边界一过自动换批，无需任何存档。
+function computeCurrentBosses(api, halfDay) {
   const allGmax = getAllGmaxPokemon(api);
-  if (allGmax.length === 0) return;
-  const shuffled = [...allGmax].sort(() => Math.random() - 0.5);
-  currentBosses = shuffled.slice(0, config.bossCount);
-  lastRotationTime = Date.now();
-  persistRotation();
-}
-
-// 轮换状态写入 mod state（随存档持久化）。
-// 原实现把 currentGmaxBosses / lastRotationTime 放在模块局部变量里，
-// 每次刷新页面都会重新随机 —— 这里改为持久化，12 小时轮换才真正跨刷新生效。
-function persistRotation() {
-  if (!activeState) return;
-  activeState.rotation = {
-    bosses: [...currentBosses],
-    lastRotationTime
-  };
-}
-
-function restoreRotation(state) {
-  const saved = state?.rotation;
-  if (!saved || !Array.isArray(saved.bosses)) return;
-  currentBosses = saved.bosses;
-  lastRotationTime = Number(saved.lastRotationTime) || Date.now();
+  if (allGmax.length === 0) return [];
+  const rng = seededRandom(halfDay * 2654435761);
+  const pool = [...allGmax];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(BOSS_COUNT, pool.length));
 }
 
 // ---------- 挑战区域 ----------
@@ -589,11 +509,13 @@ function generateValidMoves(api, pokemonId) {
   return moves;
 }
 
+// 把当前半天对应的 Boss 实体化为一组可挑战的 event 区域。
+// 直接复用游戏对 event / trainer 区域的发放逻辑（trainer won 分支会读 itemReward 发碎片）。
 function updateGmaxAreas(api) {
-  for (const areaId in api.areas) {
-    if (isGmaxAreaId(areaId)) delete api.areas[areaId];
-  }
-  for (const id of currentBosses) {
+  clearGmaxAreas(api);
+  const halfDay = getHalfDayNumber();
+  const bosses = computeCurrentBosses(api, halfDay);
+  for (const id of bosses) {
     if (!api.pkmn[id]) continue;
     const areaId = AREA_PREFIX + id;
     if (api.areas[areaId]) continue;
@@ -603,7 +525,7 @@ function updateGmaxAreas(api) {
       type: "event",
       trainer: true,
       encounter: true,
-      level: config.bossLevel,
+      level: BOSS_LEVEL,
       difficulty: 800,
 
       icon: api.pkmn[id],
@@ -625,6 +547,7 @@ function updateGmaxAreas(api) {
       spawns: { common: [] }
     };
   }
+  // 卡片区只按当天的 Boss 显示；这些 region 常驻，确保战斗中/结束后区仍存在可查。
 }
 
 function clearGmaxAreas(api) {
@@ -641,21 +564,23 @@ function applyBossBuffs(api) {
   if (!api.saved || !isGmaxAreaId(api.saved.currentArea)) return;
   if (typeof wildBuffs === "undefined") return;
 
-  const value = config.bossBuffValue;
-  wildBuffs.atkup1 = value;
-  wildBuffs.defup1 = value;
-  wildBuffs.satkup1 = value;
-  wildBuffs.sdefup1 = value;
-  wildBuffs.speup1 = value;
+  wildBuffs.atkup1 = BOSS_BUFF_VALUE;
+  wildBuffs.defup1 = BOSS_BUFF_VALUE;
+  wildBuffs.satkup1 = BOSS_BUFF_VALUE;
+  wildBuffs.sdefup1 = BOSS_BUFF_VALUE;
+  wildBuffs.speup1 = BOSS_BUFF_VALUE;
   if (typeof updateWildBuffs === "function") updateWildBuffs();
   battleBuffed = true;
 }
 
-// ---------- 战斗流程 ----------
+// ---------- 进入挑战（队伍准备）----------
 
 function startGmaxChallenge(api, bossId) {
   const areaId = AREA_PREFIX + bossId;
   if (!api.areas[areaId]) return;
+
+  // 若玩家正停留在某个普通战斗里，先不覆盖，交给引擎流程
+  if (api.saved && api.saved.currentArea !== undefined) return;
 
   api.saved.currentAreaBuffer = areaId;
 
@@ -676,30 +601,83 @@ function startGmaxChallenge(api, bossId) {
     menuBtn.classList.remove("menu-button-open");
   }
 
-  closeGmaxPage();          // 关页面并停掉倒计时
+  hideGmaxPage();   // 收起超极巨化空间页，进入队伍准备
   resetAfkTimer();
   if (typeof updatePreviewTeam === "function") updatePreviewTeam();
 }
 
-// 仅用于「mod 被禁用时玩家仍停在超极巨化战斗里」的收尾，
-// 避免卸载后残留一个已不存在的区域。正常战斗结束由引擎自己的 leaveCombat() 处理
-// （详见文件顶部「刻意不接管战斗结束」的说明）。
-function leaveGmaxCombat() {
-  const leaveBtn = document.getElementById("explore-leave");
-  if (leaveBtn) leaveBtn.click();
-  else if (typeof leaveCombat === "function") leaveCombat();
-}
-
-// 修复：原实现在这里写了 `if (typeof afkSeconds === 'undefined') var afkSeconds = 0;`，
-// 这个 var 声明遮蔽了游戏全局的 `let afkSeconds`（explore.js:7485），
-// 后续 `afkSeconds = 0` 只写到了 mod 自己的局部变量上，AFK 计时从未被重置。
-// 这里不再声明同名变量，直接写全局绑定。
+// 复位全局挂机计时：原实现用 var afkSeconds 遮蔽了游戏全局，赋值落不到全局；
+// 这里直接写全局绑定。
 function resetAfkTimer() {
   try {
     if (typeof afkSeconds !== "undefined") afkSeconds = 0;
   } catch (e) {
     // 游戏未提供该绑定时静默跳过
   }
+}
+
+// ---------- Req4：返回流程 patch ----------
+//
+// 引擎的原版行为：
+//   - #pkmn-team-return（队伍准备左上角「返回」）→ exitPkmnTeam()：永远回到 explore-menu。
+//   - 战斗结束 → exitCombat()：仅当 lastArea 是 dimension 才回 dimension-menu，否则不显示任何区域页。
+//   - leaveCombat()：按 type 分发到 explore-menu / vs-menu / training-menu。
+//
+// 由于超极巨化挑战从独立的 portal 页发起，而非 explore-menu，
+// 若直接沿用原版，玩家点返回/战斗结束都会被带到 explore-menu（旅行页），
+// 这与「超极巨化空间」入口割裂。这里参照 mythos 对 combat 函数的 patch 方式，
+// 统一在这些「离场即返回」的函数里，把目标改为超极巨化空间页。
+// patch 均为「包一层 + 记录原函数 + 卸载还原」，不动其它 mod / 原版行为。
+
+function patchGlobal(name, wrapper) {
+  if (patchedGlobals[name]) return;                 // 已 patch 过则跳过（幂等）
+  const original = window[name];
+  if (typeof original !== "function") return;
+  const wrapped = wrapper(original);
+  patchedGlobals[name] = { original, wrapped };
+  window[name] = wrapped;
+}
+
+function isGmaxEntry(api) {
+  const s = api?.saved || (typeof saved !== "undefined" ? saved : null);
+  if (!s) return false;
+  return isGmaxAreaId(s.currentArea) || isGmaxAreaId(s.currentAreaBuffer) || isGmaxAreaId(s.lastAreaJoined);
+}
+
+function installBackPatches() {
+  if (Object.keys(patchedGlobals).length > 0) return;
+
+  // 1) 队伍准备「返回」：若源自超极巨化空间，回到超极巨化空间页
+  patchGlobal("exitPkmnTeam", original => function gmaxExitPkmnTeam(...args) {
+    const ret = original.apply(this, args);   // 先走原版（它会显示 explore-menu 等）
+    const api = activeApi;
+    if (!api || !isGmaxEntry(api)) return ret;
+    // 收掉原版顺带显示的 explore-menu，改开超极巨化空间
+    showGmaxPage(api, true);
+    return ret;
+  });
+
+  // 2) 战斗真正结束后玩家点「Save and exit」（area-end 上的 exitCombat()），
+  //    若本次打的是超极巨化 Boss，回到超极巨化空间。
+  //    注：leaveCombat() 会在战斗结算早期自动触发（显示 area-end 结算层），此刻若抢先
+  //    展示超极巨化页会与结算层冲突，故只接管玩家主动离开的 exitCombat()。
+  patchGlobal("exitCombat", original => function gmaxExitCombat(...args) {
+    const wasGmax = isGmaxEntry(activeApi);
+    const ret = original.apply(this, args);
+    if (!wasGmax || !activeApi) return ret;
+    // 引擎在 exitCombat 里仅对 type=="dimension" 开 dimension-menu；对 gmax 开 gmax 页
+    showGmaxPage(activeApi, true);
+    return ret;
+  });
+}
+
+function uninstallBackPatches() {
+  for (const name of Object.keys(patchedGlobals)) {
+    if (window[name] === patchedGlobals[name].wrapped) {
+      window[name] = patchedGlobals[name].original;
+    }
+  }
+  patchedGlobals = {};
 }
 
 // ---------- 页面 ----------
@@ -709,75 +687,165 @@ function createGmaxPage(api) {
 
   const page = document.createElement("div");
   page.id = PAGE_ID;
-  page.className = "gmax-page";
 
   page.innerHTML = `
-    <div class="gmax-header">
-      <div class="gmax-menu-button">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
-          <path d="M3 12a9 9 0 1 0 18 0 9 9 0 1 0 -18 0"></path>
-          <path d="M9 12a3 3 0 1 0 6 0 3 3 0 1 0 -6 0"></path>
-          <path d="M3 12h6"></path>
-          <path d="M15 12h6"></path>
-        </svg>
-        <span>菜单</span>
-      </div>
-      <span class="gmax-page-title">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21.22 6.894a3.7 3.7 0 0 0-1.4-1.37l-6-3.31a3.83 3.83 0 0 0-3.63 0l-6 3.31a3.7 3.7 0 0 0-1.4 1.37a3.74 3.74 0 0 0-.52 1.9v6.41a3.79 3.79 0 0 0 1.92 3.27l6 3.3a3.74 3.74 0 0 0 3.63 0l6-3.31a3.72 3.72 0 0 0 1.91-3.26v-6.36a3.64 3.64 0 0 0-.51-1.95m-1 8.31a2.2 2.2 0 0 1-1.14 1.95l-6 3.31q-.158.089-.33.14v-8.18l7.3-4.39c.092.242.136.5.13.76z"/></svg>
+    <div class="gmax-dim-bg"></div>
+
+    <div class="gmax-dim-header">
+      <span class="gmax-dim-header-title">
+        <img src="img/icons/bhole.png">
         超极巨化空间
       </span>
-    </div>
-    <div class="gmax-content">
-      <div class="gmax-stats">
-        <div class="gmax-frag">
-          <img class="gmax-frag-icon" src="img/items/wormholeResidue.png">
+      <div class="gmax-dim-header-pills">
+        <span class="gmax-dim-pill">
+          <img src="img/items/wormholeResidue.png">
           <span id="gmax-fragment-count">0</span>
-        </div>
-        <div class="gmax-gacha-wrap">
-          <button type="button" id="gmax-gacha-btn" class="gmax-gacha-btn">抽奖 (${config.gachaCost}碎片)</button>
-          <div class="gmax-gacha-help" data-help="gacha概率说明">50%未拥有 / 已拥有时10%闪光</div>
-        </div>
-        <div id="gmax-timer" class="gmax-timer">BOSS刷新倒计时: 12:00:00</div>
+        </span>
+        <span class="gmax-dim-pill gmax-dim-timer" id="gmax-timer">--:--:--</span>
       </div>
-      <div class="gmax-card-container" id="gmax-card-container"></div>
+    </div>
+
+    <div class="gmax-dim-content">
+      <div class="gmax-dim-lock" id="gmax-lock-bar" style="display:none"></div>
+      <div class="gmax-card-grid" id="gmax-card-grid"></div>
+      <div class="gmax-gacha-wrap">
+        <button type="button" id="gmax-gacha-btn">碎片抽奖 (${GACHA_COST})</button>
+      </div>
     </div>
   `;
 
   document.getElementById("main-content").appendChild(page);
 
-  page.querySelector(".gmax-menu-button").addEventListener("click", () => {
-    closeGmaxPage();
-    if (typeof openMenu === "function") openMenu();
-  });
   page.querySelector("#gmax-gacha-btn").addEventListener("click", () => performGacha(api));
 }
 
-function updateGmaxPageDisplay(api) {
-  const container = document.getElementById("gmax-card-container");
-  if (!container) return;
-  container.innerHTML = "";
+// 渲染 Boss 卡片：复用原版 .dimension-pokemon 卡座 + .dimension-bhole + .dimension-sprite，
+// 星级胶囊沿用 dimension 的视觉（红底圆角 + 白色星星），但用独立类 gmax-card-stars 避免
+// 与游戏里单例的 #dimension-indicator(id) 冲突。
+function renderBossCards(api) {
+  const grid = document.getElementById("gmax-card-grid");
+  if (!grid) return;
+  grid.innerHTML = "";
 
-  for (const id of currentBosses) {
+  const halfDay = getHalfDayNumber();
+  const bosses = computeCurrentBosses(api, halfDay);
+
+  for (const id of bosses) {
     if (!api.pkmn[id]) continue;
-
     const card = document.createElement("div");
     card.className = "dimension-pokemon gmax-card";
     card.dataset.pkmn = id;
     card.dataset.boss = id;
+
     card.innerHTML = `
       <img class="dimension-bhole" src="img/icons/bhole.png">
       <img class="dimension-bhole gmax-bhole-reverse" src="img/icons/bhole.png">
-      <img class="dimension-sprite sprite-trim gmax-card-sprite" src="img/pkmn/sprite/${id}.png">
-      <div class="gmax-card-stars">★★★★★★★★★★</div>
+      <img class="dimension-sprite sprite-trim" src="img/pkmn/sprite/${id}.png">
+      <span class="gmax-card-stars">★★★★★★★★★★</span>
     `;
     card.addEventListener("click", e => {
       e.stopPropagation();
-      startGmaxChallenge(api, id);
+      if (isGmaxUnlocked(api)) startGmaxChallenge(api, id);
     });
-    container.appendChild(card);
+    grid.appendChild(card);
+  }
+}
+
+function isGmaxUnlocked(api) {
+  return getDexCount(api) >= DEX_REQUIREMENT;
+}
+
+function getDexCount(api) {
+  let count = 0;
+  for (const id in api.pkmn) {
+    const p = api.pkmn[id];
+    if (p && p.caught > 0) count++;
+  }
+  return count;
+}
+
+// 打开超极巨化空间页；若跨了半天边界会先重建 Boss 挑战区与卡片再展示。
+function showGmaxPage(api, fromReturn = false) {
+  if (!isGmaxUnlocked(api)) {
+    // 未解锁时给原版 tooltip 提示，不进入
+    if (fromReturn) {
+      // 正常情况不会走到；仅当图鉴掉回阈值以下（几乎不可能）才兜底回主菜单
+      if (typeof openMenu === "function") openMenu();
+      return;
+    }
+    gmaxTooltip("尚未解锁", `需要图鉴数达到 ${DEX_REQUIREMENT}（当前 ${getDexCount(api)}）`);
+    return;
   }
 
+  let page = document.getElementById(PAGE_ID);
+  if (!page) {
+    createGmaxPage(api);
+    page = document.getElementById(PAGE_ID);
+    if (!page) return;
+  }
+
+  // 关闭/收起其它主菜单子页面（沿用 mythos hideMainMenus 同款列表）
+  [
+    "explore-menu", "vs-menu", "item-menu", "team-menu", "pokedex-menu",
+    "settings-menu", "guide-menu", "genetics-menu", "shop-menu",
+    "training-menu", "dimension-menu", "dictionary-menu"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
+  // 若跨了半天边界，重建区域与卡片
+  const halfDay = getHalfDayNumber();
+  if (halfDay !== lastRenderHalfDay) {
+    updateGmaxAreas(api);
+    lastRenderHalfDay = halfDay;
+  }
+
+  renderBossCards(api);
   updateFragmentDisplay(api);
+  updateLockBar(api);
+
+  // 若玩家正从主菜单球点进来的那一刻，展开的下拉是 #menu-button.menu-button-open。
+  // 这里把它收起：下拉已无必要（后续可用左上角球再打开），避免与页面重叠。
+  const menuBtn = document.getElementById("menu-button");
+  if (menuBtn && menuBtn.classList.contains("menu-button-open")) {
+    menuBtn.classList.remove("menu-button-open");
+  }
+
+  page.classList.add("open");
+  gmaxPageVisible = true;
+  startCountdown(api);
+}
+
+function hideGmaxPage() {
+  stopCountdown();
+  const page = document.getElementById(PAGE_ID);
+  if (page) page.classList.remove("open");
+  gmaxPageVisible = false;
+}
+
+// Req3：超极巨化空间页 z-index(40) < 左上角菜单球(z100)，故点其它主菜单项进入别的页面时，
+// 本页会残留在下方并盖住它。这里在捕获阶段监听：只要点击的是「非本 mod」的 .menu-item
+// （即玩家要从主菜单跳去 travel/vs/dex…），就先收起超极巨化空间页。参照 mythos installObservers。
+function installMenuCloseObserver() {
+  if (menuCloseBound) return;
+  document.addEventListener("click", onMenuCloseClick, true);
+  menuCloseBound = true;
+}
+
+function uninstallMenuCloseObserver() {
+  if (!menuCloseBound) return;
+  document.removeEventListener("click", onMenuCloseClick, true);
+  menuCloseBound = false;
+}
+
+function onMenuCloseClick(event) {
+  if (!gmaxPageVisible) return;
+  const item = event.target?.closest?.("#menu-items .menu-item");
+  if (!item) return;
+  if (item.id === MENU_ITEM_ID) return;   // 再点自己＝刷新/重开，无需收起
+  // 点了其它主菜单项：收起本页，交给引擎的 switchMenu 去展示目标页面
+  hideGmaxPage();
 }
 
 function updateFragmentDisplay(api) {
@@ -785,24 +853,39 @@ function updateFragmentDisplay(api) {
   if (fragSpan) fragSpan.textContent = getFragmentCount(api);
 }
 
+function updateLockBar(api) {
+  const bar = document.getElementById("gmax-lock-bar");
+  if (!bar) return;
+  const unlocked = isGmaxUnlocked(api);
+  bar.style.display = unlocked ? "none" : "block";
+  bar.textContent = `需图鉴 ${DEX_REQUIREMENT} 解锁，当前 ${getDexCount(api)}`;
+}
+
+// 倒计时：指向下一个 UTC 半天边界（与 Wild Area 的 .time-counter-daily 同一时钟）。
+// 边界一到（页面仍开着）自动重建挑战区并重绘卡片 —— 行为与原版 Wild Area 一致。
 function startCountdown(api) {
   stopCountdown();
   const timerEl = document.getElementById("gmax-timer");
   if (!timerEl) return;
 
   countdownTimer = setInterval(() => {
-    const diff = lastRotationTime + config.rotationHours * 60 * 60 * 1000 - Date.now();
+    const boundary = getNextHalfDayBoundary();
+    let diff = boundary - Date.now();
 
     if (diff <= 0) {
-      rotateBosses(api);
+      // 极端情况下若计时偏差越过边界，直接按新半天重建
       updateGmaxAreas(api);
-      updateGmaxPageDisplay(api);
-    } else {
-      const hours = Math.floor(diff / 3600000);
-      const minutes = Math.floor((diff % 3600000) / 60000);
-      const seconds = Math.floor((diff % 60000) / 1000);
-      timerEl.textContent = `刷新倒计时: ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      lastRenderHalfDay = getHalfDayNumber();
+      renderBossCards(api);
+      diff = HALF_DAY_MS;
     }
+
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    timerEl.textContent =
+      `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
     updateFragmentDisplay(api);
   }, 1000);
 }
@@ -814,56 +897,14 @@ function stopCountdown() {
   }
 }
 
-function closeGmaxPage() {
-  stopCountdown();
-  const page = document.getElementById(PAGE_ID);
-  if (page) page.style.display = "none";
-}
-
-function openGmaxPage(api) {
-  let page = document.getElementById(PAGE_ID);
-  if (!page) {
-    createGmaxPage(api);
-    page = document.getElementById(PAGE_ID);
-    if (!page) return;
-  }
-
-  const menus = ["explore-menu", "vs-menu", "item-menu", "team-menu", "pokedex-menu", "settings-menu", "guide-menu", "genetics-menu", "shop-menu", "training-menu", "dimension-menu"];
-  for (const id of menus) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = "none";
-  }
-  page.style.display = "flex";
-
-  if (isRotationDue()) {
-    rotateBosses(api);
-    updateGmaxAreas(api);
-  }
-  updateGmaxPageDisplay(api);
-  startCountdown(api);
-}
-
 function removePage() {
   stopCountdown();
   document.getElementById(PAGE_ID)?.remove();
+  gmaxPageVisible = false;
 }
 
-// ---------- 主菜单入口 ----------
+// ---------- 主菜单入口（Req3：左上角菜单沿用原版 .menu-item 结构）----------
 
-function getDexCount(api) {
-  let count = 0;
-  for (const id in api.pkmn) {
-    const p = api.pkmn[id];
-    if (p && p.caught > 0) count++;
-  }
-  return count;
-}
-
-// 菜单项挂载。
-// #menu-items 是 index.html 里的静态节点，而 onRefresh 在 window.load 之后才触发
-// （mods.js:1537-1542），理论上必然就绪；这里仍保留有界重试，
-// 因为 onRefresh 只在「切换开关 / 导入 / 页面加载」时触发，不会周期性重放，
-// 一旦错过就没有第二次机会。
 function addMenuItem(api, attempt = 0) {
   const menuItems = document.getElementById("menu-items");
   if (!menuItems) {
@@ -880,21 +921,28 @@ function addMenuItem(api, attempt = 0) {
     <span>超极巨化空间</span>
   `;
   menuItem.addEventListener("click", () => {
-    if (menuItem.classList.contains("menu-item-locked")) {
-      showFormalMessage("未解锁", `需要图鉴数达到${config.dexRequirement}（当前 ${getDexCount(api)}）`);
+    if (!isGmaxUnlocked(api)) {
+      gmaxTooltip("尚未解锁", `需要图鉴数达到 ${DEX_REQUIREMENT}（当前 ${getDexCount(api)}）`);
       return;
     }
-    openGmaxPage(api);
+    showGmaxPage(api);
   });
 
-  menuItems.appendChild(menuItem);
+  // 插在「维度/传送门」菜单项之后，视觉上与原版 portal 条目并列
+  const dimension = document.getElementById("menu-dimension");
+  if (dimension?.parentElement === menuItems) {
+    dimension.insertAdjacentElement("afterend", menuItem);
+  } else {
+    menuItems.appendChild(menuItem);
+  }
+
   updateMenuItemLock(api);
 }
 
 function updateMenuItemLock(api) {
   const menuItem = document.getElementById(MENU_ITEM_ID);
   if (!menuItem) return;
-  const unlocked = getDexCount(api) >= config.dexRequirement;
+  const unlocked = isGmaxUnlocked(api);
   menuItem.classList.toggle("menu-item-locked", !unlocked);
 }
 
@@ -918,8 +966,8 @@ function removeMenuItem() {
 
 function performGacha(api) {
   const fragments = getFragmentCount(api);
-  if (fragments < config.gachaCost) {
-    showFormalMessage("碎片不足", `需要 ${config.gachaCost} 个碎片。`);
+  if (fragments < GACHA_COST) {
+    gmaxTooltip("碎片不足", `需要 ${GACHA_COST} 个碎片。`);
     return;
   }
 
@@ -934,30 +982,29 @@ function performGacha(api) {
   // 修复：原实现先扣费再校验，奖池为空时 30 个碎片被扣掉且不退还。
   // 这里改为先确认奖池非空，再走 API 扣费。
   if (unowned.length === 0 && owned.length === 0) {
-    showFormalMessage("抽奖失败", "还没有任何宝可梦，无法抽奖！");
+    gmaxTooltip("无法抽奖", "还没有任何宝可梦，无法抽奖！");
     return;
   }
 
-  api.setItemAmount(FRAGMENT_ID, fragments - config.gachaCost);
+  api.setItemAmount(FRAGMENT_ID, fragments - GACHA_COST);
 
   let resultId = null;
   let isShiny = false;
 
-  if (unowned.length > 0 && Math.random() < config.unownedChance) {
+  if (unowned.length > 0 && Math.random() < UNOWNED_CHANCE) {
     resultId = unowned[Math.floor(Math.random() * unowned.length)];
     api.givePkmn(resultId, 1);
   } else {
     resultId = owned[Math.floor(Math.random() * owned.length)];
-    if (Math.random() < config.shinyChance) {
+    if (Math.random() < SHINY_CHANCE) {
       api.pkmn[resultId].shiny = true;
       isShiny = true;
       api.save();   // 原实现未保存闪光标记，刷新后丢失
     }
   }
 
-  let message = `恭喜获得：${api.formatName(resultId)}`;
-  if (isShiny) message += " ✦ 闪光！ ✦";
-  showFormalMessage("抽奖结果", message, resultId);
+  const text = `恭喜获得：<strong>${api.formatName(resultId)}</strong>${isShiny ? " ✦ 闪光！ ✦" : ""}`;
+  gmaxTooltip("抽奖结果", text, resultId);
 
   updateFragmentDisplay(api);
 }
