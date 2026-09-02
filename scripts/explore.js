@@ -176,10 +176,10 @@ function givePkmn(poke, level) {
 
     let i = 0;
     for (const slot of slots) {
-    if (!poke.moves[slot] && availableMoves[i]) {
-        poke.moves[slot] = availableMoves[i];
-        i++;
-    }
+        if (!poke.moves[slot] && availableMoves[i]) {
+            poke.moves[slot] = availableMoves[i];
+            i++;
+        }
     }
 
     poke.level = finalLevel;
@@ -209,6 +209,8 @@ let currentTrainerSlot = 1
 let battleDefeatCounter = 0
 
 let currentTrainingWave = 0
+let pendingRespawnTimer = null
+let trainingRerollArmed = true
 
 function setWildPkmn(){
 
@@ -230,18 +232,6 @@ function setWildPkmn(){
     let maxTrainerSlot = 1
     let hpMultiplier = 2
     let randomMoves = [];
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     if (saved.currentArea == areas.training.id) {
@@ -324,7 +314,11 @@ function setWildPkmn(){
 
 
 
-    if (currentTrainingWave<=0) {  training[areas.training.currentTraining].effect(); leaveCombat(); setTrainingMenu(); return }
+    if (currentTrainingWave<=0) {
+        if (!trainingRerollArmed) return
+        trainingRerollArmed = false
+        training[areas.training.currentTraining].effect(); leaveCombat(); setTrainingMenu(); return
+    }
 
 
 
@@ -814,24 +808,13 @@ function exitCombat(){
     saveGame()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 
 
 function leaveCombat(){
 
+    if (pendingRespawnTimer) { clearTimeout(pendingRespawnTimer); pendingRespawnTimer = null }
 
     if (areas[saved.currentArea].hpPercentage) {
         const percent = (wildPkmnHp / wildPkmnHpMax) * 100;
@@ -869,10 +852,6 @@ function leaveCombat(){
     
     updateTeamBuffs()
     updateWildBuffs()
-
-
-
-
 
 
 
@@ -1644,29 +1623,21 @@ for (let i = activeBars; i < hpBars.length; i++) {
 
     if (areas[saved.currentArea]?.trainer) currentTrainerSlot++
 
-
-
-    setTimeout(() => {
-
-
-
-        
-        setWildPkmn()
-    document.getElementById("exploe-wild-hp").style.transition = "0s"
-    document.getElementById("exploe-wild-hp").style.width = percent + "%"; 
-    setTimeout(() => {
-            document.getElementById("exploe-wild-hp").style.transition = "0.5s"
-    }, respawnTimer/5);
-    updateWildPkmn()
-    }, respawnTimer);
-
-    
-    
+        if (!pendingRespawnTimer) {
+            pendingRespawnTimer = setTimeout(() => {
+                pendingRespawnTimer = null
+                setWildPkmn()
+                document.getElementById("exploe-wild-hp").style.transition = "0s"
+                document.getElementById("exploe-wild-hp").style.width = percent + "%"; 
+                setTimeout(() => {
+                    document.getElementById("exploe-wild-hp").style.transition = "0.5s"
+                }, respawnTimer/5);
+                updateWildPkmn()
+            }, respawnTimer);
+        }
 
 
     } 
-
-
 
 }
 
@@ -4040,6 +4011,7 @@ function initialiseArea(){
     if (saved.currentArea == areas.training.id &&  areas.training.tier==1) currentTrainingWave = 30
     if (saved.currentArea == areas.training.id &&  areas.training.tier==2) currentTrainingWave = 30
     if (saved.currentArea == areas.training.id &&  areas.training.tier==3) currentTrainingWave = 30
+    if (saved.currentArea == areas.training.id) { trainingRerollArmed = true; if (pendingRespawnTimer) { clearTimeout(pendingRespawnTimer); pendingRespawnTimer = null } }
 
     exploreActiveMember = `slot1`
 
