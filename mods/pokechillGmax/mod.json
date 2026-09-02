@@ -1,10 +1,10 @@
 {
-  "id": "pokechillGmax",
-  "name": "Pokechill 超极巨化空间",
-  "description": "将「超极巨化空间」独立为 mod：Boss 轮换与旷野地带(Wild Area)在同一个 UTC 半天边界刷新，击败 Boss 收集碎片进行抽奖获取超极巨化宝可梦。启用与否交由模组管理器，所有提示走原版 tooltip，左上角菜单沿用原版样式。",
+  "id": "gmaxDimension",
+  "name": "超极巨空间",
+  "description": "在菜单中新增 “超极巨空间” 入口，每12小时刷新一轮强大的超极巨化Boss。击败它们即可获得 “超极巨碎片”，累积足够数量后便能参与抽奖，抽取超极巨化宝可梦。",
   "image": "img/items/rareCandy.png",
-  "version": "2.2.3",
-  "author": "人民当家做主",
-  "category": "实用工具",
+  "version": "2.2.4",
+  "author": "人民当家做主 & 我不是西药",
+  "category": "挑战",
   "defaultEnabled": false
 }

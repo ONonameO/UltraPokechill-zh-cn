@@ -1,4 +1,4 @@
-const MOD_ID = "pokechillGmax";
+const MOD_ID = "gmaxDimension";
 
 // 沿用 pokechillDummy / abilityTrainer 的约定：样式抽成独立 <style id> + id 守卫
 const STYLE_ID = MOD_ID + "-style";
@@ -43,9 +43,9 @@ let menuCloseBound = false;     // 页面级点击观察是否已绑定（用于
 UltraMods.define({
   id: MOD_ID,
   name: "超极巨空间",
-  description: "将「超极巨空间」独立为 mod：Boss 轮换与旷野地带(Wild Area)在同一个 UTC 半天边界刷新，击败 Boss 收集碎片进行抽奖获取超极巨化宝可梦。启用与否交由模组管理器，所有提示走原版 tooltip，左上角菜单沿用原版样式。",
+  description: "在菜单中新增 “超极巨空间” 入口，每12小时刷新一轮强大的超极巨化Boss。击败它们即可获得 “超极巨碎片”，累积足够数量后便能参与抽奖，抽取超极巨化宝可梦。",
   image: "img/items/wormholeResidue.png",
-  version: "2.2.3",
+  version: "2.2.4",
   author: "人民当家做主 & 我不是西药",
   category: "挑战",
   defaultEnabled: false,
@@ -943,9 +943,14 @@ function onMenuCloseClick(event) {
   hideGmaxPage();
 }
 
+let lastFragmentText = null;
 function updateFragmentDisplay(api) {
   const fragSpan = document.getElementById("gmax-fragment-count");
-  if (fragSpan) fragSpan.textContent = '超极巨碎片：' + getFragmentCount(api);
+  if (!fragSpan) return;
+  const text = '超极巨碎片：' + getFragmentCount(api);
+  if (text === lastFragmentText) return;   // 仅在数量变化时写 DOM，避免每拍(每秒)多余刷新
+  lastFragmentText = text;
+  fragSpan.textContent = text;
 }
 
 
