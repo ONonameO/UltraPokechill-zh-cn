@@ -29,9 +29,10 @@
     opacity: 0.75;
     font-size: 0.85rem;
     text-align: center;
-    max-width: 620px;
+    max-width: 640px;
     line-height: 1.7;
   }
+  .preview-note code { background: var(--dark2); padding: 0 0.25rem; border-radius: 0.2rem; }
   .stage {
     display: flex;
     flex-wrap: wrap;
@@ -71,16 +72,6 @@
     border-radius: 0.5rem 0.5rem 0 0;
   }
   .dummy-panel-title { font-weight: bold; font-size: 1.05rem; }
-  .dummy-panel-close {
-    background: transparent;
-    border: 0;
-    color: var(--light2);
-    cursor: pointer;
-    font-size: 1.1rem;
-    line-height: 1;
-    padding: 0 0.2rem;
-  }
-  .dummy-panel-close:hover { transform: scale(1.15); }
 
   .dummy-panel-content {
     display: flex;
@@ -119,10 +110,7 @@
     white-space: nowrap;
   }
 
-  .dummy-select,
   .dummy-input {
-    flex: 1;
-    min-width: 0;
     box-sizing: border-box;
     background: var(--dark2);
     color: var(--light2);
@@ -131,42 +119,91 @@
     font-family: inherit;
     font-size: 0.85rem;
     padding: 0.3rem 0.4rem;
-  }
-  .dummy-input { flex: 0 0 4rem; text-align: center; }
-  .dummy-select:focus,
-  .dummy-input:focus { outline: 1px solid var(--light1); }
-
-  /* 下拉框文字水平居中 */
-  .dummy-select { text-align: center; text-align-last: center; }
-
-  /* 下拉选项：基础 / hover / 选中态，配色对齐 abilityTrainer 的 ability-trainer-combo-option */
-  .dummy-select option {
-    background: var(--dark2);
-    color: var(--light2);
-    padding: 0.35rem 0.4rem;
+    flex: 0 0 4rem;
     text-align: center;
   }
-  .dummy-select option:hover,
-  .dummy-select option:focus {
-    background: var(--light1);
-    color: #fff;
-  }
-  .dummy-select option:checked,
-  .dummy-select option:selected {
-    background: rgb(90, 133, 113);
-    color: #fff;
-  }
+  .dummy-input:focus { outline: 1px solid var(--light1); }
 
-  /* 属性下拉：闭合态背景 = 对应属性色、文字白色（配色取自游戏 returnTypeColor()） */
-  .dummy-select.dummy-select-type {
+  /* ===== 自定义下拉（样式对齐 abilityTrainer 的 ability-trainer-combo-list） ===== */
+  .dummy-custom-select {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .dummy-custom-select-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    background: var(--dark2);
+    color: var(--light2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.3rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.45rem;
+    cursor: pointer;
+    text-align: center;
+  }
+  .dummy-custom-select-btn:hover { background: #685F4B; }
+  .dummy-custom-select-btn:focus { outline: 1px solid var(--light1); }
+  .dummy-custom-select-value {
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dummy-custom-select-caret {
+    margin-left: 0.3rem;
+    font-size: 0.7rem;
+    opacity: 0.8;
+  }
+  /* 属性下拉：闭合态背景 = 属性色、文字白色（由 dummySelectSet 内联设置） */
+  .dummy-custom-select[data-type="1"] .dummy-custom-select-btn {
     font-weight: bold;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   }
-  .dummy-select.dummy-select-type option {
+
+  /* 展开列表：对齐 abilityTrainer combo-list（深色浮层 + 顶部圆角衔接） */
+  .dummy-custom-select-list {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    z-index: 1350;
+    display: none;
+    flex-direction: column;
+    max-height: 200px;
+    overflow-y: auto;
     background: var(--dark2);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 0.3rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+  .dummy-custom-select.open .dummy-custom-select-list { display: flex; }
+  .dummy-custom-select-option {
+    padding: 0.4rem 0.45rem;
     color: var(--light2);
-    font-weight: normal;
-    text-shadow: none;
+    background: transparent;
+    border: 0;
+    font-family: inherit;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .dummy-custom-select-option:hover,
+  .dummy-custom-select-option:focus {
+    background: var(--light1);
+    color: #fff;
+  }
+  .dummy-custom-select-option.active {
+    background: rgb(90, 133, 113);
+    color: #fff;
   }
 
   /* 等级滑动条：对齐 pokechillHelper 的 pokechill-helper-slider */
@@ -194,11 +231,19 @@
     min-width: 2.1rem;
     font-size: 0.82rem;
   }
-  .dummy-bst-cell .dummy-select {
-    flex: 1;
-    padding: 0.18rem 0.25rem;
-    font-size: 0.78rem;
+  .dummy-bst-cell .dummy-custom-select { flex: 1; min-width: 0; }
+  .dummy-bst-cell .dummy-custom-select-btn { padding: 0.18rem 0.25rem; font-size: 0.78rem; }
+  .dummy-bst-cell .dummy-custom-select-option { font-size: 0.78rem; padding: 0.28rem 0.25rem; }
+
+  /* 锁血开关按钮：对齐 pokechillHelper 的 pokechill-helper-autorejoin（左标签 + 右状态） */
+  .dummy-lockhp-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
   }
+  .dummy-lockhp-status { margin-left: auto; }
 
   .dummy-btn-row { display: flex; gap: 0.4rem; }
 
@@ -219,22 +264,14 @@
   .dummy-btn:active { transform: translateY(1px); }
   .dummy-btn.primary { background: rgb(90, 133, 113); }
   .dummy-btn.primary:hover { background: rgb(74, 114, 96); }
+  .dummy-btn.danger { background: rgb(206, 83, 83); }
+  .dummy-btn.danger:hover { background: rgb(178, 66, 66); }
   /* 开关态：与 pokechillHelper 的 .pokechill-helper-btn.active 一致 */
   .dummy-btn.active {
     background: rgb(90, 133, 113);
     color: #fff;
   }
   .dummy-btn.active:hover { background: rgb(74, 114, 96); }
-
-  /* 锁血开关按钮：对齐 pokechillHelper 的 pokechill-helper-autorejoin（左标签 + 右状态） */
-  .dummy-lockhp-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    text-align: left;
-  }
-  .dummy-lockhp-status { margin-left: auto; }
 
   .dummy-foot {
     margin-top: 0.2rem;
@@ -251,10 +288,17 @@
       width: 92vw !important;
       font-size: 15px !important;
     }
-    .dummy-select,
     .dummy-input {
       font-size: 16px !important;
       padding: 0.45rem !important;
+    }
+    .dummy-custom-select-btn {
+      font-size: 16px !important;
+      padding: 0.45rem !important;
+    }
+    .dummy-custom-select-option {
+      font-size: 16px !important;
+      padding: 0.5rem !important;
     }
     .dummy-btn {
       padding: 0.6rem 0.5rem !important;
@@ -263,14 +307,21 @@
     .dummy-bst-grid { grid-template-columns: 1fr; }
   }
   /* ===== 注入样式结束 ===== */
+
+  /* ===== 以下为 mod.js 中 customSelectHTML() 生成的结构辅助样式（预览页专用，非注入样式） ===== */
+  .preview-select { flex: 1; min-width: 0; }
+  .preview-list { position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 1350; display: flex; flex-direction: column; background: var(--dark2); border: 1px solid rgba(255,255,255,0.25); border-radius: 0.3rem; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  /* 示例二展示某下拉展开态时，让容器 overflow 可见以显示浮层 */
+  .expand-demo { overflow: visible; }
+  .expand-demo .preview-list { display: flex; }
 </style>
 </head>
 <body>
 
 <p class="preview-note">
   以下为调整后的「测试木桩配置」界面预览，样式与 mod.js 中 <code>installPanelStyles()</code> 注入的 CSS 完全一致。<br>
-  左：单属性 + 锁血 OFF；右：双属性（下拉框着对应属性色）+ 锁血 ON。<br>
-  下拉选项的 hover / 选中态配色取自 abilityTrainer 的 <code>ability-trainer-combo-option</code>；滑动条与开关按钮取自 pokechillHelper 的 <code>pokechill-helper-slider</code> / <code>pokechill-helper-autorejoin</code>。
+  左：单属性 + 锁血 OFF；右：双属性（下拉框着对应属性色）+ 锁血 ON，并展示一个展开的属性下拉浮层。<br>
+  下拉为自定义实现（对齐 abilityTrainer 的 <code>ability-trainer-combo-list</code>），等级为滑块 + 数字过滤文本输入框（取自 pokechillHelper），窗口右上角无关闭按钮，确定/取消按钮分别使用 <code>rgb(90,133,113)</code> 与 <code>rgb(206,83,83)</code>。
 </p>
 
 <div class="stage">
@@ -279,33 +330,48 @@
   <div class="dummy-config-panel">
     <div class="dummy-panel-header">
       <span class="dummy-panel-title">🎯 测试木桩配置</span>
-      <button type="button" class="dummy-panel-close" title="关闭">✕</button>
     </div>
     <div class="dummy-panel-content">
       <div class="dummy-section-title">🎨 木桩属性</div>
       <div class="dummy-row">
         <label>第一属性</label>
-        <select class="dummy-select dummy-select-type" style="background:#A0A29F; color:#fff">
-          <option selected>一般</option><option>火</option><option>水</option><option>电</option>
-        </select>
+        <div class="dummy-custom-select preview-select" data-type="1">
+          <button type="button" class="dummy-custom-select-btn" style="background:#A0A29F; color:#fff">
+            <span class="dummy-custom-select-value">一般</span><span class="dummy-custom-select-caret">▾</span>
+          </button>
+        </div>
       </div>
       <div class="dummy-row">
         <label>第二属性</label>
-        <select class="dummy-select dummy-select-type">
-          <option selected>无</option><option>一般</option><option>火</option><option>水</option>
-        </select>
+        <div class="dummy-custom-select preview-select" data-type="1">
+          <button type="button" class="dummy-custom-select-btn" style="background:var(--dark2); color:var(--light2)">
+            <span class="dummy-custom-select-value">无</span><span class="dummy-custom-select-caret">▾</span>
+          </button>
+        </div>
       </div>
 
       <div class="dummy-divider"></div>
 
       <div class="dummy-section-title">⭐ 种族值星级</div>
       <div class="dummy-bst-grid">
-        <div class="dummy-bst-cell"><label>HP</label><select class="dummy-select"><option selected>6★</option></select></div>
-        <div class="dummy-bst-cell"><label>攻击</label><select class="dummy-select"><option selected>4★</option></select></div>
-        <div class="dummy-bst-cell"><label>防御</label><select class="dummy-select"><option selected>2★</option></select></div>
-        <div class="dummy-bst-cell"><label>特攻</label><select class="dummy-select"><option selected>4★</option></select></div>
-        <div class="dummy-bst-cell"><label>特防</label><select class="dummy-select"><option selected>2★</option></select></div>
-        <div class="dummy-bst-cell"><label>速度</label><select class="dummy-select"><option selected>4★</option></select></div>
+        <div class="dummy-bst-cell"><label>HP</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">6★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>攻击</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">4★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>防御</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">2★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>特攻</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">4★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>特防</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">2★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>速度</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">4★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
       </div>
 
       <div class="dummy-divider"></div>
@@ -314,61 +380,83 @@
       <div class="dummy-row">
         <label>等级</label>
         <input type="range" class="dummy-slider" min="1" max="100" step="1" value="100">
-        <input type="number" class="dummy-input" min="1" max="100" value="100">
+        <input type="text" class="dummy-input" inputmode="numeric" maxlength="3" value="100">
       </div>
       <div class="dummy-btn-row">
         <button type="button" class="dummy-btn dummy-lockhp-btn">
-          <span>🔒 锁血（每回合回满）</span><span class="dummy-lockhp-status">OFF</span>
+          <span>🔒 锁血</span><span class="dummy-lockhp-status">OFF</span>
         </button>
       </div>
       <div class="dummy-btn-row">
-        <button type="button" class="dummy-btn">⚙ 配置技能</button>
+        <button type="button" class="dummy-btn">⚙️ 配置技能</button>
       </div>
 
       <div class="dummy-divider"></div>
 
       <div class="dummy-btn-row">
-        <button type="button" class="dummy-btn">↺ 重置</button>
+        <button type="button" class="dummy-btn">🔄 重　置</button>
       </div>
       <div class="dummy-btn-row">
         <button type="button" class="dummy-btn primary">✔ 确定</button>
-        <button type="button" class="dummy-btn">✕ 取消</button>
+        <button type="button" class="dummy-btn danger">✕ 取消</button>
       </div>
       <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
     </div>
   </div>
 
-  <!-- 示例二：双属性着属性色，锁血 ON -->
-  <div class="dummy-config-panel">
+  <!-- 示例二：双属性着属性色，锁血 ON，并展示展开的属性下拉 -->
+  <div class="dummy-config-panel expand-demo">
     <div class="dummy-panel-header">
       <span class="dummy-panel-title">🎯 测试木桩配置</span>
-      <button type="button" class="dummy-panel-close" title="关闭">✕</button>
     </div>
     <div class="dummy-panel-content">
       <div class="dummy-section-title">🎨 木桩属性</div>
       <div class="dummy-row">
         <label>第一属性</label>
-        <select class="dummy-select dummy-select-type" style="background:#FBA64C; color:#fff">
-          <option>一般</option><option selected>火</option><option>水</option><option>电</option>
-        </select>
+        <div class="dummy-custom-select preview-select" data-type="1">
+          <button type="button" class="dummy-custom-select-btn" style="background:#FBA64C; color:#fff">
+            <span class="dummy-custom-select-value">火</span><span class="dummy-custom-select-caret">▾</span>
+          </button>
+          <div class="preview-list">
+            <button type="button" class="dummy-custom-select-option">一般</button>
+            <button type="button" class="dummy-custom-select-option active">火</button>
+            <button type="button" class="dummy-custom-select-option">水</button>
+            <button type="button" class="dummy-custom-select-option">电</button>
+            <button type="button" class="dummy-custom-select-option">草</button>
+          </div>
+        </div>
       </div>
       <div class="dummy-row">
         <label>第二属性</label>
-        <select class="dummy-select dummy-select-type" style="background:#A1BBEC; color:#fff">
-          <option>无</option><option>一般</option><option>火</option><option selected>飞行</option>
-        </select>
+        <div class="dummy-custom-select preview-select" data-type="1">
+          <button type="button" class="dummy-custom-select-btn" style="background:#A1BBEC; color:#fff">
+            <span class="dummy-custom-select-value">飞行</span><span class="dummy-custom-select-caret">▾</span>
+          </button>
+        </div>
       </div>
 
       <div class="dummy-divider"></div>
 
       <div class="dummy-section-title">⭐ 种族值星级</div>
       <div class="dummy-bst-grid">
-        <div class="dummy-bst-cell"><label>HP</label><select class="dummy-select"><option selected>6★</option></select></div>
-        <div class="dummy-bst-cell"><label>攻击</label><select class="dummy-select"><option selected>6★</option></select></div>
-        <div class="dummy-bst-cell"><label>防御</label><select class="dummy-select"><option selected>0★</option></select></div>
-        <div class="dummy-bst-cell"><label>特攻</label><select class="dummy-select"><option selected>3★</option></select></div>
-        <div class="dummy-bst-cell"><label>特防</label><select class="dummy-select"><option selected>1★</option></select></div>
-        <div class="dummy-bst-cell"><label>速度</label><select class="dummy-select"><option selected>5★</option></select></div>
+        <div class="dummy-bst-cell"><label>HP</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">6★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>攻击</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">6★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>防御</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">0★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>特攻</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">3★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>特防</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">1★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
+        <div class="dummy-bst-cell"><label>速度</label>
+          <div class="dummy-custom-select preview-select" data-type="0"><button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value">5★</span><span class="dummy-custom-select-caret">▾</span></button></div>
+        </div>
       </div>
 
       <div class="dummy-divider"></div>
@@ -377,25 +465,25 @@
       <div class="dummy-row">
         <label>等级</label>
         <input type="range" class="dummy-slider" min="1" max="100" step="1" value="50">
-        <input type="number" class="dummy-input" min="1" max="100" value="50">
+        <input type="text" class="dummy-input" inputmode="numeric" maxlength="3" value="50">
       </div>
       <div class="dummy-btn-row">
         <button type="button" class="dummy-btn dummy-lockhp-btn active">
-          <span>🔒 锁血（每回合回满）</span><span class="dummy-lockhp-status">ON</span>
+          <span>🔒 锁血</span><span class="dummy-lockhp-status">ON</span>
         </button>
       </div>
       <div class="dummy-btn-row">
-        <button type="button" class="dummy-btn">⚙ 配置技能</button>
+        <button type="button" class="dummy-btn">⚙️ 配置技能</button>
       </div>
 
       <div class="dummy-divider"></div>
 
       <div class="dummy-btn-row">
-        <button type="button" class="dummy-btn">↺ 重置</button>
+        <button type="button" class="dummy-btn">🔄 重　置</button>
       </div>
       <div class="dummy-btn-row">
         <button type="button" class="dummy-btn primary">✔ 确定</button>
-        <button type="button" class="dummy-btn">✕ 取消</button>
+        <button type="button" class="dummy-btn danger">✕ 取消</button>
       </div>
       <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
     </div>

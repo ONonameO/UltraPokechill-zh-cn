@@ -375,10 +375,7 @@ function installPanelStyles() {
       white-space: nowrap;
     }
 
-    .dummy-select,
     .dummy-input {
-      flex: 1;
-      min-width: 0;
       box-sizing: border-box;
       background: var(--dark2);
       color: var(--light2);
@@ -387,42 +384,91 @@ function installPanelStyles() {
       font-family: inherit;
       font-size: 0.85rem;
       padding: 0.3rem 0.4rem;
-    }
-    .dummy-input { flex: 0 0 4rem; text-align: center; }
-    .dummy-select:focus,
-    .dummy-input:focus { outline: 1px solid var(--light1); }
-
-    /* 下拉框文字水平居中 */
-    .dummy-select { text-align: center; text-align-last: center; }
-
-    /* 下拉选项：基础 / hover / 选中态，配色对齐 abilityTrainer 的 ability-trainer-combo-option */
-    .dummy-select option {
-      background: var(--dark2);
-      color: var(--light2);
-      padding: 0.35rem 0.4rem;
+      flex: 0 0 4rem;
       text-align: center;
     }
-    .dummy-select option:hover,
-    .dummy-select option:focus {
-      background: var(--light1);
-      color: #fff;
-    }
-    .dummy-select option:checked,
-    .dummy-select option:selected {
-      background: rgb(90, 133, 113);
-      color: #fff;
-    }
+    .dummy-input:focus { outline: 1px solid var(--light1); }
 
-    /* 属性下拉：闭合态背景 = 对应属性色、文字白色（配色取自游戏 returnTypeColor()） */
-    .dummy-select.dummy-select-type {
+    /* ===== 自定义下拉（样式对齐 abilityTrainer 的 ability-trainer-combo-list） ===== */
+    .dummy-custom-select {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .dummy-custom-select-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-sizing: border-box;
+      background: var(--dark2);
+      color: var(--light2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.3rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.45rem;
+      cursor: pointer;
+      text-align: center;
+    }
+    .dummy-custom-select-btn:hover { background: #685F4B; }
+    .dummy-custom-select-btn:focus { outline: 1px solid var(--light1); }
+    .dummy-custom-select-value {
+      flex: 1;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dummy-custom-select-caret {
+      margin-left: 0.3rem;
+      font-size: 0.7rem;
+      opacity: 0.8;
+    }
+    /* 属性下拉：闭合态背景 = 属性色、文字白色（由 dummySelectSet 内联设置） */
+    .dummy-custom-select[data-type="1"] .dummy-custom-select-btn {
       font-weight: bold;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     }
-    .dummy-select.dummy-select-type option {
+
+    /* 展开列表：对齐 abilityTrainer combo-list（深色浮层 + 顶部圆角衔接） */
+    .dummy-custom-select-list {
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      right: 0;
+      z-index: 1350;
+      display: none;
+      flex-direction: column;
+      max-height: 200px;
+      overflow-y: auto;
       background: var(--dark2);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 0.3rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    .dummy-custom-select.open .dummy-custom-select-list { display: flex; }
+    .dummy-custom-select-option {
+      padding: 0.4rem 0.45rem;
       color: var(--light2);
-      font-weight: normal;
-      text-shadow: none;
+      background: transparent;
+      border: 0;
+      font-family: inherit;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      text-align: center;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .dummy-custom-select-option:hover,
+    .dummy-custom-select-option:focus {
+      background: var(--light1);
+      color: #fff;
+    }
+    .dummy-custom-select-option.active {
+      background: rgb(90, 133, 113);
+      color: #fff;
     }
 
     /* 等级滑动条：对齐 pokechillHelper 的 pokechill-helper-slider */
@@ -450,10 +496,17 @@ function installPanelStyles() {
       min-width: 2.1rem;
       font-size: 0.82rem;
     }
-    .dummy-bst-cell .dummy-select {
+    .dummy-bst-cell .dummy-custom-select {
       flex: 1;
+      min-width: 0;
+    }
+    .dummy-bst-cell .dummy-custom-select-btn {
       padding: 0.18rem 0.25rem;
       font-size: 0.78rem;
+    }
+    .dummy-bst-cell .dummy-custom-select-option {
+      font-size: 0.78rem;
+      padding: 0.28rem 0.25rem;
     }
 
     /* 锁血开关按钮：对齐 pokechillHelper 的 pokechill-helper-autorejoin（左标签 + 右状态） */
@@ -485,6 +538,8 @@ function installPanelStyles() {
     .dummy-btn:active { transform: translateY(1px); }
     .dummy-btn.primary { background: rgb(90, 133, 113); }
     .dummy-btn.primary:hover { background: rgb(74, 114, 96); }
+    .dummy-btn.danger { background: rgb(206, 83, 83); }
+    .dummy-btn.danger:hover { background: rgb(178, 66, 66); }
     /* 开关态：与 pokechillHelper 的 .pokechill-helper-btn.active 一致 */
     .dummy-btn.active {
       background: rgb(90, 133, 113);
@@ -506,10 +561,17 @@ function installPanelStyles() {
         width: 92vw !important;
         font-size: 15px !important;
       }
-      .dummy-select,
       .dummy-input {
         font-size: 16px !important;
         padding: 0.45rem !important;
+      }
+      .dummy-custom-select-btn {
+        font-size: 16px !important;
+        padding: 0.45rem !important;
+      }
+      .dummy-custom-select-option {
+        font-size: 16px !important;
+        padding: 0.5rem !important;
       }
       .dummy-btn {
         padding: 0.6rem 0.5rem !important;
@@ -537,22 +599,41 @@ function setupEditorCloseWatcher(api) {
   editorCloseObserver.observe(editor, { attributes: true, attributeFilter: ["style"] });
 }
 
-// 生成属性下拉选项；withNone=true 时首项追加「无」（用于第二属性）
-function typeOptionsHTML(withNone) {
-  let html = withNone ? `<option value="">无</option>` : "";
-  for (const [id, label] of DUMMY_TYPE_LIST) {
-    html += `<option value="${id}">${label}</option>`;
-  }
-  return html;
+// 生成自定义下拉的选项按钮；type 下拉 withNone=true 时首项追加「无」（用于第二属性）
+// 返回 [ {value, label} ] 列表
+function typeOptions(withNone) {
+  const list = withNone ? [{ value: "", label: "无" }] : [];
+  for (const [id, label] of DUMMY_TYPE_LIST) list.push({ value: id, label });
+  return list;
 }
 
-// 生成 0-6 星下拉选项（沿用游戏「★」星级表述）
-function starOptionsHTML(selected) {
-  let html = "";
-  for (let i = 0; i <= 6; i++) {
-    html += `<option value="${i}" ${selected == i ? "selected" : ""}>${i}★</option>`;
+// 0-6 星选项
+function starOptions() {
+  return Array.from({ length: 7 }, (_, i) => ({ value: String(i), label: `${i}★` }));
+}
+
+// 读取自定义下拉当前值
+function dummySelectGet(id) {
+  const el = document.getElementById(id);
+  return el ? el.dataset.value || "" : "";
+}
+
+// 写入自定义下拉的值：更新 dataset 与触发按钮文字（并联动属性着色）
+function dummySelectSet(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.dataset.value = value;
+  const btn = el.querySelector(".dummy-custom-select-value");
+  if (btn) {
+    const opts = Array.from(el.querySelectorAll(".dummy-custom-select-option"));
+    const opt = opts.find(o => o.dataset.value === value);
+    btn.textContent = opt ? opt.textContent : "";
+    // 联动属性着色：非「无」时背景=属性色、文字白；否则回退
+    if (el.dataset.type === "1") {
+      if (!value) { btn.style.backgroundColor = ""; btn.style.color = ""; }
+      else { btn.style.backgroundColor = typeColor(value); btn.style.color = "#fff"; }
+    }
   }
-  return html;
 }
 
 // 属性配色：优先复用游戏 returnTypeColor()，不可用时回退到同色表
@@ -563,20 +644,16 @@ function typeColor(type) {
   return TYPE_FALLBACK_COLOR[type] || "#000000";
 }
 
-// 属性下拉框背景 = 该属性色、文字白色；属性为「无」时回退到样式表默认底色
-function updateTypeSelectColor() {
-  const ids = ["dummy-type1", "dummy-type2"];
-  for (const id of ids) {
-    const sel = document.getElementById(id);
-    if (!sel) continue;
-    if (!sel.value) {
-      sel.style.backgroundColor = "";
-      sel.style.color = "";
-    } else {
-      sel.style.backgroundColor = typeColor(sel.value);
-      sel.style.color = "#fff";
-    }
-  }
+// 生成自定义下拉的整体 HTML：isType 表示这是属性下拉（闭合态需着属性色）
+// opts: [{value,label}]；cur：当前值
+function customSelectHTML(id, opts, cur, isType) {
+  const optBtns = opts.map(o =>
+    `<button type="button" class="dummy-custom-select-option${o.value === cur ? " active" : ""}" data-value="${o.value}">${o.label}</button>`
+  ).join("");
+  return `<div id="${id}" class="dummy-custom-select" data-type="${isType ? "1" : "0"}" data-value="${cur}">
+    <button type="button" class="dummy-custom-select-btn"><span class="dummy-custom-select-value"></span><span class="dummy-custom-select-caret">▾</span></button>
+    <div class="dummy-custom-select-list">${optBtns}</div>
+  </div>`;
 }
 
 // 锁血开关按钮（对齐 pokechillHelper「自动重开」按钮：左标签 + 右 ON/OFF 状态）
@@ -613,17 +690,16 @@ function ensureConfigPanel(api) {
   panel.innerHTML = `
     <div class="dummy-panel-header">
       <span class="dummy-panel-title">🎯 测试木桩配置</span>
-      <button type="button" id="dummy-panel-close" class="dummy-panel-close" title="关闭">✕</button>
     </div>
     <div class="dummy-panel-content">
       <div class="dummy-section-title">🎨 木桩属性</div>
       <div class="dummy-row">
         <label for="dummy-type1">第一属性</label>
-        <select id="dummy-type1" class="dummy-select dummy-select-type">${typeOptionsHTML(false)}</select>
+        ${customSelectHTML("dummy-type1", typeOptions(false), (dummy.type ? dummy.type[0] : "normal") || "normal", true)}
       </div>
       <div class="dummy-row">
         <label for="dummy-type2">第二属性</label>
-        <select id="dummy-type2" class="dummy-select dummy-select-type">${typeOptionsHTML(true)}</select>
+        ${customSelectHTML("dummy-type2", typeOptions(true), dummy.type ? (dummy.type[1] || "") : "", true)}
       </div>
 
       <div class="dummy-divider"></div>
@@ -633,7 +709,7 @@ function ensureConfigPanel(api) {
         ${DUMMY_BST_LIST.map(([key, label]) => `
         <div class="dummy-bst-cell">
           <label for="dummy-bst-${key}">${label}</label>
-          <select id="dummy-bst-${key}" class="dummy-select">${starOptionsHTML(bst[key])}</select>
+          ${customSelectHTML(`dummy-bst-${key}`, starOptions(), String(bst[key]), false)}
         </div>`).join("")}
       </div>
 
@@ -643,7 +719,7 @@ function ensureConfigPanel(api) {
       <div class="dummy-row">
         <label for="dummy-level">等级</label>
         <input type="range" id="dummy-level-slider" class="dummy-slider" min="1" max="100" step="1" value="100">
-        <input type="number" id="dummy-level" class="dummy-input" min="1" max="100" value="100">
+        <input type="text" id="dummy-level" class="dummy-input" inputmode="numeric" autocomplete="off" maxlength="3" value="100">
       </div>
       <div class="dummy-btn-row">
         <button type="button" id="dummy-lockhp" class="dummy-btn dummy-lockhp-btn">
@@ -661,7 +737,7 @@ function ensureConfigPanel(api) {
       </div>
       <div class="dummy-btn-row">
         <button type="button" id="dummy-config-ok" class="dummy-btn primary">✔ 确定</button>
-        <button type="button" id="dummy-config-cancel" class="dummy-btn">✕ 取消</button>
+        <button type="button" id="dummy-config-cancel" class="dummy-btn danger">✕ 取消</button>
       </div>
       <div class="dummy-foot">配置木桩属性 / 星级 / 等级后开始测试</div>
     </div>
@@ -669,53 +745,105 @@ function ensureConfigPanel(api) {
 
   document.body.appendChild(panel);
 
+  // ===== 自定义下拉交互：点击展开/收起、选中即确定、点击外部关闭 =====
+  // 触发按钮：点击切换本下拉的展开态，并关闭其它已展开的下拉
+  panel.addEventListener("click", (e) => {
+    const btn = e.target.closest(".dummy-custom-select-btn");
+    const opt = e.target.closest(".dummy-custom-select-option");
+    if (btn) {
+      e.stopPropagation();
+      const wrap = btn.closest(".dummy-custom-select");
+      const wasOpen = wrap.classList.contains("open");
+      // 关闭所有
+      panel.querySelectorAll(".dummy-custom-select.open").forEach(s => s.classList.remove("open"));
+      if (!wasOpen) wrap.classList.add("open");
+      return;
+    }
+    if (opt) {
+      e.stopPropagation();
+      const wrap = opt.closest(".dummy-custom-select");
+      dummySelectSet(wrap.id, opt.dataset.value);
+      wrap.classList.remove("open");
+      // 触发 change 事件，让 updateType / 其它监听生效
+      wrap.dispatchEvent(new Event("change", { bubbles: true }));
+      return;
+    }
+    // 点击面板空白处：关闭所有下拉
+    if (!e.target.closest(".dummy-custom-select")) {
+      panel.querySelectorAll(".dummy-custom-select.open").forEach(s => s.classList.remove("open"));
+    }
+  });
+  // 点击面板外部（全局）：关闭所有展开的下拉
+  document.addEventListener("mousedown", function onDocDown(e) {
+    if (!panel.contains(e.target)) {
+      panel.querySelectorAll(".dummy-custom-select.open").forEach(s => s.classList.remove("open"));
+    }
+  });
+
+  // 初始化触发按钮文字与属性着色
+  panel.querySelectorAll(".dummy-custom-select").forEach(sel => {
+    dummySelectSet(sel.id, sel.dataset.value);
+  });
+
   const getDummy = () => api.pkmn?.[DUMMY_PKMN_ID];
 
   function updateBstFromUI() {
     const d = getDummy();
     if (!d) return;
-    d.bst.hp = parseInt(document.getElementById("dummy-bst-hp").value, 10);
-    d.bst.atk = parseInt(document.getElementById("dummy-bst-atk").value, 10);
-    d.bst.def = parseInt(document.getElementById("dummy-bst-def").value, 10);
-    d.bst.satk = parseInt(document.getElementById("dummy-bst-satk").value, 10);
-    d.bst.sdef = parseInt(document.getElementById("dummy-bst-sdef").value, 10);
-    d.bst.spe = parseInt(document.getElementById("dummy-bst-spe").value, 10);
+    d.bst.hp = parseInt(dummySelectGet("dummy-bst-hp"), 10);
+    d.bst.atk = parseInt(dummySelectGet("dummy-bst-atk"), 10);
+    d.bst.def = parseInt(dummySelectGet("dummy-bst-def"), 10);
+    d.bst.satk = parseInt(dummySelectGet("dummy-bst-satk"), 10);
+    d.bst.sdef = parseInt(dummySelectGet("dummy-bst-sdef"), 10);
+    d.bst.spe = parseInt(dummySelectGet("dummy-bst-spe"), 10);
   }
 
   function setBstToUI() {
     const d = getDummy();
     if (!d) return;
-    document.getElementById("dummy-bst-hp").value = d.bst.hp;
-    document.getElementById("dummy-bst-atk").value = d.bst.atk;
-    document.getElementById("dummy-bst-def").value = d.bst.def;
-    document.getElementById("dummy-bst-satk").value = d.bst.satk;
-    document.getElementById("dummy-bst-sdef").value = d.bst.sdef;
-    document.getElementById("dummy-bst-spe").value = d.bst.spe;
+    dummySelectSet("dummy-bst-hp", String(d.bst.hp));
+    dummySelectSet("dummy-bst-atk", String(d.bst.atk));
+    dummySelectSet("dummy-bst-def", String(d.bst.def));
+    dummySelectSet("dummy-bst-satk", String(d.bst.satk));
+    dummySelectSet("dummy-bst-sdef", String(d.bst.sdef));
+    dummySelectSet("dummy-bst-spe", String(d.bst.spe));
   }
 
   const updateType = () => {
-    const type1 = document.getElementById("dummy-type1").value;
-    const type2 = document.getElementById("dummy-type2").value;
+    const type1 = dummySelectGet("dummy-type1");
+    const type2 = dummySelectGet("dummy-type2");
     const d = getDummy();
     if (d) d.type = type2 ? [type1, type2] : [type1];
-    updateTypeSelectColor();
   };
   document.getElementById("dummy-type1").addEventListener("change", updateType);
   document.getElementById("dummy-type2").addEventListener("change", updateType);
 
-  // 等级：滑动条与数字输入框双向同步（步进 1）
+  // 自定义下拉：初始化触发按钮文字与属性着色
+  document.querySelectorAll("#dummy-config-panel .dummy-custom-select").forEach(sel => {
+    dummySelectSet(sel.id, sel.dataset.value);
+  });
+
+  // 等级：滑动条与文本输入框双向同步（步进 1）
+  // 文本输入框逻辑对齐 pokechillHelper：input 时过滤非数字、change/blur 时钳制到 1-100
   const levelInput = document.getElementById("dummy-level");
   const levelSlider = document.getElementById("dummy-level-slider");
   levelSlider.addEventListener("input", () => {
     levelInput.value = clampLevel(levelSlider.value);
   });
   levelInput.addEventListener("input", () => {
-    levelSlider.value = clampLevel(levelInput.value);
+    // 只保留数字字符
+    const cleaned = levelInput.value.replace(/[^0-9]/g, "");
+    if (cleaned !== levelInput.value) levelInput.value = cleaned;
+    // 边输入边同步滑块（空串不钳制，待 change 再定）
+    if (cleaned !== "") levelSlider.value = clampLevel(cleaned);
   });
   levelInput.addEventListener("change", () => {
     const v = clampLevel(levelInput.value);
     levelInput.value = v;
     levelSlider.value = v;
+  });
+  levelInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); levelInput.blur(); }
   });
 
   // 锁血开关按钮：点击切换 ON/OFF
@@ -746,12 +874,12 @@ function ensureConfigPanel(api) {
   });
 
   document.getElementById("dummy-config-reset").addEventListener("click", () => {
-    document.getElementById("dummy-type1").value = "normal";
-    document.getElementById("dummy-type2").value = "";
+    dummySelectSet("dummy-type1", "normal");
+    dummySelectSet("dummy-type2", "");
     document.getElementById("dummy-level").value = 100;
     document.getElementById("dummy-level-slider").value = 100;
     setLockHp(true);
-    updateTypeSelectColor();
+    updateType();
 
     const d = getDummy();
     if (d) {
@@ -766,8 +894,8 @@ function ensureConfigPanel(api) {
   });
 
   document.getElementById("dummy-config-ok").addEventListener("click", () => {
-    const type1 = document.getElementById("dummy-type1").value;
-    const type2 = document.getElementById("dummy-type2").value;
+    const type1 = dummySelectGet("dummy-type1");
+    const type2 = dummySelectGet("dummy-type2");
     const level = parseInt(document.getElementById("dummy-level").value, 10);
     const lockHp = getLockHp();
 
@@ -794,11 +922,6 @@ function ensureConfigPanel(api) {
   document.getElementById("dummy-config-cancel").addEventListener("click", () => {
     panel.style.display = "none";
   });
-
-  // 标题栏 ×：等同取消（仅收起面板）
-  document.getElementById("dummy-panel-close").addEventListener("click", () => {
-    panel.style.display = "none";
-  });
 }
 
 function openConfigPanel(api) {
@@ -807,19 +930,18 @@ function openConfigPanel(api) {
   if (!panel) return;
   const d = api.pkmn?.[DUMMY_PKMN_ID];
   if (d) {
-    document.getElementById("dummy-type1").value = d.type[0] || "normal";
-    document.getElementById("dummy-type2").value = d.type[1] || "";
-    document.getElementById("dummy-level").value = d.level;
+    dummySelectSet("dummy-type1", d.type[0] || "normal");
+    dummySelectSet("dummy-type2", d.type[1] || "");
+    document.getElementById("dummy-level").value = clampLevel(d.level);
     const lvSlider = document.getElementById("dummy-level-slider");
     if (lvSlider) lvSlider.value = clampLevel(d.level);
     setLockHp(!!d.lockHp);
-    document.getElementById("dummy-bst-hp").value = d.bst.hp;
-    document.getElementById("dummy-bst-atk").value = d.bst.atk;
-    document.getElementById("dummy-bst-def").value = d.bst.def;
-    document.getElementById("dummy-bst-satk").value = d.bst.satk;
-    document.getElementById("dummy-bst-sdef").value = d.bst.sdef;
-    document.getElementById("dummy-bst-spe").value = d.bst.spe;
+    dummySelectSet("dummy-bst-hp", String(d.bst.hp));
+    dummySelectSet("dummy-bst-atk", String(d.bst.atk));
+    dummySelectSet("dummy-bst-def", String(d.bst.def));
+    dummySelectSet("dummy-bst-satk", String(d.bst.satk));
+    dummySelectSet("dummy-bst-sdef", String(d.bst.sdef));
+    dummySelectSet("dummy-bst-spe", String(d.bst.spe));
   }
-  updateTypeSelectColor();
   panel.style.display = "flex";
 }
