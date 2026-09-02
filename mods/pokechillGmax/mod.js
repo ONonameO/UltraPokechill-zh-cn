@@ -327,7 +327,7 @@ function installStyles() {
       // background-color: var(--dark2);
       border: 2px solid var(--light2);
       position: relative;
-      flex-shrink: 0;
+      flex-shrink: 1;
       border-radius: 0.5rem;
       padding: 0.3rem 1rem;
       z-index: 4;
@@ -344,12 +344,13 @@ function installStyles() {
       color: var(--light2);
       font-size: 1.4rem;
       background: rgba(0, 0, 0, 0.5);
-      flex-shrink: 0;
+      flex-shrink: 1;
     }
 
     #gmax-fragment-count {
       margin-left: 0.5rem;
       font-weight: 500;
+      flex-shrink: 1;
     }
 
     /* 抽奖按钮：对照原版 .explore-menu-selector div（dark2 底、圆角、居中） */
@@ -362,45 +363,17 @@ function installStyles() {
       color: var(--light2);
       border: none;
       border-radius: 0.3rem;
-      padding: 0.3rem 1.5rem;
+      padding: 0.3rem 1rem;
       font-family: inherit;
       font-weight: 600;
       font-size: 1.2rem;
       cursor: pointer;
-      white-space: pre-wrap;;
-      flex-shrink: 0;
+      white-space: pre;
       box-shadow: rgba(0, 0, 0, 0.2) 0 2px 2px 0;
+      flex-shrink: 1;
     }
     .gmax-gacha-btn:hover { background-color: #685F4B; }
 
-    /* 标题胶囊：对照 #explore-menu-header span */
-    .gmax-title {
-      height: 2rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      background: var(--dark1);
-      color: white;
-      border: rgba(255, 255, 255, 0.7) 1px solid;
-      border-radius: 0.5rem;
-      font-size: 1.5rem;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 1.3rem 1rem;
-      font-weight: 100;
-      flex-shrink: 0;
-      z-index: 2;
-    }
-    .gmax-title img {
-      height: 1.6rem;
-      margin-right: 0.5rem;
-    }
-    /* 帮助胶囊：沿用原版 .header-help（cursor:help、不另加底色），垂直居中对齐标题 */
-    .gmax-title-row .header-help {
-      height: 2rem;
-      display: inline-flex;
-      align-items: center;
-    }
 
     /* 外层：负责滚动，裁剪溢出（必须） */
     .gmax-dim-content {
@@ -409,11 +382,13 @@ function installStyles() {
       position: relative;
       z-index: 2;
       width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: start;  /* 垂直居中 */
       align-items: center;
       padding: 0;
+      margin-top: 1rem;
     }
 
     /* 网格布局，正常显示 */
@@ -422,13 +397,14 @@ function installStyles() {
       flex-wrap: wrap;
       justify-content: center;
       gap: clamp(0.6rem, 2.5vw, 1.4rem);
-      margin: 5rem 0;
+      margin: 3rem 0;
       /* 不需要 padding-top，已由外层提供 */
     }
 
     /* 卡片样式 */
     .gmax-card {
-      margin: 0 auto;
+      margin: 0.3rem auto;
+      cursor: help;
       /* 如果卡片本身需要溢出，在这里处理 */
     }
 
