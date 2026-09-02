@@ -1,8 +1,8 @@
-const MOD_ID = "pokechillDummy";
-const DUMMY_PKMN_ID = "custom_dummy_pkmn";
+const MOD_ID = "customDummy";
+const DUMMY_PKMN_ID = "customDummy";
 const DUMMY_AREA_ID = "custom_dummy_area";
-const DUMMY_AREA_NAME = "木桩测试 (可配置)";
-const DUMMY_SPRITE_URL = "mods/customDummyIcon.png";
+const DUMMY_AREA_NAME = "custom_dummy";
+const DUMMY_SPRITE_URL = "img/pkmn/sprite/customDummy.png";
 
 // 面板样式表 id（沿用 abilityTrainer 的「独立 style + id 守卫」做法）
 const PANEL_STYLE_ID = "dummy-panel-style";
@@ -18,7 +18,7 @@ const DUMMY_TYPE_LIST = [
 
 // 种族值项
 const DUMMY_BST_LIST = [
-  ["hp", "HP"], ["atk", "攻击"], ["def", "防御"],
+  ["hp", "生命"], ["atk", "攻击"], ["def", "防御"],
   ["satk", "特攻"], ["sdef", "特防"], ["spe", "速度"]
 ];
 
@@ -40,11 +40,11 @@ const VS_PATCH = "__pokechillDummyVsPatch";
 
 UltraMods.define({
   id: MOD_ID,
-  name: "Pokechill 自定义木桩",
-  description: "基于 UltraMods API 构建自定义木桩训练区：可配置属性/等级/技能的木桩，支持锁血，用于测试配队与伤害。由 mod 管理器独立启用或禁用。",
-  image: "mods/customDummyIcon.png",
-  version: "2.2.0",
-  author: "人民当家做主",
+  name: "自定义木桩",
+  description: "在对战界面新增一个自定义木桩，支持配置属性、种族值星级、等级、技能等参数，并可锁定血量，便于玩家测试队伍配置与伤害输出。",
+  image: "img/pkmn/sprite/customDummy.png",
+  version: "2.2.1",
+  author: "人民当家做主 & 我不是西药",
   category: "实用工具",
   defaultEnabled: false,
   hooks: {
@@ -138,9 +138,9 @@ function registerDummyPokemon(api) {
   if (api.pkmn[DUMMY_PKMN_ID]) return; // 已存在则保留既有配置
   api.pkmn[DUMMY_PKMN_ID] = {
     id: DUMMY_PKMN_ID,
-    rename: "自定义测试木桩",
+    rename: "自定义木桩",
     type: ["normal"],
-    bst: { hp: 6, atk: 4, def: 2, satk: 4, sdef: 2, spe: 4 },
+    bst: { hp: 6, atk: 6, def: 6, satk: 6, sdef: 6, spe: 6 },
     level: 100,
     exp: 0,
     caught: 0,
@@ -267,8 +267,7 @@ function injectDummyVsCard(api) {
       <span><strong style="font-size:1rem; background:#964646ff">测试木桩</strong></span>
     </span>
     <div class="vs-card-left">
-      <img src="${DUMMY_SPRITE_URL}"
-           style="max-width: 96px; max-height: 96px; width: auto; height: auto; transform: none; scale: 1; object-fit: contain; margin: auto;">
+      <img src="${DUMMY_SPRITE_URL}" style="max-height: 80px; max-width: 80px;" class="sprite-trim">
     </div>
   `;
   card.addEventListener("click", () => openConfigPanel(api));
@@ -368,11 +367,13 @@ function installPanelStyles() {
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
+      min-width: 0;   /* 允许行内可收缩项收缩，避免撑破面板 */
     }
     .dummy-row > label {
-      color: var(--dark2);
+      color: var(--light1);
       font-weight: 600;
       white-space: nowrap;
+      flex: 0 0 auto;
     }
 
     .dummy-input {
@@ -384,7 +385,9 @@ function installPanelStyles() {
       font-family: inherit;
       font-size: 0.85rem;
       padding: 0.3rem 0.4rem;
-      flex: 0 0 4rem;
+      /* 等级最多 3 位数，固定 3.6rem 足够；允许收缩，避免把整行撑出面板 */
+      flex: 0 1 3.6rem;
+      min-width: 2.4rem;
       text-align: center;
     }
     .dummy-input:focus { outline: 1px solid var(--light1); }
@@ -426,10 +429,20 @@ function installPanelStyles() {
       font-size: 0.7rem;
       opacity: 0.8;
     }
-    /* 属性下拉：闭合态背景 = 属性色、文字白色（由 dummySelectSet 内联设置） */
+    /* 属性下拉：闭合态整颗按钮背景 = 属性色、文字白色。
+       颜色由 dummySelectSet 写入 CSS 变量 --dummy-type-bg / --dummy-type-fg，
+       这样颜色覆盖的是「整颗按钮（含 padding）」而非内层文字 span；
+       用变量而非内联 background，是为了让 :hover 仍能被后面的规则覆盖生效。 */
     .dummy-custom-select[data-type="1"] .dummy-custom-select-btn {
+      background: var(--dummy-type-bg, var(--dark2));
+      color: var(--dummy-type-fg, var(--light2));
       font-weight: bold;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+    .dummy-custom-select[data-type="1"] .dummy-custom-select-btn:hover {
+      // background: #685F4B;
+      // color: var(--light2);
+      filter: brightness(1.2);
     }
 
     /* 展开列表：对齐 abilityTrainer combo-list（深色浮层 + 顶部圆角衔接） */
@@ -471,10 +484,11 @@ function installPanelStyles() {
       color: #fff;
     }
 
-    /* 等级滑动条：对齐 pokechillHelper 的 pokechill-helper-slider */
+    /* 等级滑动条：对齐 pokechillHelper 的 pokechill-helper-slider。
+       min-width 收小且允许收缩，保证「标签 + 滑块 + 输入框」在任何面板宽度下都不会溢出 */
     .dummy-slider {
-      flex: 1;
-      min-width: 90px;
+      flex: 1 1 0;
+      min-width: 2.5rem;
       accent-color: rgb(90, 133, 113);
       cursor: pointer;
     }
@@ -491,7 +505,7 @@ function installPanelStyles() {
       gap: 0.3rem;
     }
     .dummy-bst-cell > label {
-      color: var(--dark2);
+      color: var(--light1);
       font-weight: 600;
       min-width: 2.1rem;
       font-size: 0.82rem;
@@ -564,7 +578,9 @@ function installPanelStyles() {
       .dummy-input {
         font-size: 16px !important;
         padding: 0.45rem !important;
+        min-width: 3.2rem !important;  /* 16px 字号下仍容得下 3 位数 */
       }
+      .dummy-slider { min-width: 3rem !important; }
       .dummy-custom-select-btn {
         font-size: 16px !important;
         padding: 0.45rem !important;
@@ -618,20 +634,34 @@ function dummySelectGet(id) {
   return el ? el.dataset.value || "" : "";
 }
 
-// 写入自定义下拉的值：更新 dataset 与触发按钮文字（并联动属性着色）
+// 写入自定义下拉的值：更新 dataset、选项选中高亮、触发按钮文字（并联动属性着色）
 function dummySelectSet(id, value) {
   const el = document.getElementById(id);
   if (!el) return;
   el.dataset.value = value;
-  const btn = el.querySelector(".dummy-custom-select-value");
-  if (btn) {
-    const opts = Array.from(el.querySelectorAll(".dummy-custom-select-option"));
-    const opt = opts.find(o => o.dataset.value === value);
-    btn.textContent = opt ? opt.textContent : "";
-    // 联动属性着色：非「无」时背景=属性色、文字白；否则回退
-    if (el.dataset.type === "1") {
-      if (!value) { btn.style.backgroundColor = ""; btn.style.color = ""; }
-      else { btn.style.backgroundColor = typeColor(value); btn.style.color = "#fff"; }
+
+  // 1) 同步选项的选中高亮（.active）——否则高亮会一直停在生成 HTML 时的初始项
+  const opts = Array.from(el.querySelectorAll(".dummy-custom-select-option"));
+  let label = "";
+  for (const o of opts) {
+    const on = o.dataset.value === value;
+    o.classList.toggle("active", on);
+    if (on) label = o.textContent;
+  }
+
+  // 2) 更新触发按钮文字
+  const val = el.querySelector(".dummy-custom-select-value");
+  if (val) val.textContent = label;
+
+  // 3) 属性着色：写入 CSS 变量，让整颗按钮（含 padding）都铺上属性色
+  const btn = el.querySelector(".dummy-custom-select-btn");
+  if (btn && el.dataset.type === "1") {
+    if (!value) {
+      btn.style.removeProperty("--dummy-type-bg");
+      btn.style.removeProperty("--dummy-type-fg");
+    } else {
+      btn.style.setProperty("--dummy-type-bg", typeColor(value));
+      btn.style.setProperty("--dummy-type-fg", "#fff");
     }
   }
 }
@@ -694,11 +724,11 @@ function ensureConfigPanel(api) {
     <div class="dummy-panel-content">
       <div class="dummy-section-title">🎨 木桩属性</div>
       <div class="dummy-row">
-        <label for="dummy-type1">第一属性</label>
+        <label for="dummy-type1">属性 1</label>
         ${customSelectHTML("dummy-type1", typeOptions(false), (dummy.type ? dummy.type[0] : "normal") || "normal", true)}
       </div>
       <div class="dummy-row">
-        <label for="dummy-type2">第二属性</label>
+        <label for="dummy-type2">属性 2</label>
         ${customSelectHTML("dummy-type2", typeOptions(true), dummy.type ? (dummy.type[1] || "") : "", true)}
       </div>
 
@@ -715,7 +745,7 @@ function ensureConfigPanel(api) {
 
       <div class="dummy-divider"></div>
 
-      <div class="dummy-section-title">📊 基础参数</div>
+      <div class="dummy-section-title">📊 其他参数</div>
       <div class="dummy-row">
         <label for="dummy-level">等级</label>
         <input type="range" id="dummy-level-slider" class="dummy-slider" min="1" max="100" step="1" value="100">
@@ -817,11 +847,6 @@ function ensureConfigPanel(api) {
   };
   document.getElementById("dummy-type1").addEventListener("change", updateType);
   document.getElementById("dummy-type2").addEventListener("change", updateType);
-
-  // 自定义下拉：初始化触发按钮文字与属性着色
-  document.querySelectorAll("#dummy-config-panel .dummy-custom-select").forEach(sel => {
-    dummySelectSet(sel.id, sel.dataset.value);
-  });
 
   // 等级：滑动条与文本输入框双向同步（步进 1）
   // 文本输入框逻辑对齐 pokechillHelper：input 时过滤非数字、change/blur 时钳制到 1-100

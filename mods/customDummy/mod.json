@@ -1,0 +1,10 @@
+{
+  "id": "customDummy",
+  "name": "自定义木桩",
+  "description": "在对战界面新增一个自定义木桩，支持配置属性、种族值星级、等级、技能等参数，并可锁定血量，便于玩家测试队伍配置与伤害输出。",
+  "image": "img/pkmn/sprite/customDummy.png",
+  "version": "2.2.1",
+  "author": "人民当家做主 & 我不是西药",
+  "category": "实用工具",
+  "defaultEnabled": false
+}
