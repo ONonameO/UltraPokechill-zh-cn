@@ -45,7 +45,7 @@ UltraMods.define({
   name: "Pokechill 超极巨化空间",
   description: "将「超极巨化空间」独立为 mod：Boss 轮换与旷野地带(Wild Area)在同一个 UTC 半天边界刷新，击败 Boss 收集碎片进行抽奖获取超极巨化宝可梦。启用与否交由模组管理器，所有提示走原版 tooltip，左上角菜单沿用原版样式。",
   image: "img/items/rareCandy.png",
-  version: "2.2.2",
+  version: "2.2.3",
   author: "人民当家做主",
   category: "实用工具",
   defaultEnabled: false,
@@ -225,16 +225,9 @@ function installStyles() {
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
-    /* 页面外壳完全复刻游戏 dimension-menu（styles.css #dimension-menu）：
-       position:fixed、桌面 50% 宽、暗色 portal 背景，z-index 40 —— 低于左上角
-       #menu-button-parent(z-index:100)，因此原版左上角菜单球始终浮在页面上方，
-       玩家可用原版菜单球回到主菜单（即“去掉自制的球状返回按钮”）。
-
-       【定位修复】刻意不写 top/left/right/bottom 任何偏移，与 #main-content、
-       #dimension-menu 等原版子页面一致：body 是 position:fixed + display:flex +
-       justify-content:center，游戏窗口是居中的 #main-content(width:50%)。
-       不设偏移的 fixed 子元素会停在自身静态位置，正好贴合居中的游戏窗口；
-       一旦写了 left:0 就会贴到浏览器视口左缘（即此前“跑到浏览器窗口左侧”的根因）。 */
+    /* 页面外壳复刻游戏 #dimension-menu：position:fixed、50% 宽、暗色 portal 背景、z-index:40
+       （低于左上角菜单球 z100，故原版菜单球可浮于页面上方返回主菜单）。
+       关键点：不写 top/left 等偏移，贴合居中游戏窗口；写 left:0 会贴到视口左缘（旧 bug 根因）。 */
     #${PAGE_ID} {
       position: fixed;
       height: 100%;
@@ -295,7 +288,6 @@ function installStyles() {
       justify-content: center;
       align-items: center;
       text-align: center;
-      background: var(--dark1);
       color: white;
       border: rgba(255, 255, 255, 0.7) 1px solid;
       border-radius: 0.5rem;
@@ -324,7 +316,6 @@ function installStyles() {
       display: flex;                 /* 开启弹性布局 */
       justify-content: space-between; /* 左右两端对齐 */
       align-items: center;           /* 垂直方向居中，防止高度不一致 */
-      // background-color: var(--dark2);
       border: 2px solid var(--light2);
       position: relative;
       flex-shrink: 1;
@@ -402,12 +393,35 @@ function installStyles() {
     }
 
     /* 卡片样式 */
+    /* 卡片不建立层叠上下文：让星级胶囊(gmax-card-stars, z-index:900)能溢出到下一行卡片之上，
+       而非被本卡 z-index 困住；黑洞层(gmax-bhole-wrap, z-index:-1)沉到卡片与相邻卡之下。 */
+    .gmax-card.dimension-pokemon {
+      z-index: auto;
+    }
     .gmax-card {
       margin: 0.3rem auto;
       cursor: help;
-      /* 如果卡片本身需要溢出，在这里处理 */
     }
 
+    /* 黑洞旋转层：固定尺寸 + overflow:hidden 包裹两个旋转黑洞，阻断其旋转边界框泄漏到
+       滚动容器(.gmax-dim-content)造成的滚动条长度抖动；圆形裁剪不会裁到实际黑洞(最大约 37rem)。 */
+    .gmax-bhole-wrap {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 40rem;
+      height: 40rem;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .gmax-bhole-wrap .dimension-bhole {
+      top: 50%;
+      left: 50%;
+      margin: -10rem 0 0 -10rem;
+    }
     .gmax-bhole-reverse {
       animation-direction: reverse;
       scale: 1.3;
@@ -419,7 +433,7 @@ function installStyles() {
       bottom: -0.8rem;
       z-index: 900;
       padding: 0.2rem 0.5rem;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.4);
       border-radius: 100px;
       color: #ffd700;
       font-size: clamp(0.8rem, 2.5vw, 1.1rem);
@@ -817,8 +831,10 @@ function renderBossCards(api) {
     card.dataset.boss = id;
 
     card.innerHTML = `
-      <img class="dimension-bhole" src="img/icons/bhole.png">
-      <img class="dimension-bhole gmax-bhole-reverse" src="img/icons/bhole.png">
+      <div class="gmax-bhole-wrap">
+        <img class="dimension-bhole" src="img/icons/bhole.png">
+        <img class="dimension-bhole gmax-bhole-reverse" src="img/icons/bhole.png">
+      </div>
       <img class="dimension-sprite sprite-trim" src="img/pkmn/sprite/${id}.png">
       <span class="gmax-card-stars">★★★★★★★★★★</span>
     `;
