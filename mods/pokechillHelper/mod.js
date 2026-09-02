@@ -1,21 +1,25 @@
-// Pokechill 助手 — 全局加速 + 倍速滑动条/输入框 + 跳过时间(原版 Date 劫持) + 自动重开
-// 改写自原 pokechill助手 userscript（v3.8.1）：
-//  - 全局加速：劫持 requestAnimationFrame / performance.now / Date / setTimeout / setInterval，
-//    以虚拟时间方式将倍速覆盖到整个游戏运行过程（不再局限于战斗场景）；
-//  - 跳过时间沿用原脚本对 window.Date 的劫持方式（虚拟时间偏移）；
+// Pokechill 助手 — 战斗加速 + 倍速滑动条/输入框 + 跳过时间(原版 Date 劫持) + 自动重开
+// 改写自原 pokechill助手 userscript：
+//  - 战斗加速改用 speedBattles 的回合推进式（非全局）机制；
+//  - 跳过时间沿用原脚本对 window.Date 的劫持方式（仅做时钟偏移，1x，不加速全局时间）；
 //  - UI 为独立浮窗（可拖拽/折叠），美术与交互沿用原版游戏 mod 卡片风格；
 
 
 const MOD_ID = "pokechillHelper";
 const STYLE_ID = "pokechill-helper-style";
+const LOOP_KEY = "__pokechillHelperLoop";
+const RESPAWN_PATCH_KEY = "__pokechillHelperRespawnPatch";
 const TIME_KEY = "__pokechillHelperTimeHijack";
+const BASE_TIMER = 2000;
+const STEP_MS = 1000 / 60;
+const INTERVAL_MS = 50;
 const SPEEDS = [1, 2, 3, 5, 10, 50];
 const MIN_SPEED = 1;
 const MAX_SPEED = 50;
 
 let uiEl = null;
 let timeOriginals = null;
-let timeState = { speed: 1, isActive: false, startTime: { real: 0, virtual: 0 } };
+let timeState = { isActive: false, startTime: { real: 0, virtual: 0 } };
 let rejoinObserver = null;
 let rejoinObserverStarted = false;
 let hotkeysInstalled = false;
@@ -25,7 +29,7 @@ let resizeHandler = null;       // 窗口 resize 时约束浮窗位置的监听
 UltraMods.define({
   id: MOD_ID,
   name: "Pokechill 助手",
-  description: "集成全局加速、时间跳过与自动重开三大功能，可将全局游戏运行提速，减少等待时间，轻松护肝。",
+  description: "集成战斗加速、时间跳过与自动重开三大功能，可快速推进战斗进程，省去等待时间，轻松护肝。",
   image: "img/pkmn/sprite/rotom.png",
   version: "3.8.1",
   author: "黄黄",
@@ -39,10 +43,12 @@ UltraMods.define({
 
       if (payload.enabled) {
         installTimeHijack();
+        applySpeed(api, state);
         ensureFloatingUI(api, state);
         startRejoinObserver(api);
         installHotkeys(api);
       } else {
+        restoreSpeed(api);
         removeTimeHijack();
         removeFloatingUI();
         stopRejoinObserver();
@@ -58,10 +64,23 @@ UltraMods.define({
 
       if (api.isEnabled(MOD_ID)) {
         installTimeHijack();
+        applySpeed(api, state);
         ensureFloatingUI(api, state);
         startRejoinObserver(api);
       }
       updateBodyState(api, state);
+    },
+    afterPlayerDamage(api, payload, state) {
+      if (clampSpeed(state.speed) < 5) return;
+      scheduleVisualSync(api);
+    },
+    afterWildDamage(api, payload, state) {
+      if (clampSpeed(state.speed) < 5) return;
+      scheduleVisualSync(api);
+    },
+    afterEnemyDefeated(api, payload, state) {
+      accelerateCurrentRespawn(state);
+      if (clampSpeed(state.speed) >= 5) scheduleVisualSync(api);
     }
   }
 });
@@ -106,20 +125,26 @@ function clampSpeed(value) {
 function setSpeed(api, state, target) {
   const speed = clampSpeed(target);
   state.speed = speed;
-  setGlobalSpeed(speed);
-  updateBodyState(api, state);
+  if (api.isEnabled(MOD_ID)) applySpeed(api, state);
+  else updateBodyState(api, state);
   api.save();
   updateFloatingUI(api, state);
 }
 
-// 全局加速：更新虚拟时间锚点并设定倍速（状态判断/参数配置参考原脚本 setSpeed）
-function setGlobalSpeed(speed) {
-  if (timeState.speed === speed && timeState.isActive) return;
-  updateTimeAnchor();
-  timeState.speed = speed;
+// ===================== 战斗加速（非全局，回合推进，移植自 speedBattles） =====================
+
+function applySpeed(api, state) {
+  ensureState(state);
+  api.saved.overrideBattleTimer = BASE_TIMER;
+  startTurboLoop(state);
+  updateBodyState(api, state);
 }
 
-// ===================== 全局加速（劫持时间相关 API，覆盖整个游戏运行） =====================
+function restoreSpeed(api) {
+  stopTurboLoop();
+  api.saved.overrideBattleTimer = BASE_TIMER;
+  document.body.classList.remove("pokechill-helper-active", "pokechill-helper-fast");
+}
 
 function updateBodyState(api, state) {
   const enabled = api.isEnabled(MOD_ID);
@@ -132,30 +157,17 @@ function updateBodyState(api, state) {
 
 function saveOriginals() {
   if (timeOriginals) return;
-  const rafName = window.requestAnimationFrame ? "requestAnimationFrame" :
-                  window.webkitRequestAnimationFrame ? "webkitRequestAnimationFrame" : null;
-  timeOriginals = {
-    raf: rafName ? window[rafName] : null,
-    Date: window.Date,
-    dateNow: Date.now,
-    perfNow: (window.performance && window.performance.now) ? window.performance.now : null,
-    setTimeout: window.setTimeout,
-    setInterval: window.setInterval
-  };
+  timeOriginals = { Date: window.Date, dateNow: Date.now };
 }
 
 function getRealNow() {
-  if (timeOriginals && timeOriginals.perfNow) {
-    return timeOriginals.perfNow.call(window.performance);
-  }
-  if (timeOriginals) return timeOriginals.dateNow.call(timeOriginals.Date);
-  return Date.now();
+  return timeOriginals ? timeOriginals.dateNow.call(timeOriginals.Date) : Date.now();
 }
 
 function getVirtualTime(realTimeNow) {
   if (!timeState.isActive) return realTimeNow;
   const realDelta = realTimeNow - timeState.startTime.real;
-  return timeState.startTime.virtual + (realDelta * timeState.speed);
+  return timeState.startTime.virtual + (realDelta * 1); // 1x：仅做时钟偏移，不加速全局时间
 }
 
 function updateTimeAnchor() {
@@ -164,28 +176,6 @@ function updateTimeAnchor() {
   timeState.startTime.real = realNow;
   timeState.startTime.virtual = currentVirtual;
   timeState.isActive = true;
-}
-
-// 劫持 requestAnimationFrame：回调收到的是虚拟时间戳
-function hijackRAF() {
-  if (!timeOriginals.raf) return;
-  const rafPolyfill = (callback) => {
-    return timeOriginals.raf.call(window, (realTimestamp) => {
-      const virtualTimestamp = timeState.isActive ? getVirtualTime(realTimestamp) : realTimestamp;
-      callback(virtualTimestamp);
-    });
-  };
-  if (window.requestAnimationFrame) window.requestAnimationFrame = rafPolyfill;
-  if (window.webkitRequestAnimationFrame) window.webkitRequestAnimationFrame = rafPolyfill;
-}
-
-// 劫持 performance.now：返回虚拟时间
-function hijackPerformance() {
-  if (!timeOriginals.perfNow) return;
-  window.performance.now = () => {
-    const realNow = timeOriginals.perfNow.call(window.performance);
-    return timeState.isActive ? getVirtualTime(realNow) : realNow;
-  };
 }
 
 function hijackDate() {
@@ -209,49 +199,19 @@ function hijackDate() {
   window.Date = MockDate;
 }
 
-// 劫持 setTimeout / setInterval：按倍速缩放延迟（覆盖整个游戏运行过程）
-function hijackTimers() {
-  window.setTimeout = (cb, delay, ...args) => {
-    const scaledDelay = timeState.isActive ? (delay / timeState.speed) : delay;
-    return timeOriginals.setTimeout.call(window, cb, scaledDelay, ...args);
-  };
-  window.setInterval = (cb, delay, ...args) => {
-    const scaledDelay = timeState.isActive ? (delay / timeState.speed) : delay;
-    return timeOriginals.setInterval.call(window, cb, scaledDelay, ...args);
-  };
-}
-
 function installTimeHijack() {
   if (window[TIME_KEY]) return;
-  const state = getState(apiRef);
   saveOriginals();
-  hijackRAF();
-  hijackPerformance();
   hijackDate();
-  hijackTimers();
   const now = getRealNow();
-  timeState = {
-    speed: clampSpeed(state.speed || 1),
-    isActive: false,
-    startTime: { real: now, virtual: now }
-  };
-  updateTimeAnchor();
+  timeState = { isActive: false, startTime: { real: now, virtual: now } };
   window[TIME_KEY] = true;
 }
 
 function removeTimeHijack() {
   if (!window[TIME_KEY]) return;
-  if (timeOriginals) {
-    window.Date = timeOriginals.Date;
-    if (timeOriginals.perfNow) window.performance.now = timeOriginals.perfNow;
-    if (timeOriginals.raf) {
-      if (window.requestAnimationFrame) window.requestAnimationFrame = timeOriginals.raf;
-      if (window.webkitRequestAnimationFrame) window.webkitRequestAnimationFrame = timeOriginals.raf;
-    }
-    window.setTimeout = timeOriginals.setTimeout;
-    window.setInterval = timeOriginals.setInterval;
-  }
-  timeState = { speed: 1, isActive: false, startTime: { real: 0, virtual: 0 } };
+  if (timeOriginals) window.Date = timeOriginals.Date;
+  timeState = { isActive: false, startTime: { real: 0, virtual: 0 } };
   window[TIME_KEY] = false;
 }
 
@@ -500,7 +460,7 @@ function buildFloatingUI(api, state) {
   speedHeader.className = "pokechill-helper-section-title";
   const label = document.createElement("span");
   label.className = "pokechill-helper-section-title";
-  label.textContent = "⏳ 游戏加速";
+  label.textContent = "⏳ 战斗速度";
   speedHeader.append(label);
 
   // 倍速行：滑动条 + 输入框
@@ -584,7 +544,7 @@ function buildFloatingUI(api, state) {
 
   const foot = document.createElement("div");
   foot.className = "pokechill-helper-foot";
-  foot.textContent = "Ctrl+Shift+↑/↓ 调整加速倍速";
+  foot.textContent = "Ctrl+Shift+↑/↓ 调整战斗速度";
 
   content.append(speedHeader, speedRow, grid, skipDividerTop, skipTitle, skipRow, skipDividerBottom, rejoinRow, foot);
   ui.append(header, content);
@@ -812,3 +772,203 @@ function removeHotkeys() {
   apiRef = null;
 }
 
+// ===================== 战斗加速主循环（移植自 speedBattles） =====================
+
+function startTurboLoop(state) {
+  const speed = clampSpeed(state.speed);
+  let loop = window[LOOP_KEY];
+
+  if (!loop) {
+    loop = {
+      active: false,
+      accumulator: 0,
+      interval: 0,
+      last: performance.now(),
+      raf: 0,
+      running: false,
+      speed: 1
+    };
+    window[LOOP_KEY] = loop;
+  }
+
+  loop.active = true;
+  loop.speed = speed;
+  loop.last = performance.now();
+
+  if (loop.raf) {
+    cancelAnimationFrame(loop.raf);
+    loop.raf = 0;
+  }
+
+  if (!loop.running || !loop.interval) {
+    if (loop.interval) clearInterval(loop.interval);
+    loop.running = true;
+    loop.interval = setInterval(runTurboLoop, INTERVAL_MS);
+  }
+}
+
+function stopTurboLoop() {
+  const loop = window[LOOP_KEY];
+  if (!loop) return;
+
+  loop.active = false;
+  loop.speed = 1;
+  loop.accumulator = 0;
+  if (loop.interval) clearInterval(loop.interval);
+  loop.interval = 0;
+  if (loop.raf) cancelAnimationFrame(loop.raf);
+  loop.raf = 0;
+  loop.running = false;
+}
+
+function runTurboLoop(now) {
+  const loop = window[LOOP_KEY];
+  if (!loop?.active) {
+    if (loop) {
+      if (loop.interval) clearInterval(loop.interval);
+      loop.interval = 0;
+      loop.running = false;
+    }
+    return;
+  }
+
+  const timestamp = Number.isFinite(Number(now)) ? Number(now) : performance.now();
+  const speed = clampSpeed(loop.speed);
+  const extraTicks = Math.max(0, speed - 1);
+  let delta = timestamp - loop.last;
+  loop.last = timestamp;
+  if (delta > 250) delta = 250;
+
+  if (extraTicks > 0 && !isAfkFastForwardActive()) {
+    loop.accumulator += delta * extraTicks;
+    runExtraCombatTicks(loop);
+  } else {
+    loop.accumulator = 0;
+  }
+}
+
+function runExtraCombatTicks(loop) {
+  if (typeof window.exploreCombatPlayer !== "function" || typeof window.exploreCombatWild !== "function") return;
+
+  const maxTicks = Math.max(1, Math.min(600, clampSpeed(loop.speed) * 20));
+  let ticks = 0;
+
+  while (loop.accumulator >= STEP_MS && ticks < maxTicks) {
+    if (isCombatStopped()) {
+      loop.accumulator = 0;
+      return;
+    }
+
+    window.exploreCombatPlayer();
+
+    if (!isCombatStopped()) {
+      window.exploreCombatWild();
+    }
+
+    loop.accumulator -= STEP_MS;
+    ticks++;
+  }
+}
+
+function isCombatStopped() {
+  try {
+    return typeof shouldCombatStop === "function" && shouldCombatStop();
+  } catch (error) {
+    return false;
+  }
+}
+
+function isAfkFastForwardActive() {
+  try {
+    return typeof afkSeconds !== "undefined" && afkSeconds > 0;
+  } catch (error) {
+    return false;
+  }
+}
+
+function accelerateCurrentRespawn(state) {
+  const speed = clampSpeed(state.speed);
+  if (speed <= 1 || window[RESPAWN_PATCH_KEY]) return;
+
+  const originalSetTimeout = window.setTimeout;
+  const originalVoidAnimation = window.voidAnimation;
+  const patch = { originalSetTimeout, originalVoidAnimation };
+  window[RESPAWN_PATCH_KEY] = patch;
+
+  window.setTimeout = function patchedPokechillHelperTimeout(callback, delay, ...args) {
+    let nextDelay = delay;
+    if (typeof delay === "number" && delay > 0 && delay <= 1600) {
+      nextDelay = Math.max(1, delay / speed);
+    }
+    return originalSetTimeout.call(window, callback, nextDelay, ...args);
+  };
+
+  if (typeof originalVoidAnimation === "function") {
+    window.voidAnimation = function patchedPokechillHelperAnimation(divName, animationName) {
+      let nextAnimation = animationName;
+      if (divName === "explore-wild-sprite" && typeof animationName === "string" && animationName.includes("wildPokemonDown")) {
+        nextAnimation = animationName.replace(/([0-9]+(?:\.[0-9]+)?)s/g, (match, seconds) => {
+          return `${Math.max(0.05, Number(seconds) / speed)}s`;
+        });
+      }
+      return originalVoidAnimation.call(this, divName, nextAnimation);
+    };
+  }
+
+  originalSetTimeout.call(window, () => {
+    const activePatch = window[RESPAWN_PATCH_KEY];
+    if (activePatch !== patch) return;
+    window.setTimeout = originalSetTimeout;
+    if (typeof originalVoidAnimation === "function") window.voidAnimation = originalVoidAnimation;
+    delete window[RESPAWN_PATCH_KEY];
+  }, 0);
+}
+
+function scheduleVisualSync(api) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => syncHpVisuals(api));
+  });
+}
+
+function syncHpVisuals(api) {
+  const teamState = api.getTeamState();
+  for (const slot in teamState) {
+    const hp = Number(teamState[slot].hp) || 0;
+    const hpMax = Number(teamState[slot].hpMax) || 1;
+    const percent = Math.max(0, Math.min(100, (hp / hpMax) * 100));
+    const bar = document.getElementById(`explore-${slot}-hp`);
+    if (!bar) continue;
+
+    bar.style.width = `${percent}%`;
+    if (percent > 60) bar.style.background = "rgb(130, 211, 130)";
+    else if (percent < 30) bar.style.background = "rgba(219, 112, 112, 1)";
+    else bar.style.background = "rgba(221, 168, 99, 1)";
+  }
+
+  const battle = api.getBattleState();
+  if (!Number.isFinite(Number(battle.wildHpMax)) || battle.wildHpMax <= 0) return;
+
+  const percent = Math.max(0, Math.min(100, (Number(battle.wildHp) / Number(battle.wildHpMax)) * 100));
+  const bars = [
+    document.getElementById("exploe-wild-hp"),
+    document.getElementById("exploe-wild-hp-2"),
+    document.getElementById("exploe-wild-hp-3"),
+    document.getElementById("exploe-wild-hp-4")
+  ].filter(Boolean);
+
+  const activeBars = Math.max(1, bars.filter(bar => bar.style.display !== "none").length);
+  const segment = 100 / activeBars;
+
+  for (let i = 0; i < bars.length; i++) {
+    const bar = bars[i];
+    if (i >= activeBars) continue;
+
+    const start = segment * i;
+    const end = start + segment;
+    if (percent > start) {
+      bar.style.width = percent >= end ? "100%" : `${((percent - start) / segment) * 100}%`;
+    } else {
+      bar.style.width = "0%";
+    }
+  }
+}
