@@ -1,0 +1,10 @@
+{
+  "id": "saveVault",
+  "name": "存档保险库",
+  "description": "每五分钟自动加密备份您的 UltraPokechill 存档至云端，使用前请先设置备份服务器地址。",
+  "image": "img/items/parcel.png",
+  "version": "1.0.5",
+  "author": "UltraPokechill",
+  "category": "实用工具",
+  "defaultEnabled": false
+}
