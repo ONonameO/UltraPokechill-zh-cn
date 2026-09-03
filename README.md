@@ -30,7 +30,7 @@
 | Mod | 名称 | 版本 | 功能简介 | 作者 | 类别 |
 | --- | --- | --- | --- | --- | --- |
 | battleNumbers | 战斗统计 | 1.3 | 在战斗中显示具体血量和伤害，并在战斗总结中显示击败的单位 | UltraPokechill | 战斗 UI |
-| saveVault | 存档保险库 | 1.0.5 | 每五分钟自动加密备份存档，可自定义备份服务器地址 | UltraPokechill | 实用工具 |
+| saveVault | 存档保险库 | 2.0.5 | 每五分钟自动备份存档，可自定义备份服务器地址 | UltraPokechill | 实用工具 |
 | mythos | 神话 | 1.8 | 新增传说级剧情（天气三神：固拉多/盖欧卡/烈空坐） | UltraPokechill | 任务 |
 | allStarters | 全世代初始宝可梦 | 1.4 | 开局可选择所有世代的初始宝可梦 | UltraPokechill | 初始宝可梦 |
 | speedBattles | 战斗加速 | 1.3 | 快速执行普通战斗帧以提升战斗速度，保留常规战斗规则 | UltraPokechill | 战斗 |
@@ -83,7 +83,7 @@ node server.js
 # 可选自定义端口： PORT=8080 node server.js
 ```
 
-启动后访问 <http://127.0.0.1:8000/> 即可游玩。`server.js` 同时托管游戏静态文件与 `/saveVault/*` 备份接口，供「存档保险库」Mod 使用。
+启动后访问 <http://127.0.0.1:18000/> 即可游玩。`server.js` 同时托管游戏静态文件与 `/saveVault/*` 备份接口，供「存档保险库」Mod 使用。
 
 #### 方式二：GitHub Pages 部署
 

@@ -5,7 +5,7 @@
 // SERVER_URL = window.location.origin 能命中一个真正实现了备份协议的地址。
 // 纯 Node 内置模块实现，无任何外部依赖。
 //   启动：node server.js   （或PORT=xxxx node server.js）
-//   默认：http://127.0.0.1:8000
+//   默认：http://0.0.0.0:18000
 
 const http = require("http");
 const fs = require("fs");
@@ -15,8 +15,8 @@ const crypto = require("crypto");
 
 const ROOT = __dirname; // 项目根目录（server.js 本身位于根目录）
 const DATA_DIR = path.join(__dirname, "saveVault"); // 加密快照本地存储目录（根目录下的 saveVault 文件夹）
-const PORT = Number(process.env.PORT) || 8000;
-const HOST = "127.0.0.1";
+const PORT = Number(process.env.PORT) || 18000;
+const HOST = "0.0.0.0";
 const MAX_BODY = 16 * 1024 * 1024; // 16MB 安全上限（模组侧已限制 8MB）
 const CODE_RE = /^SV1-(?:[A-Z2-7]{4}-){7}[A-Z2-7]{4}$/; // 与 mod.js 中 isRecoveryCode 保持一致
 

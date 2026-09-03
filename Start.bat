@@ -14,7 +14,7 @@ where node >nul 2>&1
 if %errorlevel%==0 (
   echo  [信息] 检测到 Node.js，正在启动服务器...
   start /B node "%~dp0server.js"
-  start http://127.0.0.1:8000/
+  start http://127.0.0.1:18000/
   pause >nul
   taskkill /F /IM node.exe >nul 2>&1
   echo  [信息] 服务器已关闭。
