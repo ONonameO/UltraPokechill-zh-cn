@@ -138,7 +138,7 @@
       ]
     },
     {
-      "id": "incomplete_famillies",
+      "id": "incompleteFamilies",
       "name": "未集齐的闪光家族",
       "description": "闪光筛选中新增一个选项，用于筛选尚未完全集齐闪光形态的宝可梦家族。",
       "file": "workshop/IncompleteFamilies.mod",
