@@ -2,7 +2,7 @@ const MOD_ID = "customDummy";
 const DUMMY_PKMN_ID = "customDummy";
 const DUMMY_AREA_ID = "custom_dummy_area";
 const DUMMY_AREA_NAME = "custom_dummy";
-const DUMMY_SPRITE_URL = "mods/customDummy/icon.png";
+const DUMMY_SPRITE_URL = "img/pkmn/sprite/customDummy.png";
 
 // 面板样式表 id（沿用 abilityTrainer 的「独立 style + id 守卫」做法）
 const PANEL_STYLE_ID = "dummy-panel-style";

@@ -2065,6 +2065,7 @@
         //道具
         //Mod
         "Cosmog Candy": "科斯莫古糖果",
+        "Gmax Fragment": "超极巨碎片",
         
         //携带物
         "Black Belt": "黑带",

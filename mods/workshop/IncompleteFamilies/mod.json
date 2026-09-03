@@ -1,0 +1,9 @@
+{
+    "id": "incomplete_famillies",
+    "name": "未集齐的闪光家族",
+    "description": "闪光筛选中新增一个选项，用于筛选尚未完全集齐闪光形态的宝可梦家族。",
+    "image": "icon.png",
+    "version": "1.1",
+    "author": "LPF",
+    "category": "图鉴"
+}
