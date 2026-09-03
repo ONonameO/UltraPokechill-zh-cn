@@ -5,11 +5,6 @@
     "mythos.mod",
     "allStarters.mod",
     "speedBattles.mod",
-    "movePresets.mod",
-    "pokechillHelper/mod.js",
-    "abilityTrainer/mod.js",
-    "pokechillGmax/mod.js",
-    "customDummy/mod.js",
-    "coinExchange/mod.js"
+    "movePresets.mod"
   ]
 }
