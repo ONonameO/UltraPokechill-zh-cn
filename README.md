@@ -8,7 +8,7 @@
 |------|------| 
 | [Pokechill](https://github.com/play-pokechill/play-pokechill.github.io) | 一款宝可梦题材的放置挂机游戏 | 
 | [UltraPokechill](https://github.com/play-ultrapokechill/play-ultrapokechill.github.io) | Pokechill 的改版，在其基础上增加 Mod 加载器与相关 Mod | 
-| [本项目] | UltraPokechill 的汉化版本，新增 / 修改部分 Mod | 
+| [本项目](https://github.com/ONonameO/UltraPokechill-zh-cn) | UltraPokechill 的汉化版本，新增 / 修改部分 Mod | 
 
 ---
 
